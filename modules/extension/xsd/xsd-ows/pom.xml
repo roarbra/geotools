@@ -65,7 +65,7 @@
     <dependency>
       <groupId>org.geotools.ogc</groupId>
       <artifactId>net.opengis.ows</artifactId>
-      <version>23-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools.xsd</groupId>
