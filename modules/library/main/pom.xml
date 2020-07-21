@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>library</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>23-NIVA</version>
   </parent>
 
 
@@ -211,6 +211,11 @@
   <!--     Dependency Management                                   -->
   <!-- =========================================================== -->
   <dependencies>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-metadata</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-referencing</artifactId>
