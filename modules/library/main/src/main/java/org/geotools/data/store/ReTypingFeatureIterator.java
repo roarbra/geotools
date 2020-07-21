@@ -108,7 +108,7 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
             /*
             if (!attrib.equals(original.getDescriptor(xpath))) {
                 throw new IllegalArgumentException(
-                        "Unable to retype FeatureReader<SimpleFeatureType, SimpleFeature> (original does not cover "
+                        "Unable to retype  FeatureReader<SimpleFeatureType, SimpleFeature> (original does not cover "
                                 + xpath
                                 + ")");
             }
