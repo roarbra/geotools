@@ -65,7 +65,14 @@ public class ReTypingFeatureCollection extends DecoratingSimpleFeatureCollection
     }
 
     public SimpleFeatureIterator features() {
-        return new ReTypingFeatureIterator(delegate.features(), delegate.getSchema(), featureType);
+    	final SimpleFeatureIterator delegateIterator = delegate.features();
+    	try {
+    		return new ReTypingFeatureIterator(delegateIterator, delegate.getSchema(), featureType);
+    	}
+    	catch (Exception ex) {
+    		delegateIterator.close();
+    		throw ex;
+    	}
     }
 
     @Override
