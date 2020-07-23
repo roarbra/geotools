@@ -372,7 +372,10 @@ public class ImageIOExt {
         }
         ImageInputStream stream = ImageIO.createImageInputStream(input);
         if (stream == null) {
-            throw new IOException("Can't create an ImageInputStream!");
+            throw new IOException(
+                    String.format(
+                            "Can't create an ImageInputStream of the input of %s with value: %s",
+                            input.getClass().getName(), input.toString()));
         }
         return stream;
     }
@@ -385,7 +388,7 @@ public class ImageIOExt {
      * @return A image
      */
     public static BufferedImage readBufferedImage(Object input) throws IOException {
-        RenderedImage ri = ImageIOExt.read(input);
+        RenderedImage ri = read(input);
         if (ri == null) {
             return null;
         } else if (ri instanceof BufferedImage) {
