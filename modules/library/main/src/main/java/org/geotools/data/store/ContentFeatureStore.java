@@ -245,18 +245,29 @@ public abstract class ContentFeatureStore extends ContentFeatureSource
             throws IOException {
         // gather up id's
         List<FeatureId> ids = new ArrayList<FeatureId>();
-
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer = getWriterAppend();
-        FeatureIterator<SimpleFeature> f = featureCollection.features();
+        FeatureWriter<SimpleFeatureType, SimpleFeature> writer = null;
+        FeatureIterator<SimpleFeature> f = null;
         try {
+            writer = getWriterAppend();
+            f = featureCollection.features();
+            
             while (f.hasNext()) {
                 SimpleFeature feature = f.next();
                 FeatureId id = addFeature(feature, writer);
                 ids.add(id);
             }
-        } finally {
-            writer.close();
-            f.close();
+        }
+        finally {
+        	if (writer != null) {
+        		try {
+        			writer.close();
+        		}
+        		finally {
+        			if (f != null) {
+        				f.close();
+        			}
+        		}
+        	}
         }
         return ids;
     }
