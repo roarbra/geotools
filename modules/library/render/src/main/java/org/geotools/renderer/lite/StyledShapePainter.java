@@ -401,8 +401,8 @@ public class StyledShapePainter {
             final double symbolScale,
             boolean isLabelObstacle) {
         if (legend == null) {
-            // TODO: what's going on? Should not be reached...
-            throw new NullPointerException("ShapePainter has been asked to paint a null legend!!");
+            throw new IllegalArgumentException(
+                    "ShapePainter has been asked to paint a null legend!!");
         }
         Iterator<GraphicalSymbol> symbolIter = legend.graphicalSymbols().iterator();
 
@@ -473,8 +473,10 @@ public class StyledShapePainter {
                                 composite,
                                 isLabelObstacle);
                     } catch (IOException ex) {
-                        Logger.getLogger(StyledShapePainter.class.getName())
-                                .log(Level.SEVERE, null, ex);
+                        LOGGER.log(
+                                Level.SEVERE,
+                                "Failed to draw an ExternalGraphic of the legend.",
+                                ex);
                     }
                     iter.next();
                 }
