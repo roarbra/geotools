@@ -250,22 +250,24 @@ public abstract class ContentFeatureStore extends ContentFeatureSource
         try {
             writer = getWriterAppend();
             f = featureCollection.features();
-
+            
             while (f.hasNext()) {
                 SimpleFeature feature = f.next();
                 FeatureId id = addFeature(feature, writer);
                 ids.add(id);
             }
-        } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } finally {
-                    if (f != null) {
-                        f.close();
-                    }
-                }
-            }
+        }
+        finally {
+        	if (writer != null) {
+        		try {
+        			writer.close();
+        		}
+        		finally {
+        			if (f != null) {
+        				f.close();
+        			}
+        		}
+        	}
         }
         return ids;
     }
