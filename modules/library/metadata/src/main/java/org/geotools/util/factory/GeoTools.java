@@ -109,6 +109,8 @@ public final class GeoTools {
         return props;
     }
 
+    private static final Logger LOGGER = Logging.getLogger(GeoTools.class);
+
     /** The current GeoTools version. The separator character must be the dot. */
     private static final Version VERSION = new Version(PROPS.getProperty("version", "20-SNAPSHOT"));
 
@@ -916,8 +918,18 @@ public final class GeoTools {
     public static synchronized InitialContext getInitialContext(final Hints hints)
             throws NamingException {
         if (context == null) {
-            context = new InitialContext();
+            try {
+                context = new InitialContext();
+            } catch (Exception ex) {
+                if (ex instanceof NamingException) {
+                    throw ex;
+                } else {
+                    LOGGER.log(Level.SEVERE, "Failed to establish initial context.", ex);
+                    throw new NamingException();
+                }
+            }
         }
+
         return context;
     }
 
