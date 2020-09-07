@@ -113,7 +113,7 @@ public class CompoundRing extends LinearRing
         return "CompoundRing";
     }
 
-    public Geometry reverseInternal() {
+    public CompoundRing reverseInternal() {
         CompoundCurve reversedDelegate = (CompoundCurve) ((Geometry) delegate).reverse();
         return new CompoundRing(reversedDelegate);
     }
