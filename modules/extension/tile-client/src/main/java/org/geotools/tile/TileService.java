@@ -252,9 +252,7 @@ public abstract class TileService {
             throw new RuntimeException(e);
         }
 
-        // TODO understand the minus 1 below
-        int zoomLevelA = getZoomLevelToUse(zoomLevelMatcher, scaleFactor, recommendedZoomLevel) - 1;
-        if (zoomLevelA <= 0) zoomLevelA = 0; // this is related to the -1 above!
+        int zoomLevelA = getZoomLevelToUse(zoomLevelMatcher, scaleFactor, recommendedZoomLevel);
         ZoomLevel zoomLevel = tileFactory.getZoomLevel(zoomLevelA, this);
 
         long maxNumberOfTilesForZoomLevel = zoomLevel.getMaxTileNumber();
