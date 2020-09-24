@@ -20,9 +20,14 @@ import java.util.logging.Level;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.util.FeatureUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.styling.FeatureTypeStyle;
+import org.geotools.styling.RasterSymbolizer;
+import org.geotools.styling.Rule;
 import org.geotools.styling.Style;
+import org.geotools.styling.StyleFactory;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -43,6 +48,24 @@ public class GridReaderLayer extends RasterLayer {
 
     /** Optional parameters to control the rendering process. */
     protected GeneralParameterValue[] params;
+    
+
+    public static Style createRasterStyle() {
+        StyleFactory factory = CommonFactoryFinder.getStyleFactory(null);
+        
+        Style style = factory.createStyle();
+        
+        FeatureTypeStyle type = factory.createFeatureTypeStyle();
+        style.featureTypeStyles().add(type);
+        
+        Rule rule = factory.createRule();
+        type.rules().add(rule);
+        
+        RasterSymbolizer symbolizer = factory.createRasterSymbolizer();
+        rule.symbolizers().add(symbolizer);
+        
+        return style;
+    }
 
     /**
      * Create a lyaer to draw the provided grid coverage reader.
