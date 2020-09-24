@@ -17,7 +17,12 @@
  */
 package org.geotools.tile.impl.osm;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.net.URL;
+
+import org.geotools.data.ows.HTTPResponse;
+import org.geotools.image.io.ImageIOExt;
 import org.geotools.tile.Tile;
 import org.geotools.tile.TileIdentifier;
 import org.geotools.tile.TileService;
@@ -56,5 +61,12 @@ public class OSMTile extends Tile {
             final String mesg = "Cannot create URL from " + url;
             throw new RuntimeException(mesg, e);
         }
+    }
+    
+    @Override
+    public BufferedImage loadImageTileImage(Tile tile) throws IOException {
+    	URL url = getUrl();
+    	HTTPResponse response = this.service.getHttpClient().get(url);
+        return ImageIOExt.readBufferedImage(response.getResponseStream());
     }
 }
