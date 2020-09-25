@@ -48,22 +48,21 @@ public class GridReaderLayer extends RasterLayer {
 
     /** Optional parameters to control the rendering process. */
     protected GeneralParameterValue[] params;
-    
 
     public static Style createRasterStyle() {
         StyleFactory factory = CommonFactoryFinder.getStyleFactory(null);
-        
+
         Style style = factory.createStyle();
-        
+
         FeatureTypeStyle type = factory.createFeatureTypeStyle();
         style.featureTypeStyles().add(type);
-        
+
         Rule rule = factory.createRule();
         type.rules().add(rule);
-        
+
         RasterSymbolizer symbolizer = factory.createRasterSymbolizer();
         rule.symbolizers().add(symbolizer);
-        
+
         return style;
     }
 
