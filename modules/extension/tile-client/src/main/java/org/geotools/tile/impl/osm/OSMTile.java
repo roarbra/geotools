@@ -20,7 +20,6 @@ package org.geotools.tile.impl.osm;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.image.io.ImageIOExt;
 import org.geotools.tile.Tile;
@@ -62,11 +61,11 @@ public class OSMTile extends Tile {
             throw new RuntimeException(mesg, e);
         }
     }
-    
+
     @Override
     public BufferedImage loadImageTileImage(Tile tile) throws IOException {
-    	URL url = getUrl();
-    	HTTPResponse response = this.service.getHttpClient().get(url);
+        URL url = getUrl();
+        HTTPResponse response = this.service.getHttpClient().get(url);
         return ImageIOExt.readBufferedImage(response.getResponseStream());
     }
 }

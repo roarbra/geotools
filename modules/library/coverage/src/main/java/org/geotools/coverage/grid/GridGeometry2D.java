@@ -504,18 +504,16 @@ public class GridGeometry2D extends GeneralGridGeometry {
                 getMathTransform(gridRange, userRange),
                 (CoordinateReferenceSystem) null);
     }
-    
-    
-    
+
     /**
-     * 
      * @param gridRange
      * @param userEnvelope
      */
     public GridGeometry2D(final Rectangle gridRange, final Envelope2D userEnvelope) {
-    	this(new GridEnvelope2D(gridRange),
-    			getMathTransform(gridRange, userEnvelope),
-    			userEnvelope.getCoordinateReferenceSystem());
+        this(
+                new GridEnvelope2D(gridRange),
+                getMathTransform(gridRange, userEnvelope),
+                userEnvelope.getCoordinateReferenceSystem());
     }
 
     /**
