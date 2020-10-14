@@ -165,7 +165,7 @@ public class GridReaderLayer extends RasterLayer {
             collection = FeatureUtilities.wrapGridCoverageReader(reader, params);
             return collection;
         } catch (Exception e) {
-            LOGGER.log(Level.FINER, "Coverage could not be converted to FeatureCollection", e);
+            LOGGER.log(Level.WARNING, "Coverage could not be converted to FeatureCollection", e);
             return null;
         }
     }

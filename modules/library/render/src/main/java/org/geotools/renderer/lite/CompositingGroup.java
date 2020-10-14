@@ -67,7 +67,7 @@ class CompositingGroup {
                     if (isCompositingBase(firstFts) && !layers.isEmpty()) {
                         addToCompositingMapContents(graphics, screenSize, result, layers);
                     }
-                    if (s == style) {
+                    if (s.equals(style)) {
                         layers.add(layer);
                     } else {
                         // all the streaming renderer cares about is normally contained
