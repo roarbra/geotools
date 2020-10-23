@@ -379,6 +379,7 @@ public class JDBCFeatureSource extends ContentFeatureSource {
 
         // handle three-valued logic differences by adding "is not null" checks in the filter,
         // the simplifying filter visitor will take care of them if they are redundant
+        /*
         NullHandlingVisitor nhv = new NullHandlingVisitor(source.getSchema());
         split[0] = (Filter) split[0].accept(nhv, null);
 
@@ -387,7 +388,8 @@ public class JDBCFeatureSource extends ContentFeatureSource {
         visitor.setFeatureType(getSchema());
         split[0] = (Filter) split[0].accept(visitor, null);
         split[1] = (Filter) split[1].accept(visitor, null);
-
+		*/
+        
         return split;
     }
 
