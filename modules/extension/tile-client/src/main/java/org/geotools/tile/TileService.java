@@ -295,8 +295,8 @@ public abstract class TileService {
                     LOGGER.warning(
                             "Reached tile limit of "
                                     + maxNumberOfTiles
-                                    + ". Returning an empty collection.");
-                    return Collections.emptySet();
+                                    + ". Returning what we got so far.");
+                    return tileList;
                 }
             } while (tileList.size() < maxNumberOfTilesForZoomLevel);
 
