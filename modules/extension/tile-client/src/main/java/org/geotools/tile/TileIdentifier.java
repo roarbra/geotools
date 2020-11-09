@@ -34,19 +34,28 @@ import org.geotools.tile.impl.ZoomLevel;
  */
 public abstract class TileIdentifier {
 
-    private int x;
+    private final int x;
 
-    private int y;
+    private final int y;
 
-    private ZoomLevel zoomLevel;
+    private final ZoomLevel zoomLevel;
 
     private String serviceName;
 
     public TileIdentifier(int x, int y, ZoomLevel zoomLevel, String serviceName) {
+        if (x < 0) {
+            throw new IllegalArgumentException("X must be >= 0 (" + x + ")");
+        }
+        this.x = x;
+        if (y < 0) {
+            throw new IllegalArgumentException("Y must be >= 0 (" + y + ")");
+        }
+        this.y = y;
+        if (zoomLevel == null) {
+            throw new IllegalArgumentException("Zoom level cannot be null");
+        }
+        this.zoomLevel = zoomLevel;
 
-        setX(x);
-        setY(y);
-        setZomLevel(zoomLevel);
         setServiceName(serviceName);
     }
 
@@ -55,27 +64,6 @@ public abstract class TileIdentifier {
             throw new IllegalArgumentException("Service name cannot be null");
         }
         this.serviceName = serviceName;
-    }
-
-    private void setX(int x) {
-        if (x < 0) {
-            throw new IllegalArgumentException("X must be >= 0 (" + x + ")");
-        }
-        this.x = x;
-    }
-
-    private void setY(int y) {
-        if (y < 0) {
-            throw new IllegalArgumentException("Y must be >= 0 (" + y + ")");
-        }
-        this.y = y;
-    }
-
-    private void setZomLevel(ZoomLevel zoomLevel) {
-        if (zoomLevel == null) {
-            throw new IllegalArgumentException("Zoom level cannot be null");
-        }
-        this.zoomLevel = zoomLevel;
     }
 
     /**

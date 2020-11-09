@@ -42,17 +42,16 @@ public abstract class WebMercatorTileFactory extends TileFactory {
 
     public static ReferencedEnvelope getExtentFromTileName(TileIdentifier tileName) {
 
+        final int x = tileName.getX();
+        final int y = tileName.getY();
         final int z = tileName.getZ();
 
-        ReferencedEnvelope extent =
-                new ReferencedEnvelope(
-                        tile2lon(tileName.getX(), z),
-                        tile2lon(tileName.getX() + 1, z),
-                        tile2lat(tileName.getY(), z),
-                        tile2lat(tileName.getY() + 1, z),
-                        DefaultGeographicCRS.WGS84);
-
-        return extent;
+        return new ReferencedEnvelope(
+                tile2lon(x, z),
+                tile2lon(x + 1, z),
+                tile2lat(y, z),
+                tile2lat(y + 1, z),
+                DefaultGeographicCRS.WGS84);
     }
 
     public static final double tile2lon(double x, int z) {
@@ -61,9 +60,7 @@ public abstract class WebMercatorTileFactory extends TileFactory {
     }
 
     public static final double tile2lat(double y, int z) {
-        double n = Math.PI - ((2.0 * Math.PI * y) / Math.pow(2.0, z));
-        // return 180.0 / Math.PI * Math.atan(0.5 * (Math.exp(n) -
-        // Math.exp(-n)));
+        final double n = Math.PI - ((2.0 * Math.PI * y) / Math.pow(2.0, z));
         return Math.toDegrees(Math.atan(Math.sinh(n)));
     }
 }
