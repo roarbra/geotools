@@ -154,12 +154,11 @@ public class GroupCandidateSelectionProcess implements VectorProcess {
         // produces new PropertyName to add to the query
         List<PropertyName> propertiesToAdd =
                 Stream.of(sortBy).map(s -> s.getPropertyName()).collect(Collectors.toList());
-        propertiesToAdd.add(ff.property(operationAttribute));
-
+        PropertyName operationAttributeProp = ff.property(operationAttribute);
+        propertiesToAdd.add(operationAttributeProp);
         // eventually merge with existing ones
         List<PropertyName> pns = getNewProperties(propertiesToAdd, properties);
         q.setProperties(pns);
-
         return q;
     }
 
@@ -300,12 +299,14 @@ public class GroupCandidateSelectionProcess implements VectorProcess {
                 Feature f = super.next();
                 if (bestFeature == null) {
                     // no features in the list this is the first of the group
-                    // takes the values to check the following features if belong to the same group
+                    // takes the values to check the following features if belong to the same
+                    // group
                     groupingValues = getGroupingValues(groupingValues, f);
                     bestFeature = f;
                 } else {
                     // is the feature in the group?
                     if (featureComparison(groupingValues, f)) {
+                        // if operationValue is null skip
                         bestFeature = updateBestFeature(f, bestFeature);
                     } else {
                         ((PushBackFeatureIterator) delegate).pushBack();
@@ -341,23 +342,25 @@ public class GroupCandidateSelectionProcess implements VectorProcess {
         }
 
         private Feature updateBestFeature(Feature best, Feature f) {
+            Comparable bestValue = getComparableFromEvaluation(best);
+            Comparable value = getComparableFromEvaluation(f);
+            if (value == null) return best;
+            else if (bestValue == null) return f;
             if (aggregation.equals(Operations.MAX)) {
-                return findBestMax(best, f);
+                return findBestMax(best, f, bestValue, value);
             } else {
-                return findBestMin(best, f);
+                return findBestMin(best, f, bestValue, value);
             }
         }
 
-        private Feature findBestMax(Feature best, Feature f) {
-            Comparable bestValue = getComparableFromEvaluation(best);
-            Comparable value = getComparableFromEvaluation(f);
+        private Feature findBestMax(
+                Feature best, Feature f, Comparable bestValue, Comparable value) {
             if (bestValue.compareTo(value) < 0) return f;
             return best;
         }
 
-        private Feature findBestMin(Feature best, Feature f) {
-            Comparable bestValue = getComparableFromEvaluation(best);
-            Comparable value = getComparableFromEvaluation(f);
+        private Feature findBestMin(
+                Feature best, Feature f, Comparable bestValue, Comparable value) {
             if (bestValue.compareTo(value) > 0) return f;
             return best;
         }
