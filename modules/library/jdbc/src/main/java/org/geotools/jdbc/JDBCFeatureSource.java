@@ -47,7 +47,6 @@ import org.geotools.feature.visitor.MaxVisitor;
 import org.geotools.feature.visitor.MinVisitor;
 import org.geotools.feature.visitor.NearestVisitor;
 import org.geotools.filter.FilterAttributeExtractor;
-import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.util.factory.Hints;
@@ -380,16 +379,16 @@ public class JDBCFeatureSource extends ContentFeatureSource {
         // handle three-valued logic differences by adding "is not null" checks in the filter,
         // the simplifying filter visitor will take care of them if they are redundant
         /*
-        NullHandlingVisitor nhv = new NullHandlingVisitor(source.getSchema());
-        split[0] = (Filter) split[0].accept(nhv, null);
+              NullHandlingVisitor nhv = new NullHandlingVisitor(source.getSchema());
+              split[0] = (Filter) split[0].accept(nhv, null);
 
-        SimplifyingFilterVisitor visitor = new SimplifyingFilterVisitor();
-        visitor.setFIDValidator(new PrimaryKeyFIDValidator(featureSource));
-        visitor.setFeatureType(getSchema());
-        split[0] = (Filter) split[0].accept(visitor, null);
-        split[1] = (Filter) split[1].accept(visitor, null);
-		*/
-        
+              SimplifyingFilterVisitor visitor = new SimplifyingFilterVisitor();
+              visitor.setFIDValidator(new PrimaryKeyFIDValidator(featureSource));
+              visitor.setFeatureType(getSchema());
+              split[0] = (Filter) split[0].accept(visitor, null);
+              split[1] = (Filter) split[1].accept(visitor, null);
+        */
+
         return split;
     }
 
