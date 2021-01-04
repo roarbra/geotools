@@ -121,10 +121,7 @@ public class ArcGISRestDataStoreFactoryTest {
         return (new ArcGISRestDataStoreFactory()).createDataStore(params);
     }
 
-    /**
-     * Helper method to create a data store
-     *
-     */
+    /** Helper method to create a data store */
     public DataStore createDataStore(
             final String namespace,
             final String url,

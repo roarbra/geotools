@@ -223,6 +223,11 @@
 
 		<profile>
 			<id>arcgis-rest</id>
+			<activation>
+				<property>
+					<name>all</name>
+				</property>
+			</activation>
 			<modules>
 				<module>arcgis-rest</module>
 			</modules>
