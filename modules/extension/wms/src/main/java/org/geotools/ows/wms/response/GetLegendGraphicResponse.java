@@ -17,6 +17,8 @@
 package org.geotools.ows.wms.response;
 
 import java.io.IOException;
+
+import org.geotools.data.ows.DelegateOldHTTPResponse;
 import org.geotools.data.ows.Response;
 import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
@@ -27,7 +29,7 @@ public class GetLegendGraphicResponse extends Response {
     @Deprecated
     public GetLegendGraphicResponse(org.geotools.data.ows.HTTPResponse httpResponse)
             throws ServiceException, IOException {
-        this(new org.geotools.http.DelegateOldHTTPResponse(httpResponse));
+        this(new DelegateOldHTTPResponse(httpResponse));
     }
 
     public GetLegendGraphicResponse(HTTPResponse httpResponse)

@@ -18,6 +18,10 @@
 package org.geotools.http;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import org.geotools.util.LazySet;
 import org.geotools.util.factory.FactoryCreator;
 import org.geotools.util.factory.FactoryFinder;
 import org.geotools.util.factory.FactoryRegistry;
@@ -35,13 +39,52 @@ import org.geotools.util.factory.Hints;
  */
 public class HTTPFactoryFinder extends FactoryFinder {
 
+    /** Cache of last factory found */
+    static HTTPClientFactory lastFactory;
+
     /** The service registry for this manager. Will be initialized only when first needed. */
     private static volatile FactoryRegistry registry;
 
+    /** Do not allow any instantiation of this class. */
     private HTTPFactoryFinder() {
         // singleton
     }
 
+    /**
+     * Dynamically register a new factory from SPI.
+     * @param factory client factory
+     */
+    public static void addFactory(HTTPClientFactory factory) {
+        getServiceRegistry().registerFactory(factory);
+    }
+
+    /**
+     * Dynamically removes a factory from SPI.
+     * Normally the factory has been added before via {@link #addFactory(HTTPClientFactory)}
+     * @param factory client factory
+     */
+    public static void removeProcessFactory(HTTPClientFactory factory) {
+        if (lastFactory == factory) {
+            lastFactory = null;
+        }
+        getServiceRegistry().deregisterFactory(factory);
+    }
+
+    /**
+     * Set of available HTTPClientFactory; each of which is responsible for one or client implementations.
+     *
+     * @return Set of ProcessFactory
+     */
+    public static Set<HTTPClientFactory> getFactories() {
+        Stream<HTTPClientFactory> serviceProviders =
+                getServiceRegistry().getFactories(HTTPClientFactory.class, null, null);
+        return new LazySet<>(serviceProviders);
+    }
+
+    /**
+     * Returns the service registry. The registry will be created the first time this method is
+     * invoked.
+     */
     private static FactoryRegistry getServiceRegistry() {
         assert Thread.holdsLock(HTTPFactoryFinder.class);
         if (registry == null) {

@@ -87,7 +87,7 @@ public interface Request {
     @Deprecated
     default Response createResponse(org.geotools.data.ows.HTTPResponse response)
             throws ServiceException, IOException {
-        return createResponse(new org.geotools.http.DelegateOldHTTPResponse(response));
+        return createResponse(new DelegateOldHTTPResponse(response));
     }
 
     /**

@@ -22,8 +22,9 @@ import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
 
 /**
- * Default factory for generating HTTP client's. Will deliver a SimpleHttpClient, or a HTTPClient
- * given by the hint HTTP_CLIENT.
+ * Default factory for generating HTTP client's.
+ *
+ * Will deliver a SimpleHttpClient, or a HTTPClient given by the hint HTTP_CLIENT.
  *
  * @author Roar Brænden
  */
@@ -31,11 +32,23 @@ public class DefaultHTTPClientFactory extends AbstractHTTPClientFactory {
 
     private static final Logger LOGGER = Logging.getLogger(DefaultHTTPClientFactory.class);
 
+    public DefaultHTTPClientFactory(){
+        super(new Class[]{SimpleHttpClient.class});
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     protected HTTPClient createClient(Hints hints) {
-        if (!hints.containsKey(Hints.HTTP_CLIENT)) {
-            LOGGER.fine("Using default Http client SimpleHttpClient.");
+        if (!hints.containsKey(Hints.HTTP_CLIENT)){
+            Class requestedFactory = hints.get(Hints.HTTP_CLIENT);
+
+
+
+
+            HTTPClient client = new SimpleHttpClient();
+            Hints.HTTP_CLIENT.isCompatibleValue(client);
+
+            Object value = hints.get(Hints.HTTP_CLIENT);
             return new SimpleHttpClient();
         } else {
             try {

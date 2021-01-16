@@ -18,26 +18,38 @@
 package org.geotools.http;
 
 import org.geotools.util.factory.Hints;
+import org.geotools.util.factory.OptionalFactory;
 
 /**
- * Factory class to create a HTTP client. Default implementation is within library gt-http.
+ * Factory class to create a {@link HTTPClient}. Default implementation is within library gt-http.
  *
  * @author Roar Brænden
  */
-public interface HTTPClientFactory {
+public interface HTTPClientFactory extends OptionalFactory {
 
     /**
-     * Main method to get the client
+     * Check if factory can create requested implementation.
      *
-     * @return default http client
+     * @param implementation HTTP Client implementation
+     * @return true if factory can create requested implementation
      */
-    HTTPClient getClient();
+    boolean canCreate(Class<? extends HTTPClient> implementation);
 
     /**
-     * Get a client by the given hints. Supersedes the one given by Geotools.getDefaultHints()
+     * Create a http client.
      *
-     * @param hints Looks for the key HTTP_CLIENT
-     * @return
+     * @return created http client instance
      */
-    HTTPClient getClient(Hints hints);
+    HTTPClient createClient();
+
+    /**
+     * Create a http client configured with the provided hints.
+     *
+     * To request a specific implementation use {@link Hints#HTTP_CLIENT}.
+     * Provided hints supersede any given by {@code GeoTools.getDefaultHints()}.
+     *
+     * @param hints Used to select implementation created
+     * @return created http client instance
+     */
+    HTTPClient createClient(Hints hints);
 }

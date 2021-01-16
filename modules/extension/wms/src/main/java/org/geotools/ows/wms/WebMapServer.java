@@ -30,11 +30,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.geotools.data.ResourceInfo;
 import org.geotools.data.ServiceInfo;
-import org.geotools.data.ows.AbstractOpenWebService;
-import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.GetCapabilitiesResponse;
-import org.geotools.data.ows.OperationType;
-import org.geotools.data.ows.Specification;
+import org.geotools.data.ows.*;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.HTTPClient;
@@ -404,7 +400,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
             final org.geotools.data.ows.HTTPClient httpClient,
             Map<String, Object> hints)
             throws IOException, ServiceException {
-        this(serverURL, new org.geotools.http.DelegateOldHTTPClient(httpClient), hints);
+        this(serverURL, new DelegateOldHTTPClient(httpClient), hints);
     }
 
     /**

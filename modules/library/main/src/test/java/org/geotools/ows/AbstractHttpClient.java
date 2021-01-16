@@ -14,7 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.ows;
+package org.geotools.ows;
+
+import org.geotools.data.ows.HTTPClient;
 
 /**
  * A base class for HTTPClient, that implements everything except the get and post methods.

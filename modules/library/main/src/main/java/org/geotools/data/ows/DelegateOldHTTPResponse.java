@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.http;
+package org.geotools.data.ows;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +25,7 @@ import java.io.InputStream;
  * @author Roar Brænden
  */
 @Deprecated
-public class DelegateOldHTTPResponse implements HTTPResponse {
+public class DelegateOldHTTPResponse implements org.geotools.http.HTTPResponse {
 
     protected org.geotools.data.ows.HTTPResponse delegate;
 

@@ -14,7 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.ows;
+package org.geotools.ows;
+
+import org.geotools.data.ows.HTTPResponse;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

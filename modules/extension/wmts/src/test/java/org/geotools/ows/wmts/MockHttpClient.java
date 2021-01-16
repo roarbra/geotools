@@ -1,5 +1,7 @@
 package org.geotools.ows.wmts;
 
+import org.geotools.ows.AbstractHttpClient;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -11,7 +13,7 @@ import java.util.Map;
  * @author Andrea Aime - GeoSolutions
  */
 @Deprecated
-public abstract class MockHttpClient extends org.geotools.data.ows.AbstractHttpClient {
+public abstract class MockHttpClient extends AbstractHttpClient {
 
     @Override
     public org.geotools.data.ows.HTTPResponse post(

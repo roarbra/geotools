@@ -133,7 +133,7 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
 
     @Deprecated
     public void setHttpClient(org.geotools.data.ows.HTTPClient httpClient) {
-        this.httpClient = new org.geotools.http.DelegateOldHTTPClient(httpClient);
+        this.httpClient = new DelegateOldHTTPClient(httpClient);
     }
 
     public HTTPClient getHTTPClient() {

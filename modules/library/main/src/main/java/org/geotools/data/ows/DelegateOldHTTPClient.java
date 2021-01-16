@@ -14,7 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.http;
+package org.geotools.data.ows;
+
+import org.geotools.http.HTTPResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +29,7 @@ import java.util.Map;
  * @author Roar Brænden
  */
 @Deprecated
-public class DelegateOldHTTPClient implements HTTPClient {
+public class DelegateOldHTTPClient implements org.geotools.http.HTTPClient {
 
     protected org.geotools.data.ows.HTTPClient delegate;
 
@@ -36,13 +38,13 @@ public class DelegateOldHTTPClient implements HTTPClient {
     }
 
     @Override
-    public HTTPResponse post(URL url, InputStream postContent, String postContentType)
+    public org.geotools.http.HTTPResponse post(URL url, InputStream postContent, String postContentType)
             throws IOException {
         return new DelegateOldHTTPResponse(delegate.post(url, postContent, postContentType));
     }
 
     @Override
-    public HTTPResponse get(URL url) throws IOException {
+    public org.geotools.http.HTTPResponse get(URL url) throws IOException {
         return new DelegateOldHTTPResponse(delegate.get(url));
     }
 
