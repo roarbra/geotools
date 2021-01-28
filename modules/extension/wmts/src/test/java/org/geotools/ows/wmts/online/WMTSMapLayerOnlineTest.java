@@ -14,15 +14,18 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.ows.wmts.map;
+package org.geotools.ows.wmts.online;
 
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.net.URL;
+import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapContent;
 import org.geotools.ows.wmts.WebMapTileServer;
+import org.geotools.ows.wmts.map.WMTSMapLayer;
 import org.geotools.ows.wmts.model.WMTSLayer;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -35,7 +38,7 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** @author ian */
-public class WMTSMapLayerTest extends OnlineTestCase {
+public class WMTSMapLayerOnlineTest extends OnlineTestCase {
 
     private URL serverURL;
 
@@ -44,19 +47,44 @@ public class WMTSMapLayerTest extends OnlineTestCase {
     private WMTSMapLayer kvpMapLayer;
 
     private WMTSMapLayer restMapLayer;
+    
+
+    @Override
+    protected String getFixtureId() {
+        return "wmts";
+    }
+    
+    @Override
+    protected boolean isOnline() throws Exception {
+    	HTTPClient http = new SimpleHttpClient();
+    	return ( WebMapTileServerOnlineTest.getUrlFromProperty(fixture, "kvp_server")
+    											.map(url -> WebMapTileServerOnlineTest.checkUrlOnline(http, url))
+    											.orElse(false)
+    				&&
+    				WebMapTileServerOnlineTest.getUrlFromProperty(fixture, "rest_server")
+    											.map(url -> WebMapTileServerOnlineTest.checkUrlOnline(http, url))
+    											.orElse(false));
+    }
 
     @Override
     protected void setUpInternal() throws Exception {
-        serverURL = new URL(fixture.getProperty("kvp_server"));
-        WebMapTileServer server = new WebMapTileServer(serverURL);
+    	
+    	serverURL = WebMapTileServerOnlineTest.getUrlFromProperty(fixture, "kvp_server")
+    									.orElseThrow(() -> new RuntimeException("kvp_server was missing."));
+    	
+    	WebMapTileServer server = new WebMapTileServer(serverURL);
         WMTSLayer wlayer = server.getCapabilities().getLayer("topp:states");
 
         kvpMapLayer = new WMTSMapLayer(server, wlayer);
-        restWMTS = new URL(fixture.getProperty("rest_server"));
+
+        restWMTS = WebMapTileServerOnlineTest.getUrlFromProperty(fixture, "rest_server")
+        		.orElseThrow(() -> new RuntimeException("rest_server was missing."));
+        
         WebMapTileServer server2 = new WebMapTileServer(restWMTS);
         WMTSLayer w2layer = server2.getCapabilities().getLayer("topp:states");
         restMapLayer = new WMTSMapLayer(server2, w2layer);
     }
+
 
     /** Test method for {@link WMTSMapLayer#getBounds()}. */
     @Test
@@ -128,8 +156,4 @@ public class WMTSMapLayerTest extends OnlineTestCase {
         assertFalse(kvpMapLayer.isNativelySupported(crs));
     }
 
-    @Override
-    protected String getFixtureId() {
-        return "wmts";
-    }
 }

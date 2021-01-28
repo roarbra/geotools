@@ -17,15 +17,11 @@
 
 package org.geotools.ows.wmts.online;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.awt.Rectangle;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,6 +29,8 @@ import javax.media.jai.Interpolation;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.ows.ServiceException;
@@ -45,26 +43,45 @@ import org.geotools.ows.wmts.model.WMTSLayer;
 import org.geotools.ows.wmts.request.GetTileRequest;
 import org.geotools.parameter.Parameter;
 import org.geotools.referencing.CRS;
+import org.geotools.test.OnlineTestCase;
 import org.geotools.tile.Tile;
-import org.junit.Before;
 import org.junit.Test;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 
-public class WMTSServerOnlineTest {
+public class WMTSLantmaterietServerOnlineTest extends OnlineTestCase {
+	
+	private final String serverUrl = "https://api.lantmateriet.se/open/topowebb-ccby/v1/wmts/token/8d61b10d-e93b-3c04-b4ae-4f4bdd1afe1b/?request=getcapabilities&service=wmts";
+	
+	private final String serverWithStyleUrl = "https://www.basemap.at/wmts/1.0.0/WMTSCapabilities.xml";
 
     private URL server;
-
+    
     private URL serverWithStyle;
+    
 
-    @Before
-    public void setUpInternal() throws MalformedURLException {
-        this.server =
-                new URL(
-                        "https://api.lantmateriet.se/open/topowebb-ccby/v1/wmts/token/8d61b10d-e93b-3c04-b4ae-4f4bdd1afe1b/?request=getcapabilities&service=wmts");
-        this.serverWithStyle = new URL("https://www.basemap.at/wmts/1.0.0/WMTSCapabilities.xml");
+    @Override
+    protected String getFixtureId() {
+        return "wmts_lantmateriet";
+    }
+
+    @Override
+    protected boolean isOnline() throws Exception {
+        
+        HTTPClient http = new SimpleHttpClient();
+        
+        http.get(new URL(serverUrl));
+        http.get(new URL(serverWithStyleUrl));
+       
+        return true;
+    }
+    
+    @Override
+    protected void setUpInternal() throws Exception {
+    	server = new URL(serverUrl);
+    	serverWithStyle = new URL(serverWithStyleUrl);
     }
 
     @Test

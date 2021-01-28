@@ -14,18 +14,19 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.ows.wmts.client;
+package org.geotools.ows.wmts.online;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.net.URISyntaxException;
 import java.net.URL;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
+import org.geotools.ows.wmts.client.WMTSTileFactory4326Test;
+import org.geotools.ows.wmts.client.WMTSTileService;
 import org.geotools.ows.wmts.model.TileMatrixSet;
 import org.geotools.ows.wmts.model.WMTSCapabilities;
 import org.geotools.ows.wmts.model.WMTSLayer;
@@ -36,25 +37,19 @@ import org.geotools.swing.SingleLayerMapContent;
 import org.geotools.test.OnlineTestCase;
 import org.geotools.tile.util.AsyncTileLayer;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Ludovic Pecquot (E-IS) on 21/12/2017.
  * @link {org.geotools.tile.util.TileLayer}
  */
-public class WMTSTransparentTileTest extends OnlineTestCase {
+public class WMTSTransparentTileOnlineTest extends OnlineTestCase {
 
     private WMTSTileService service;
 
-    @Before
-    public void setup() throws Exception {
-        service = createKVPService();
-    }
-
     @Override
-    protected void tearDownInternal() throws Exception {
-        service = null;
+    public void setUpInternal() throws Exception {
+        service = createKVPService();
     }
 
     @Override
@@ -63,28 +58,20 @@ public class WMTSTransparentTileTest extends OnlineTestCase {
     }
 
     private WMTSTileService createKVPService() throws Exception {
-        try {
-            URL capaResource =
-                    getClass()
-                            .getClassLoader()
-                            .getResource("test-data/geosolutions_getcapa_kvp.xml");
-            assertNotNull("Can't find KVP getCapa file", capaResource);
-            File capaFile = new File(capaResource.toURI());
-            WMTSCapabilities capa = WMTSTileFactory4326Test.createCapabilities(capaFile);
+        URL capaResource =
+                getClass().getClassLoader().getResource("test-data/geosolutions_getcapa_kvp.xml");
+        assertNotNull("Can't find KVP getCapa file", capaResource);
+        File capaFile = new File(capaResource.toURI());
+        WMTSCapabilities capa = WMTSTileFactory4326Test.createCapabilities(capaFile);
 
-            String baseURL = "http://demo.geo-solutions.it/geoserver/gwc/service/wmts";
+        String baseURL = "http://demo.geo-solutions.it/geoserver/gwc/service/wmts";
 
-            WMTSLayer layer = capa.getLayer("unesco:Unesco_point");
-            TileMatrixSet matrixSet = capa.getMatrixSet("EPSG:900913");
-            assertNotNull(layer);
-            assertNotNull(matrixSet);
+        WMTSLayer layer = capa.getLayer("unesco:Unesco_point");
+        TileMatrixSet matrixSet = capa.getMatrixSet("EPSG:900913");
+        assertNotNull(layer);
+        assertNotNull(matrixSet);
 
-            return new WMTSTileService(baseURL, WMTSServiceType.KVP, layer, null, matrixSet);
-
-        } catch (URISyntaxException ex) {
-            fail(ex.getMessage());
-            return null;
-        }
+        return new WMTSTileService(baseURL, WMTSServiceType.KVP, layer, null, matrixSet);
     }
 
     @Test

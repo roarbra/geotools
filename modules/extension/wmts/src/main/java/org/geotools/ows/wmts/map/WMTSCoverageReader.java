@@ -244,7 +244,8 @@ public class WMTSCoverageReader extends AbstractGridCoverage2DReader {
             for (GeneralParameterValue param : parameters) {
                 final ReferenceIdentifier name = param.getDescriptor().getName();
                 if (name.equals(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName())) {
-                    final GridGeometry2D gg = (GridGeometry2D) ((ParameterValue) param).getValue();
+                    final GridGeometry2D gg =
+                            (GridGeometry2D) ((ParameterValue<?>) param).getValue();
                     requestedEnvelope = gg.getEnvelope();
                     // the range high value is the highest pixel included in the
                     // raster, the actual width and height is one more than that
@@ -286,10 +287,7 @@ public class WMTSCoverageReader extends AbstractGridCoverage2DReader {
         // issue the request and wrap response in a grid coverage
         try {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.log(
-                        Level.FINE,
-                        "Issuing request: " + getTileRequest().getFinalURL(),
-                        new RuntimeException("TRACE!"));
+                LOGGER.fine("Issuing request: " + getTileRequest().getFinalURL());
             }
 
             getTileRequest().setCRS(gridEnvelope.getCoordinateReferenceSystem());

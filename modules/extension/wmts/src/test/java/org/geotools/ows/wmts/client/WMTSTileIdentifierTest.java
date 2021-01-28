@@ -51,14 +51,9 @@ public class WMTSTileIdentifierTest {
     protected TileIdentifier createTestTileIdentifier(int z, int x, int y, String name)
             throws Exception {
         if (service == null) {
-            this.setup();
+            service = createKVPService();
         }
         return createTestTileIdentifier(new WMTSZoomLevel(z, service), x, y, name);
-    }
-
-    @Before
-    public void setup() throws Exception {
-        service = createKVPService();
     }
 
     private WMTSTileService createKVPService() throws Exception {

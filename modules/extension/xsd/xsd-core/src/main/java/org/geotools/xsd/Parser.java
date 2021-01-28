@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
@@ -434,6 +435,21 @@ public class Parser {
         // JD: we use xerces directly here because jaxp does seem to allow use to
         // override all the namespaces to validate against
         SAXParserFactory pFactory = SAXParserFactory.newInstance();
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine(
+                    "SAXParserFactory created as: "
+                            + pFactory.getClass().getName()
+                            + " in url["
+                            + pFactory.getClass()
+                                    .getResource(
+                                            "/"
+                                                    + pFactory.getClass()
+                                                            .getName()
+                                                            .replace('.', '/')
+                                                    + ".class")
+                                    .toExternalForm()
+                            + "]");
+        }
 
         // set the appropriate features
         pFactory.setFeature("http://xml.org/sax/features/namespaces", true);

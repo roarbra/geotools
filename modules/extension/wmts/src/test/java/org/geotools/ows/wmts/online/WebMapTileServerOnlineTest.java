@@ -14,19 +14,25 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.ows.wmts;
+package org.geotools.ows.wmts.online;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Logger;
+import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wmts.WebMapTileServer;
 import org.geotools.ows.wmts.client.WMTSTileFactory4326Test;
 import org.geotools.ows.wmts.client.WMTSTileService;
 import org.geotools.ows.wmts.model.TileMatrixSet;
@@ -38,6 +44,7 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.test.OnlineTestCase;
 import org.geotools.tile.Tile;
+import org.geotools.util.logging.Logging;
 import org.junit.Test;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
@@ -48,37 +55,79 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author ian
  */
 public class WebMapTileServerOnlineTest extends OnlineTestCase {
+	
+	private static Logger LOGGER = Logging.getLogger(WebMapTileServerOnlineTest.class);
     URL serverURL;
-
-    URL serverWithSpacedLayerNamesURL;
-
-    URL brokenURL;
-
-    private URL featureURL;
 
     private URL restWMTS;
 
     private URL esriWMTS;
     private WMTSTileService[] services = new WMTSTileService[2];
 
-    private CoordinateReferenceSystem[] _crs = new CoordinateReferenceSystem[2];
-    /*
-     * @see TestCase#setUp()
-     */
+    private CoordinateReferenceSystem[] expectedCRS = new CoordinateReferenceSystem[2];
+    
+    
+
+    @Override
+    protected String getFixtureId() {
+        return "wmts";
+    }
+
+
     @Override
     protected void setUpInternal() throws Exception {
-        String kvp_prop = fixture.getProperty("kvp_server");
-        System.out.println(kvp_prop);
-        serverURL = new URL(kvp_prop);
-        brokenURL = new URL("http://afjklda.com");
-        restWMTS = new URL(fixture.getProperty("rest_server"));
-        esriWMTS = new URL(fixture.getProperty("esri_server"));
+    	serverURL = getUrlFromProperty(fixture, "kvp_server").orElseThrow(() -> new RuntimeException("kvp_server was missing"));
+    	restWMTS = getUrlFromProperty(fixture, "rest_server").orElseThrow(() -> new RuntimeException("rest_server was missing"));
+    	esriWMTS = getUrlFromProperty(fixture, "esri_server").orElseThrow(() -> new RuntimeException("esri_server was missing"));
+
         services[0] = createRESTService();
         services[1] = createKVPService();
 
-        _crs[0] = CRS.decode("EPSG:31287");
-        _crs[1] = CRS.decode("EPSG:3857");
+        expectedCRS[0] = CRS.decode("EPSG:31287");
+        expectedCRS[1] = CRS.decode("EPSG:3857");
+        
     }
+    
+
+    @Override
+    protected boolean isOnline() throws Exception {
+    	HTTPClient http = new SimpleHttpClient();
+    	Boolean kvpServerOK = getUrlFromProperty(fixture, "kvp_server")
+    											.map(url -> checkUrlOnline(http, url))
+    											.orElse(false);
+    	Boolean restServerOK = getUrlFromProperty(fixture, "rest_server")
+    											.map(url -> checkUrlOnline(http, url))
+    											.orElse(false);
+        Boolean esriServerOK = getUrlFromProperty(fixture, "esri_server")
+        										.map(url -> checkUrlOnline(http, url))
+        										.orElse(false);
+        
+        return (kvpServerOK && restServerOK && esriServerOK);
+    }
+    
+    
+    static Optional<URL> getUrlFromProperty(Properties fixture, String name) {
+    	return Optional.ofNullable(fixture.getProperty(name))
+    			.map(url -> {
+			try {
+				return new URL(url);
+			} catch (MalformedURLException e) {
+				LOGGER.warning(e.getMessage());
+				return null;
+			}
+		});
+    }
+    
+    static boolean checkUrlOnline(HTTPClient http, URL url) {
+    	try {
+			http.get(url);
+			return true;
+		} catch (IOException ex) {
+			LOGGER.warning(ex.getMessage());
+			return false;
+		}
+    }
+
 
     @Override
     protected Properties createExampleFixture() {
@@ -96,6 +145,7 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
     /*
      * Class under test for void WebMapServer(URL)
      */
+    @Test
     public void testWebMapTileServerURL() throws Exception {
         WebMapTileServer wms = new WebMapTileServer(serverURL);
 
@@ -105,25 +155,28 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
         assertNotNull(wms.getCapabilities());
     }
 
+    @Test
     public void testGetCapabilities() throws Exception {
         WebMapTileServer wms = new WebMapTileServer(serverURL);
 
         assertNotNull(wms.getCapabilities());
     }
 
+    @Test
     public void testIssueGetTileRequestKVP()
-            throws ServiceException, IOException, FactoryException {
+            throws Exception {
         WebMapTileServer wmts = new WebMapTileServer(serverURL);
         issueGetTileRequest(wmts);
     }
 
+    @Test
     public void testIssueGetTileRequestREST()
             throws ServiceException, IOException, FactoryException {
         WebMapTileServer wmts = new WebMapTileServer(restWMTS);
         issueGetTileRequest(wmts);
     }
 
-    public void issueGetTileRequest(WebMapTileServer wmts)
+    private void issueGetTileRequest(WebMapTileServer wmts)
             throws ServiceException, FactoryException {
 
         WMTSCapabilities capabilities = wmts.getCapabilities();
@@ -153,6 +206,7 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
         }
     }
 
+    @Test
     public void testGetEnvelope() throws Exception {
         WebMapTileServer wms = new WebMapTileServer(serverURL);
 
@@ -247,7 +301,7 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
             CoordinateReferenceSystem crs = services[i].getProjectedTileCrs();
             assertEquals(
                     "Mismatching CRS in " + services[i].getName(),
-                    _crs[i].getName(),
+                    expectedCRS[i].getName(),
                     crs.getName());
         }
     }
@@ -255,7 +309,7 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
     @Test
     public void testWebMercatorBounds() {
         ReferencedEnvelope[] expected = new ReferencedEnvelope[2];
-        expected[0] = new ReferencedEnvelope(0.0, 180.0, -1.0, 0.0, _crs[0]);
+        expected[0] = new ReferencedEnvelope(0.0, 180.0, -1.0, 0.0, expectedCRS[0]);
         // expected[1] = new
         // ReferencedEnvelope(-180.0,180.0,-85.06,85.06,DefaultGeographicCRS.WGS84);
         expected[1] =
@@ -317,8 +371,4 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
         }
     }
 
-    @Override
-    protected String getFixtureId() {
-        return "wmts";
-    }
 }
