@@ -26,10 +26,10 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wmts.WebMapTileServer;
@@ -55,8 +55,8 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author ian
  */
 public class WebMapTileServerOnlineTest extends OnlineTestCase {
-	
-	private static Logger LOGGER = Logging.getLogger(WebMapTileServerOnlineTest.class);
+
+    private static Logger LOGGER = Logging.getLogger(WebMapTileServerOnlineTest.class);
     URL serverURL;
 
     private URL restWMTS;
@@ -65,69 +65,72 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
     private WMTSTileService[] services = new WMTSTileService[2];
 
     private CoordinateReferenceSystem[] expectedCRS = new CoordinateReferenceSystem[2];
-    
-    
 
     @Override
     protected String getFixtureId() {
         return "wmts";
     }
 
-
     @Override
     protected void setUpInternal() throws Exception {
-    	serverURL = getUrlFromProperty(fixture, "kvp_server").orElseThrow(() -> new RuntimeException("kvp_server was missing"));
-    	restWMTS = getUrlFromProperty(fixture, "rest_server").orElseThrow(() -> new RuntimeException("rest_server was missing"));
-    	esriWMTS = getUrlFromProperty(fixture, "esri_server").orElseThrow(() -> new RuntimeException("esri_server was missing"));
+        serverURL =
+                getUrlFromProperty(fixture, "kvp_server")
+                        .orElseThrow(() -> new RuntimeException("kvp_server was missing"));
+        restWMTS =
+                getUrlFromProperty(fixture, "rest_server")
+                        .orElseThrow(() -> new RuntimeException("rest_server was missing"));
+        esriWMTS =
+                getUrlFromProperty(fixture, "esri_server")
+                        .orElseThrow(() -> new RuntimeException("esri_server was missing"));
 
         services[0] = createRESTService();
         services[1] = createKVPService();
 
         expectedCRS[0] = CRS.decode("EPSG:31287");
         expectedCRS[1] = CRS.decode("EPSG:3857");
-        
     }
-    
 
     @Override
     protected boolean isOnline() throws Exception {
-    	HTTPClient http = new SimpleHttpClient();
-    	Boolean kvpServerOK = getUrlFromProperty(fixture, "kvp_server")
-    											.map(url -> checkUrlOnline(http, url))
-    											.orElse(false);
-    	Boolean restServerOK = getUrlFromProperty(fixture, "rest_server")
-    											.map(url -> checkUrlOnline(http, url))
-    											.orElse(false);
-        Boolean esriServerOK = getUrlFromProperty(fixture, "esri_server")
-        										.map(url -> checkUrlOnline(http, url))
-        										.orElse(false);
-        
+        HTTPClient http = HTTPClientFinder.createClient();
+        Boolean kvpServerOK =
+                getUrlFromProperty(fixture, "kvp_server")
+                        .map(url -> checkUrlOnline(http, url))
+                        .orElse(false);
+        Boolean restServerOK =
+                getUrlFromProperty(fixture, "rest_server")
+                        .map(url -> checkUrlOnline(http, url))
+                        .orElse(false);
+        Boolean esriServerOK =
+                getUrlFromProperty(fixture, "esri_server")
+                        .map(url -> checkUrlOnline(http, url))
+                        .orElse(false);
+
         return (kvpServerOK && restServerOK && esriServerOK);
     }
-    
-    
+
     static Optional<URL> getUrlFromProperty(Properties fixture, String name) {
-    	return Optional.ofNullable(fixture.getProperty(name))
-    			.map(url -> {
-			try {
-				return new URL(url);
-			} catch (MalformedURLException e) {
-				LOGGER.warning(e.getMessage());
-				return null;
-			}
-		});
-    }
-    
-    static boolean checkUrlOnline(HTTPClient http, URL url) {
-    	try {
-			http.get(url);
-			return true;
-		} catch (IOException ex) {
-			LOGGER.warning(ex.getMessage());
-			return false;
-		}
+        return Optional.ofNullable(fixture.getProperty(name))
+                .map(
+                        url -> {
+                            try {
+                                return new URL(url);
+                            } catch (MalformedURLException e) {
+                                LOGGER.warning(e.getMessage());
+                                return null;
+                            }
+                        });
     }
 
+    static boolean checkUrlOnline(HTTPClient http, URL url) {
+        try {
+            http.get(url);
+            return true;
+        } catch (IOException ex) {
+            LOGGER.warning(ex.getMessage());
+            return false;
+        }
+    }
 
     @Override
     protected Properties createExampleFixture() {
@@ -163,8 +166,7 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
     }
 
     @Test
-    public void testIssueGetTileRequestKVP()
-            throws Exception {
+    public void testIssueGetTileRequestKVP() throws Exception {
         WebMapTileServer wmts = new WebMapTileServer(serverURL);
         issueGetTileRequest(wmts);
     }
@@ -370,5 +372,4 @@ public class WebMapTileServerOnlineTest extends OnlineTestCase {
             assertTrue(tile.getUrl().toString().contains("style=default"));
         }
     }
-
 }
