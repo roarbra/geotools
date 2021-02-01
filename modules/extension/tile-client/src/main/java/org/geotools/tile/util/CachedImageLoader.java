@@ -22,15 +22,18 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.io.ImageIOExt;
-import org.geotools.tile.ImageLoader;
 import org.geotools.tile.Tile;
+import org.geotools.tile.TileFactory;
+import org.geotools.tile.TileService;
 import org.geotools.util.logging.Logging;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * The CachedImageLoader is a simple ImageLoader that uses your disk as a cache for tiles. You can
- * plug this implementation into a Tile object. Note that the TileService also has a cache of its
- * own, but for caching tiles, not necessarily their images.
+ * inject your TileService into this to get full cache on disk of images. Note that the TileService
+ * also has a cache of its own, but that one is memory based.
  *
  * <p>
  *
@@ -43,13 +46,23 @@ import org.geotools.util.logging.Logging;
  * @author Ugo Taddei
  * @since 12
  */
-public class CachedImageLoader implements ImageLoader {
+public class CachedImageLoader extends TileService {
 
     private static final Logger LOGGER = Logging.getLogger(CachedImageLoader.class);
 
+    private final TileService delegate;
+
     private final File cacheDirectory;
 
+    @Deprecated
     public CachedImageLoader(File cacheDirectory) {
+        super("cache", null);
+        throw new UnsupportedOperationException("Call instructor with TileService.");
+    }
+
+    public CachedImageLoader(TileService delegate, File cacheDirectory) {
+        super(delegate.getName(), delegate.getBaseUrl(), delegate.getHttpClient());
+        this.delegate = delegate;
         this.cacheDirectory = cacheDirectory;
     }
 
@@ -74,12 +87,32 @@ public class CachedImageLoader implements ImageLoader {
                 LOGGER.fine(
                         "Not found in cache '" + tile.getId() + "'. Loading from " + tile.getUrl());
             }
-            img = ImageIOExt.readBufferedImage(tile.getUrl());
+            img = delegate.loadImageTileImage(tile);
             ImageIO.write(img, "png", imgFile);
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Wrote to cache " + imgFile.getAbsolutePath());
             }
         }
         return img;
+    }
+
+    @Override
+    public double[] getScaleList() {
+        return delegate.getScaleList();
+    }
+
+    @Override
+    public ReferencedEnvelope getBounds() {
+        return delegate.getBounds();
+    }
+
+    @Override
+    public CoordinateReferenceSystem getProjectedTileCrs() {
+        return delegate.getProjectedTileCrs();
+    }
+
+    @Override
+    public TileFactory getTileFactory() {
+        return delegate.getTileFactory();
     }
 }
