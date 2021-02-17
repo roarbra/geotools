@@ -99,11 +99,8 @@ public abstract class AbstractHTTPClientFactory implements HTTPClientFactory {
                                     .map(behavior -> behavior.getSimpleName())
                                     .collect(Collectors.joining(", "))));
         }
-        if (hints.containsKey(Hints.HTTP_LOGGING)) {
-            return applyLogging(client, hints);
-        } else {
-            return client;
-        }
+        return ControlledHttpClientFactory.wrap(
+                (hints.containsKey(Hints.HTTP_LOGGING) ? applyLogging(client, hints) : client));
     }
 
     /**

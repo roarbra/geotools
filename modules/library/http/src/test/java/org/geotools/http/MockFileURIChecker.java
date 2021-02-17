@@ -14,31 +14,29 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.ows;
+package org.geotools.http;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * A Mock implementation to be used in unit tests ONLY
- *
- * <p>Follows simple string comparison for URL evaluation
+ * A Mock implementation intended to test Simple Dependency Injection
  *
  * @author ImranR
  */
-public class MockURLChecker implements URLChecker {
+public class MockFileURIChecker implements URLChecker {
 
-    private List<String> allowedList = Arrays.asList("schemas.opengis.net"); // url calls
+    List<String> allowedList;
 
-    private boolean enabled = true;
+    boolean enabled = true;
 
-    public MockURLChecker() {
-        allowedList = Arrays.asList("schemas.opengis.net", "schemas.xmlsoap.org");
+    public MockFileURIChecker() {
+        allowedList = Arrays.asList("ftp://user:pass@www.myserver.com", "file:///data_dir");
     }
 
     @Override
     public String getName() {
-        return "Mock";
+        return "MockFile";
     }
 
     @Override

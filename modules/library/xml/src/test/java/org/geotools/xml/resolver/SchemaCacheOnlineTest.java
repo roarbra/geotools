@@ -19,8 +19,8 @@ package org.geotools.xml.resolver;
 
 import java.io.File;
 import java.net.URI;
-import org.geotools.data.ows.MockURLChecker;
-import org.geotools.data.ows.URLCheckers;
+import org.geotools.http.MockURLChecker;
+import org.geotools.http.URLCheckers;
 import org.geotools.test.OnlineTestSupport;
 import org.geotools.util.URLs;
 import org.junit.After;

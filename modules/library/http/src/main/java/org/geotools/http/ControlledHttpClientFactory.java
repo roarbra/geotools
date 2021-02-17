@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.ows;
+package org.geotools.http;
 
 /**
  * ControlledHttpClientFactory provides static method to enable URL/URI evaluation on any
@@ -25,13 +25,13 @@ package org.geotools.data.ows;
 public class ControlledHttpClientFactory {
 
     /**
-     * This method accepts an instance org.geotools.data.ows.HTTPClient and wraps it in
+     * This method accepts an instance org.geotools.http.HTTPClient and wraps it in
      * ControlledHttpClient to enabled URL evaluation
      *
      * <p>If no URLCheckers are configured or there are no enabled URLCheckers, then no wrapping
      * will occur
      *
-     * @param client instance of org.geotools.data.ows.HTTPClient
+     * @param client instance of org.geotools.http.HTTPClient
      * @return ControlledHttpClient
      */
     public static HTTPClient wrap(HTTPClient client) {

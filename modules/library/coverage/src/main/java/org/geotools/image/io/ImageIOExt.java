@@ -42,7 +42,8 @@ import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.media.jai.PlanarImage;
-import org.geotools.data.ows.URLCheckers;
+
+import org.geotools.http.URLCheckers;
 import org.geotools.image.ImageWorker;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;

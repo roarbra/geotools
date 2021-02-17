@@ -16,6 +16,8 @@
  */
 package org.geotools.xml;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Paths;
@@ -26,15 +28,18 @@ import java.util.logging.LogRecord;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.geotools.TestData;
-import org.geotools.data.ows.MockFileURIChecker;
-import org.geotools.data.ows.URLCheckers;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.http.MockFileURIChecker;
+import org.geotools.http.URLCheckers;
 import org.geotools.xml.gml.GMLFeatureCollection;
 import org.geotools.xml.gml.GMLSchema;
 import org.geotools.xml.schema.Schema;
+import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
+
 /** @author dzwiers www.refractions.net */
 public class GMLParserTest {
     @Test

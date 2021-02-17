@@ -26,9 +26,10 @@ import java.io.FileReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import net.opengis.wmts.v_1.CapabilitiesType;
-import org.geotools.data.ows.MockURLChecker;
-import org.geotools.data.ows.URLCheckers;
+
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.MockURLChecker;
+import org.geotools.http.URLCheckers;
 import org.geotools.ows.wmts.model.TileMatrixSet;
 import org.geotools.ows.wmts.model.WMTSCapabilities;
 import org.geotools.ows.wmts.model.WMTSLayer;

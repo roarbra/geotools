@@ -30,7 +30,7 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
-import org.geotools.data.ows.URLCheckers;
+import org.geotools.http.URLCheckers;
 import org.geotools.util.URLs;
 
 /**

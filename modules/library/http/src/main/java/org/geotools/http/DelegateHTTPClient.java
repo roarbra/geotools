@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 
-public class DelegateHTTPClient implements HTTPClient {
+public class DelegateHTTPClient implements HTTPClient, HTTPConnectionPooling, HTTPProxy {
 
     protected HTTPClient delegate;
 
@@ -93,5 +93,35 @@ public class DelegateHTTPClient implements HTTPClient {
     @Override
     public boolean isTryGzip() {
         return delegate.isTryGzip();
+    }
+
+    @Override
+    public int getMaxConnections() {
+        if (delegate instanceof HTTPConnectionPooling) {
+            return ((HTTPConnectionPooling) delegate).getMaxConnections();
+        } else {
+            throw new UnsupportedOperationException(
+                    "Http client doesn't support HTTPConnectionPooling.");
+        }
+    }
+
+    @Override
+    public void setMaxConnections(int maxConnections) {
+        if (delegate instanceof HTTPConnectionPooling) {
+            ((HTTPConnectionPooling) delegate).setMaxConnections(maxConnections);
+        } else {
+            throw new UnsupportedOperationException(
+                    "Http client doesn't support HTTPConnectionPooling.");
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (delegate instanceof HTTPConnectionPooling) {
+            ((HTTPConnectionPooling) delegate).close();
+        } else {
+            throw new UnsupportedOperationException(
+                    "Http client doesn't support HTTPConnectionPooling.");
+        }
     }
 }

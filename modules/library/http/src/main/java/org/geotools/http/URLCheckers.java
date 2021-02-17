@@ -14,16 +14,21 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.ows;
+package org.geotools.http;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.util.LazySet;
+import org.geotools.util.factory.FactoryCreator;
+import org.geotools.util.factory.FactoryRegistry;
+import org.geotools.util.factory.GeoTools;
 
 /**
  * @author ImranR
@@ -33,12 +38,28 @@ import org.geotools.factory.CommonFactoryFinder;
  */
 public class URLCheckers {
 
-    // list contains all known org.geotools.data.ows.URLChecker implementations
+    private static volatile FactoryRegistry registry;
+
+    // list contains all known org.geotools.http.URLChecker implementations
 
     private static List<URLChecker> urlCheckerList;
 
     private static void initEmptyUrlCheckList() {
-        urlCheckerList = new ArrayList<URLChecker>(CommonFactoryFinder.getURLCheckers(null));
+        urlCheckerList = new ArrayList<URLChecker>(getURLCheckers());
+    }
+
+    private static synchronized Set<URLChecker> getURLCheckers() {
+        return new LazySet<URLChecker>(
+                getServiceRegistry()
+                        .getFactories(URLChecker.class, null, GeoTools.getDefaultHints()));
+    }
+
+    private static FactoryRegistry getServiceRegistry() {
+        assert Thread.holdsLock(URLCheckers.class);
+        if (registry == null) {
+            registry = new FactoryCreator(Arrays.asList(new Class<?>[] {URLChecker.class}));
+        }
+        return registry;
     }
 
     /** @return unmodifiable Collection of org.geotools.data.ows.URLChecker implementations */

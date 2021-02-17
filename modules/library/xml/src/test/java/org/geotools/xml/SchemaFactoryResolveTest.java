@@ -16,6 +16,8 @@
  */
 package org.geotools.xml;
 
+import static org.junit.Assert.assertNull;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,6 +25,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.UnknownHostException;
+import org.geotools.http.MockURLChecker;
+import org.geotools.http.URLCheckers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

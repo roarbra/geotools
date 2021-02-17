@@ -23,7 +23,7 @@ import java.net.URL;
 import java.util.logging.Logger;
 import org.apache.xml.resolver.Catalog;
 import org.apache.xml.resolver.CatalogManager;
-import org.geotools.data.ows.URLCheckers;
+import org.geotools.http.URLCheckers;
 
 /**
  * Support for XML schema resolution in an <a

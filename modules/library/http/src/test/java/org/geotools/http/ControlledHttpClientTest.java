@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.ows;
+package org.geotools.http;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -44,10 +44,10 @@ public class ControlledHttpClientTest {
     public static void setUpOnce() throws Exception {
         mockHttpClient.expectGet(
                 new URL("http://schemas.opengis.net/myschema.xml"),
-                new MockHttpResponse("passed", "text/plain", null));
+                new MockHttpResponse("passed", "text/plain"));
         mockHttpClient.expectGet(
                 new URL("http://hacked.opengis.net/myschema.xml"),
-                new MockHttpResponse("passed", "text/plain", null));
+                new MockHttpResponse("passed", "text/plain"));
     }
 
     @Before

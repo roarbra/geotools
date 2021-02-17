@@ -19,7 +19,6 @@ package org.geotools.http.commons;
 import org.geotools.http.HTTPClient;
 import org.geotools.http.HTTPClientFinder;
 import org.geotools.http.HTTPConnectionPooling;
-import org.geotools.http.commons.MultithreadedHttpClientFactory.LoggingConnectionPoolingHTTPClient;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,7 +52,6 @@ public class HTTPClientFinderTest {
             Assert.assertTrue(client instanceof HTTPConnectionPooling);
             ((HTTPConnectionPooling) client).setMaxConnections(CONN_POOL);
             Assert.assertEquals(CONN_POOL, ((HTTPConnectionPooling) client).getMaxConnections());
-            Assert.assertTrue(client instanceof LoggingConnectionPoolingHTTPClient);
             ((HTTPConnectionPooling) client).close();
         } finally {
             Hints.removeSystemDefault(Hints.HTTP_CLIENT_FACTORY);

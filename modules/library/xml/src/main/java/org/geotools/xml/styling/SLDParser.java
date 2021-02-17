@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.ExpressionDOMParser;
+import org.geotools.http.URLCheckers;
 import org.geotools.metadata.i18n.ErrorKeys;
 import org.geotools.metadata.i18n.Errors;
 import org.geotools.styling.AnchorPoint;

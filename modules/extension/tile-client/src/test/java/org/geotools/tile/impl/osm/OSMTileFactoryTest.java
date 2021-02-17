@@ -18,9 +18,9 @@ package org.geotools.tile.impl.osm;
 
 import static org.junit.Assert.fail;
 
-import org.geotools.data.ows.MockURLChecker;
-import org.geotools.data.ows.URLCheckers;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.MockURLChecker;
+import org.geotools.http.URLCheckers;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.tile.Tile;
 import org.geotools.tile.TileFactory;
