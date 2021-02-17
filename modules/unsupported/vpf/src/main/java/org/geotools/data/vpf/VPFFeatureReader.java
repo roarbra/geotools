@@ -55,6 +55,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     /* (non-Javadoc)
      * @see org.geotools.data.FeatureReader#close()
      */
+    @Override
     public synchronized void close() throws IOException {
         reset();
     }
@@ -62,6 +63,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     /* (non-Javadoc)
      * @see org.geotools.data.FeatureReader#getFeatureType()
      */
+    @Override
     public SimpleFeatureType getFeatureType() {
         return featureType;
     }
@@ -69,6 +71,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     /* (non-Javadoc)
      * @see org.geotools.data.FeatureReader#hasNext()
      */
+    @Override
     public synchronized boolean hasNext() throws IOException {
         VPFFeatureClass featureClass = featureType.getFeatureClass();
         if (!resetCalled) {
@@ -115,7 +118,7 @@ public class VPFFeatureReader implements FeatureReader<SimpleFeatureType, Simple
         VPFFile temp;
         Iterator<VPFFile> iter = featureType.getFeatureClass().getFileList().iterator();
         while (iter.hasNext()) {
-            temp = (VPFFile) iter.next();
+            temp = iter.next();
             if ((temp != null) && (temp.getColumn(columnName) != null)) {
                 result = temp;
                 break;

@@ -20,6 +20,7 @@ import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.RenderingHints;
@@ -221,25 +222,25 @@ public class MapboxSpriteTest {
         URL url = new URL(urlString);
         Map<String, String> paramsMap = SpriteGraphicFactory.parseFragmentParams(url);
         assertEquals("testName", paramsMap.get("icon"));
-        assertEquals(1.25, Double.valueOf(paramsMap.get("size")), .000001);
+        assertEquals(1.25, Double.parseDouble(paramsMap.get("size")), .000001);
 
         urlString = "http://localhost:8080/testlocation#icon=testName";
         url = new URL(urlString);
         paramsMap = SpriteGraphicFactory.parseFragmentParams(url);
         assertEquals("testName", paramsMap.get("icon"));
-        assertTrue(null == paramsMap.get("size"));
+        assertNull(paramsMap.get("size"));
 
         urlString = "http://localhost:8080/testlocation#size=1.25&icon=testName";
         url = new URL(urlString);
         paramsMap = SpriteGraphicFactory.parseFragmentParams(url);
         assertEquals("testName", paramsMap.get("icon"));
-        assertEquals(1.25, Double.valueOf(paramsMap.get("size")), .000001);
+        assertEquals(1.25, Double.parseDouble(paramsMap.get("size")), .000001);
 
         urlString = "http://localhost:8080/testlocation#testName";
         url = new URL(urlString);
         paramsMap = SpriteGraphicFactory.parseFragmentParams(url);
         assertEquals("testName", paramsMap.get("icon"));
-        assertTrue(null == paramsMap.get("size"));
+        assertNull(paramsMap.get("size"));
     }
 
     /**

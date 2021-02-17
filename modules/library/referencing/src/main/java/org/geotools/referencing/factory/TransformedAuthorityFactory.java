@@ -111,7 +111,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
     private transient CoordinateOperationFactory opFactory;
 
     /** A pool of modified objects created up to date. */
-    private final CanonicalSet pool = CanonicalSet.newInstance(Object.class);
+    private final CanonicalSet<Object> pool = CanonicalSet.newInstance(Object.class);
 
     /**
      * Creates a wrapper around the specified factory.
@@ -235,11 +235,11 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
         if (directionChanged || !oldUnits.equals(newUnits)) {
             final ReferencingFactoryContainer factories = getFactoryContainer(false);
             final CSFactory csFactory = factories.getCSFactory();
-            final Map properties = getProperties(axis);
+            final Map<String, ?> properties = getProperties(axis);
             axis =
                     csFactory.createCoordinateSystemAxis(
                             properties, axis.getAbbreviation(), newDirection, newUnits);
-            axis = (CoordinateSystemAxis) pool.unique(axis);
+            axis = pool.unique(axis);
         }
         return axis;
     }
@@ -254,6 +254,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
      * @throws FactoryException if an error occured while creating the new coordinate system.
      */
     // @Override
+    @SuppressWarnings("unchecked")
     protected CoordinateSystem replace(final CoordinateSystem cs) throws FactoryException {
         final int dimension = cs.getDimension();
         final CoordinateSystemAxis[] orderedAxis = new CoordinateSystemAxis[dimension];
@@ -268,7 +269,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
                 CoordinateSystem modified = createCS(cs.getClass(), getProperties(cs), orderedAxis);
                 assert Classes.sameInterfaces(
                         cs.getClass(), modified.getClass(), CoordinateSystem.class);
-                modified = (CoordinateSystem) pool.unique(modified);
+                modified = pool.unique(modified);
                 return modified;
             }
         }
@@ -351,7 +352,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
         } else if (sameCS) {
             return crs;
         } else {
-            final Map properties = getProperties(crs);
+            final Map<String, ?> properties = getProperties(crs);
             final ReferencingFactoryContainer factories = getFactoryContainer(true);
             final CRSFactory crsFactory = factories.getCRSFactory();
             if (crs instanceof GeographicCRS) {
@@ -379,12 +380,12 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
                 modified =
                         crsFactory.createEngineeringCRS(properties, (EngineeringDatum) datum, cs);
             } else if (crs instanceof CompoundCRS) {
-                final List /* <CoordinateReferenceSystem> */ elements =
+                final List<CoordinateReferenceSystem> elements =
                         ((CompoundCRS) crs).getCoordinateReferenceSystems();
                 final CoordinateReferenceSystem[] m =
                         new CoordinateReferenceSystem[elements.size()];
                 for (int i = 0; i < m.length; i++) {
-                    m[i] = replace((CoordinateReferenceSystem) elements.get(i));
+                    m[i] = replace(elements.get(i));
                 }
                 modified = crsFactory.createCompoundCRS(properties, m);
             } else {
@@ -392,7 +393,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
                         Errors.format(ErrorKeys.UNSUPPORTED_CRS_$1, crs.getName().getCode()));
             }
         }
-        modified = (CoordinateReferenceSystem) pool.unique(modified);
+        modified = pool.unique(modified);
         return modified;
     }
 
@@ -421,7 +422,7 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
         }
         CoordinateOperation modified;
         modified = opFactory.createOperation(sourceCRS, targetCRS);
-        modified = (CoordinateOperation) pool.unique(modified);
+        modified = pool.unique(modified);
         return modified;
     }
 
@@ -437,8 +438,8 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
      * @throws FactoryException if the coordinate system can't be created.
      */
     private CoordinateSystem createCS(
-            final Class /* <CoordinateSystem> */ type,
-            final Map properties,
+            final Class<? extends CoordinateSystem> type,
+            final Map<String, ?> properties,
             final CoordinateSystemAxis[] axis)
             throws FactoryException {
         final int dimension = axis.length;
@@ -522,15 +523,16 @@ public class TransformedAuthorityFactory extends AuthorityFactoryAdapter {
      * invokes the same method from the {@linkplain #operationFactory underlying operation factory},
      * and next invokes {@link #replace(CoordinateOperation) replace} for each operations.
      */
+    @SuppressWarnings("PMD.ForLoopCanBeForeach")
     public Set<CoordinateOperation> createFromCoordinateReferenceSystemCodes(
             final String sourceCode, final String targetCode) throws FactoryException {
-        final Set /* <CoordinateOperation> */ operations, modified;
+        final Set<CoordinateOperation> operations, modified;
         operations = super.createFromCoordinateReferenceSystemCodes(sourceCode, targetCode);
-        modified = new LinkedHashSet((int) (operations.size() / 0.75f) + 1);
-        for (final Iterator it = operations.iterator(); it.hasNext(); ) {
+        modified = new LinkedHashSet<>((int) (operations.size() / 0.75f) + 1);
+        for (final Iterator<CoordinateOperation> it = operations.iterator(); it.hasNext(); ) {
             final CoordinateOperation operation;
             try {
-                operation = (CoordinateOperation) it.next();
+                operation = it.next();
             } catch (BackingStoreException exception) {
                 final Throwable cause = exception.getCause();
                 if (cause instanceof FactoryException) {

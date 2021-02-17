@@ -38,11 +38,12 @@ import org.opengis.filter.expression.Function;
 import org.opengis.filter.expression.Multiply;
 import org.opengis.filter.expression.PropertyName;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
 
     public void testSimpleGroupByWithMax() throws Exception {
         List<Object[]> value = genericGroupByTestTest(Aggregate.MAX, "building_type");
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "HOUSE", "6.0");
         checkValueContains(value, "FABRIC", "500.0");
         checkValueContains(value, "SCHOOL", "60.0");
@@ -65,7 +66,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
                 genericGroupByTestTest(Query.ALL, Aggregate.MAX, false, aggregateFunction);
         assertNotNull(value);
 
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "HOUSE_foo", "6.0");
         checkValueContains(value, "FABRIC_foo", "500.0");
         checkValueContains(value, "SCHOOL_foo", "60.0");
@@ -79,7 +80,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
         List<Object[]> value = genericGroupByTestTest(Query.ALL, Aggregate.COUNT, expression);
         assertNotNull(value);
 
-        assertTrue(value.size() == 9);
+        assertEquals(9, value.size());
         checkValueContains(value, "40.0", "1");
         checkValueContains(value, "200.0", "2");
         checkValueContains(value, "600.0", "1");
@@ -101,12 +102,13 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
                         Query.ALL, Aggregate.MAX, computeAttribute, true, groupAttribute);
         assertNotNull(value);
 
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "HOUSE", "60.0");
         checkValueContains(value, "FABRIC", "5000.0");
         checkValueContains(value, "SCHOOL", "600.0");
     }
 
+    @SuppressWarnings("PMD.UseCollectionIsEmpty")
     public void testComputeOnMathExpressionWithLimit() throws Exception {
         FilterFactory ff = dataStore.getFilterFactory();
         // aggregate on expression
@@ -173,7 +175,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
     public void testMultipleGroupByWithMax() throws Exception {
         List<Object[]> value =
                 genericGroupByTestTest(Aggregate.MAX, "building_type", "energy_type");
-        assertTrue(value.size() == 11);
+        assertEquals(11, value.size());
         checkValueContains(value, "SCHOOL", "WIND", "20.0");
         checkValueContains(value, "SCHOOL", "FUEL", "60.0");
         checkValueContains(value, "HOUSE", "NUCLEAR", "4.0");
@@ -194,7 +196,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
                         Aggregate.MAX,
                         "building_type",
                         "energy_type");
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "SCHOOL", "FUEL", "60.0");
         checkValueContains(value, "FABRIC", "NUCLEAR", "150.0");
         checkValueContains(value, "FABRIC", "FLOWING_WATER", "500.0");
@@ -241,7 +243,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
                         Aggregate.MIN,
                         "building_type",
                         "energy_type");
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "SCHOOL", "FUEL", "60.0");
         checkValueContains(value, "FABRIC", "NUCLEAR", "150.0");
         checkValueContains(value, "FABRIC", "FLOWING_WATER", "500.0");
@@ -288,7 +290,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
                         Aggregate.COUNT,
                         "building_type",
                         "energy_type");
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "SCHOOL", "FUEL", "1");
         checkValueContains(value, "FABRIC", "NUCLEAR", "1");
         checkValueContains(value, "FABRIC", "FLOWING_WATER", "1");
@@ -335,7 +337,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
                         Aggregate.SUM,
                         "building_type",
                         "energy_type");
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "SCHOOL", "FUEL", "60.0");
         checkValueContains(value, "FABRIC", "NUCLEAR", "150.0");
         checkValueContains(value, "FABRIC", "FLOWING_WATER", "500.0");
@@ -428,6 +430,7 @@ public abstract class JDBCGroupByVisitorOnlineTest extends JDBCTestSupport {
         featureSource.accepts(query, visitor, null);
         assertEquals(expectOptimized, visitor.wasOptimized());
         assertEquals(!expectOptimized, visitor.wasVisited());
+        @SuppressWarnings("unchecked")
         List<Object[]> value = visitor.getResult().toList();
         assertNotNull(value);
         return value;

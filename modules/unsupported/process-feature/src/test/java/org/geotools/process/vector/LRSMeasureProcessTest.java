@@ -34,6 +34,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.opengis.feature.Feature;
+import org.opengis.feature.type.FeatureType;
 
 public class LRSMeasureProcessTest {
     private DataStore featureSource;
@@ -59,8 +60,7 @@ public class LRSMeasureProcessTest {
         Point point = geometryFactory.createPoint(new Coordinate(1.0, 0.0));
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs_bad", "to_lrs", point, null);
+            process.execute(origional, "from_lrs_bad", "to_lrs", point, null);
             Assert.fail("Expected error from bad from_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -75,8 +75,7 @@ public class LRSMeasureProcessTest {
         Point point = geometryFactory.createPoint(new Coordinate(1.0, 0.0));
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs", "to_lrs_bad", point, null);
+            process.execute(origional, "from_lrs", "to_lrs_bad", point, null);
             Assert.fail("Expected error from bad to_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -91,7 +90,7 @@ public class LRSMeasureProcessTest {
         Point point = geometryFactory.createPoint(new Coordinate(1.0, 0.0));
 
         try {
-            FeatureCollection result = process.execute(origional, null, "to_lrs", point, null);
+            process.execute(origional, null, "to_lrs", point, null);
             Assert.fail("Expected error from bad from_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -106,7 +105,7 @@ public class LRSMeasureProcessTest {
         Point point = geometryFactory.createPoint(new Coordinate(1.0, 0.0));
 
         try {
-            FeatureCollection result = process.execute(origional, "from_lrs", null, point, null);
+            process.execute(origional, "from_lrs", null, point, null);
             Assert.fail("Expected error from bad to_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -120,8 +119,7 @@ public class LRSMeasureProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs", "to_lrs_bad", null, null);
+            process.execute(origional, "from_lrs", "to_lrs_bad", null, null);
             Assert.fail("Expected error from bad measure value");
         } catch (ProcessException e) {
             // Successful
@@ -131,10 +129,11 @@ public class LRSMeasureProcessTest {
     @Test
     public void testNoFeaturesGiven() throws Exception {
         LRSMeasureProcess process = new LRSMeasureProcess();
-        FeatureCollection origional = new DefaultFeatureCollection();
+        DefaultFeatureCollection origional = new DefaultFeatureCollection();
         Point point = geometryFactory.createPoint(new Coordinate(1.0, 0.0));
 
-        FeatureCollection result = process.execute(origional, "from_lrs", "to_lrs", point, null);
+        FeatureCollection<? extends FeatureType, ? extends Feature> result =
+                process.execute(origional, "from_lrs", "to_lrs", point, null);
         Assert.assertEquals(0, result.size());
     }
 

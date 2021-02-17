@@ -95,7 +95,7 @@ public class PostgisGeographyOnlineTest extends JDBCGeographyOnlineTest {
         PropertyName geomName = ff.property(aname("geo"));
         Literal lit = ff.literal(geometry);
 
-        DWithin dwithinGeomFilter = ((FilterFactory2) ff).dwithin(geomName, lit, distance, unit);
+        DWithin dwithinGeomFilter = ff.dwithin(geomName, lit, distance, unit);
         Query query = new Query(tname("geopoint"), dwithinGeomFilter);
         SimpleFeatureCollection features =
                 dataStore.getFeatureSource(tname("geopoint")).getFeatures(query);
@@ -105,13 +105,13 @@ public class PostgisGeographyOnlineTest extends JDBCGeographyOnlineTest {
 
     protected void checkSingleResult(FeatureCollection features, String name) {
         assertEquals(1, features.size());
-        FeatureIterator fr = features.features();
-        assertTrue(fr.hasNext());
-        SimpleFeature f = (SimpleFeature) fr.next();
-        assertNotNull(f);
-        assertEquals(name, f.getAttribute(aname("name")));
-        assertFalse(fr.hasNext());
-        fr.close();
+        try (FeatureIterator fr = features.features()) {
+            assertTrue(fr.hasNext());
+            SimpleFeature f = (SimpleFeature) fr.next();
+            assertNotNull(f);
+            assertEquals(name, f.getAttribute(aname("name")));
+            assertFalse(fr.hasNext());
+        }
     }
 
     public void testSimplifyGeography() throws Exception {
@@ -133,11 +133,12 @@ public class PostgisGeographyOnlineTest extends JDBCGeographyOnlineTest {
     }
 
     public void testDimensionFromFirstGeography() throws Exception {
-        Connection cx = dataStore.getDataSource().getConnection();
-        PostGISDialect dialect = ((PostGISDialect) dataStore.getSQLDialect());
-        assertEquals(
-                (Integer) 0, dialect.getDimensionFromFirstGeo("public", "geopoint", "geo", cx));
-        assertEquals((Integer) 1, dialect.getDimensionFromFirstGeo("public", "geoline", "geo", cx));
-        dataStore.closeSafe(cx);
+        try (Connection cx = dataStore.getDataSource().getConnection()) {
+            PostGISDialect dialect = ((PostGISDialect) dataStore.getSQLDialect());
+            assertEquals(
+                    (Integer) 0, dialect.getDimensionFromFirstGeo("public", "geopoint", "geo", cx));
+            assertEquals(
+                    (Integer) 1, dialect.getDimensionFromFirstGeo("public", "geoline", "geo", cx));
+        }
     }
 }

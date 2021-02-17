@@ -34,6 +34,7 @@ import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.sort.SortBy;
 import org.opengis.filter.sort.SortOrder;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCJoinOnlineTest extends JDBCTestSupport {
 
     @Override
@@ -508,7 +509,7 @@ public abstract class JDBCJoinOnlineTest extends JDBCTestSupport {
         try (SimpleFeatureIterator it = features.features()) {
             SimpleFeature f;
 
-            Set<String> s = new HashSet<String>(Arrays.asList("zero", "one", "two"));
+            Set<String> s = new HashSet<>(Arrays.asList("zero", "one", "two"));
 
             assertTrue(it.hasNext());
             f = it.next();
@@ -527,7 +528,7 @@ public abstract class JDBCJoinOnlineTest extends JDBCTestSupport {
 
             assertEquals(0, s.size());
 
-            s = new HashSet<String>(Arrays.asList("one", "two"));
+            s = new HashSet<>(Arrays.asList("one", "two"));
 
             assertTrue(it.hasNext());
             f = it.next();

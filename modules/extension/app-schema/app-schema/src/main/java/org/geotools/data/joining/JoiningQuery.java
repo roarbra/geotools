@@ -17,8 +17,10 @@
 package org.geotools.data.joining;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.geotools.data.Query;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.opengis.filter.expression.Expression;
@@ -33,6 +35,7 @@ public class JoiningQuery extends Query {
 
     public static class QueryJoin extends JoiningQuery {
         protected String joiningTypeName;
+        protected String joinedTypeName;
         protected Expression foreignKeyName;
         protected Expression joiningKeyName;
         protected SortBy[] sortBy;
@@ -43,6 +46,14 @@ public class JoiningQuery extends Query {
 
         public void setJoiningTypeName(String joiningTypeName) {
             this.joiningTypeName = joiningTypeName;
+        }
+
+        public String getJoinedTypeName() {
+            return joinedTypeName;
+        }
+
+        public void setJoinedTypeName(String joinedTypeName) {
+            this.joinedTypeName = joinedTypeName;
         }
 
         public Expression getForeignKeyName() {
@@ -59,6 +70,25 @@ public class JoiningQuery extends Query {
 
         public void setJoiningKeyName(Expression joiningKeyName) {
             this.joiningKeyName = joiningKeyName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            QueryJoin queryJoin = (QueryJoin) o;
+            return Objects.equals(joiningTypeName, queryJoin.joiningTypeName)
+                    && Objects.equals(foreignKeyName, queryJoin.foreignKeyName)
+                    && Objects.equals(joiningKeyName, queryJoin.joiningKeyName)
+                    && Arrays.equals(sortBy, queryJoin.sortBy);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(joiningTypeName, foreignKeyName, joiningKeyName);
+            result = 31 * result + Arrays.hashCode(sortBy);
+            return result;
         }
     }
 
@@ -87,11 +117,11 @@ public class JoiningQuery extends Query {
 
     public JoiningQuery(Query query) {
         super(query);
-        ids = new ArrayList<String>();
+        ids = new ArrayList<>();
     }
 
     public JoiningQuery() {
-        ids = new ArrayList<String>();
+        ids = new ArrayList<>();
     }
 
     public void setQueryJoins(List<QueryJoin> queryJoins) {
@@ -100,7 +130,7 @@ public class JoiningQuery extends Query {
 
     public List<QueryJoin> getQueryJoins() {
         if (queryJoins == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return queryJoins;
     }

@@ -78,7 +78,7 @@ public final class RPFTOCTest extends GDALTestCase {
         // read once
         //
         // /////////////////////////////////////////////////////////////////////
-        GridCoverage2D gc = (GridCoverage2D) reader.read(null);
+        GridCoverage2D gc = reader.read(null);
         forceDataLoading(gc);
 
         // /////////////////////////////////////////////////////////////////////
@@ -87,8 +87,6 @@ public final class RPFTOCTest extends GDALTestCase {
         //
         // /////////////////////////////////////////////////////////////////////
         final double cropFactor = 2.0;
-        final int oldW = gc.getRenderedImage().getWidth();
-        final int oldH = gc.getRenderedImage().getHeight();
         final Rectangle range = ((GridEnvelope2D) reader.getOriginalGridRange());
         final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
         final GeneralEnvelope cropEnvelope =
@@ -106,8 +104,7 @@ public final class RPFTOCTest extends GDALTestCase {
         cropEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
 
         final ParameterValue gg =
-                (ParameterValue)
-                        ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+                ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
         gg.setValue(
                 new GridGeometry2D(
                         new GridEnvelope2D(
@@ -117,7 +114,7 @@ public final class RPFTOCTest extends GDALTestCase {
                                         (int) (range.width / 2.0 / cropFactor),
                                         (int) (range.height / 2.0 / cropFactor))),
                         cropEnvelope));
-        gc = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg});
+        gc = reader.read(new GeneralParameterValue[] {gg});
         forceDataLoading(gc);
     }
 

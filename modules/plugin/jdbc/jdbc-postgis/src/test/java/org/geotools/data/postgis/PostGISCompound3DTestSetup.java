@@ -25,6 +25,7 @@ import org.geotools.jdbc.JDBCCompound3DTestSetup;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.util.Version;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class PostGISCompound3DTestSetup extends JDBCCompound3DTestSetup {
 
     static final Version V_2_0_0 = new Version("2.0.0");
@@ -37,20 +38,12 @@ public class PostGISCompound3DTestSetup extends JDBCCompound3DTestSetup {
 
     public Version getVersion() throws SQLException, IOException {
         if (version == null) {
-            Connection conn = null;
-            Statement st = null;
-            ResultSet rs = null;
-            try {
-                conn = getDataSource().getConnection();
-                st = conn.createStatement();
-                rs = st.executeQuery("select PostGIS_Lib_Version()");
+            try (Connection conn = getDataSource().getConnection();
+                    Statement st = conn.createStatement();
+                    ResultSet rs = st.executeQuery("select " + "PostGIS_Lib_Version()")) {
                 if (rs.next()) {
                     version = new Version(rs.getString(1));
                 }
-            } finally {
-                conn.close();
-                st.close();
-                rs.close();
             }
         }
 

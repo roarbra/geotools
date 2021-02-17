@@ -16,9 +16,13 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertNotNull;
+
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
@@ -29,7 +33,8 @@ public class GMLMultiLineStringPropertyTypeBindingTest extends AbstractGMLBindin
     ElementInstance association;
     ElementInstance geometry;
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         association =
@@ -46,6 +51,7 @@ public class GMLMultiLineStringPropertyTypeBindingTest extends AbstractGMLBindin
         container.registerComponentImplementation(GMLMultiLineStringPropertyTypeBinding.class);
     }
 
+    @Test
     public void testWithGeometry() throws Exception {
         LineString p1 =
                 new GeometryFactory()

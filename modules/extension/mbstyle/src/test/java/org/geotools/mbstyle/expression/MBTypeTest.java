@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.Test;
@@ -97,7 +98,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals(true, nested);
 
         try {
-            Object arr = getExpressionEvaluation(j, "no-bool");
+            getExpressionEvaluation(j, "no-bool");
             fail("expected exception function \"mbBoolean\" fails if not argument is a boolean");
         } catch (IllegalArgumentException expected) {
         }
@@ -122,7 +123,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals(1234L, nested);
 
         try {
-            Object arr = getExpressionEvaluation(j, "no-num");
+            getExpressionEvaluation(j, "no-num");
             fail("expected exception function \"mbNumber\" fails if no argument is a number");
         } catch (IllegalArgumentException expected) {
         }
@@ -144,7 +145,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals(JSONObject.class, nested.getClass());
 
         try {
-            Object arr = getExpressionEvaluation(j, "no-obj");
+            getExpressionEvaluation(j, "no-obj");
             fail("expected exception function \"mbObject\" fails if not argument is a boolean");
         } catch (IllegalArgumentException expected) {
         }
@@ -166,7 +167,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals("nestedstring", nested);
 
         try {
-            Object arr = getExpressionEvaluation(j, "no-string");
+            getExpressionEvaluation(j, "no-string");
             fail("expected exception function \"mbObject\" fails if not argument is a boolean");
         } catch (IllegalArgumentException expected) {
         }
@@ -271,7 +272,7 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals(46.08D, nested);
 
         try {
-            Object obj = getExpressionEvaluation(j, "object");
+            getExpressionEvaluation(j, "object");
             fail(
                     "expected exception function \"mbToColor\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
@@ -306,14 +307,14 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals(new Color(111, 222, 121), nested);
 
         try {
-            Object aTrue = getExpressionEvaluation(j, "true");
+            getExpressionEvaluation(j, "true");
             fail(
                     "expected exception function \"mbToColor\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            Object aFalse = getExpressionEvaluation(j, "false");
+            getExpressionEvaluation(j, "false");
             fail(
                     "expected exception function \"mbToColor\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
@@ -325,9 +326,14 @@ public class MBTypeTest extends AbstractMBExpressionTest {
 
         final JSONObject j = getObjectByLayerId("arrayExpression", "paint");
         JSONArray test = new JSONArray();
-        test.add(111l);
-        test.add(222l);
-        test.add(121l);
+
+        @SuppressWarnings("unchecked")
+        ArrayList<Object> array = (ArrayList<Object>) test;
+
+        array.add(111L);
+        array.add(222L);
+        array.add(121L);
+
         Object arr = getExpressionEvaluation(j, "array");
         assertEquals(test, arr);
 
@@ -335,28 +341,28 @@ public class MBTypeTest extends AbstractMBExpressionTest {
         assertEquals(test, nested);
 
         try {
-            Object obj = getExpressionEvaluation(j, "boolean");
+            getExpressionEvaluation(j, "boolean");
             fail(
                     "expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            Object obj = getExpressionEvaluation(j, "string");
+            getExpressionEvaluation(j, "string");
             fail(
                     "expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            Object obj = getExpressionEvaluation(j, "number");
+            getExpressionEvaluation(j, "number");
             fail(
                     "expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            Object obj = getExpressionEvaluation(j, "object");
+            getExpressionEvaluation(j, "object");
             fail(
                     "expected exception function \"mbType\" fails if argument can't be converted to a color");
         } catch (IllegalArgumentException e) {

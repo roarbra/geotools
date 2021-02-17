@@ -172,7 +172,6 @@ public class UomRescaleStyleVisitorTest {
         try {
             UomRescaleStyleVisitor visitor = null;
             double size = 100;
-            double margin = 15;
             double expectedRescaledSize = computeExpectedRescaleSize(size, scaleMetersToPixel, uom);
             int expectedGraphicMargin =
                     (int) computeExpectedRescaleSize(15, scaleMetersToPixel, uom);
@@ -323,9 +322,7 @@ public class UomRescaleStyleVisitorTest {
             lineSymb.accept(visitor);
             LineSymbolizer rescaledLineSymb = (LineSymbolizer) visitor.getCopy();
             String rescaledDynamicDashArray =
-                    (String)
-                            ((Expression) rescaledLineSymb.getStroke().dashArray().get(0))
-                                    .evaluate(null);
+                    (String) rescaledLineSymb.getStroke().dashArray().get(0).evaluate(null);
 
             assertEquals(expectedDashArray, rescaledDynamicDashArray);
             assertNotSame(rescaledLineSymb, lineSymb);
@@ -796,7 +793,7 @@ public class UomRescaleStyleVisitorTest {
         LineSymbolizer rescaledLineSymb = (LineSymbolizer) visitor.getCopy();
         double rescaledSize = rescaledLineSymb.getStroke().getWidth().evaluate(null, Double.class);
 
-        assertEquals(Math.round(size), Math.round(size));
+        assertEquals(Math.round(rescaledSize), Math.round(size));
         assertNotSame(rescaledLineSymb, lineSymb);
     }
 

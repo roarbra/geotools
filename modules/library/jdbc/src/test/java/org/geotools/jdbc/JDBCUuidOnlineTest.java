@@ -28,6 +28,7 @@ import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 
 /** @author kbyte */
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCUuidOnlineTest extends JDBCTestSupport {
 
     @Override
@@ -49,11 +50,11 @@ public abstract class JDBCUuidOnlineTest extends JDBCTestSupport {
                 dataStore.getFeatureReader(new Query(tname(("guid"))), Transaction.AUTO_COMMIT)) {
             r.hasNext();
 
-            Set<UUID> uuids = new HashSet<UUID>();
+            Set<UUID> uuids = new HashSet<>();
             uuids.add(uuid1);
             uuids.add(uuid2);
             while (r.hasNext()) {
-                SimpleFeature f = (SimpleFeature) r.next();
+                SimpleFeature f = r.next();
                 assertNotNull(uuids.remove(f.getAttribute(aname("uuidProperty"))));
             }
             assertTrue(uuids.isEmpty());

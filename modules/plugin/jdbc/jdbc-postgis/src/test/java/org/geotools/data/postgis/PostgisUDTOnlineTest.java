@@ -69,12 +69,8 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
     }
 
     public void testRead() throws Exception {
-        SimpleFeatureType type = dataStore.getSchema(tname("udt"));
-
         SimpleFeatureCollection features = dataStore.getFeatureSource(tname("udt")).getFeatures();
-        SimpleFeatureIterator fi = null;
-        try {
-            fi = features.features();
+        try (SimpleFeatureIterator fi = features.features()) {
             assertTrue(fi.hasNext());
             SimpleFeature item = fi.next();
             assertEquals("12ab", item.getAttribute(aname("ut")));
@@ -93,8 +89,6 @@ public class PostgisUDTOnlineTest extends JDBCUDTOnlineTest {
                     item.getAttribute(aname("ut13")).toString());
 
             assertFalse(fi.hasNext());
-        } finally {
-            fi.close();
         }
     }
 

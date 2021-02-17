@@ -101,8 +101,8 @@ public final class NetCDFBasicTest extends Assert {
             // check coverage names
             final List<Name> names = reader.getCoveragesNames();
             assertNotNull(names);
-            assertTrue(!names.isEmpty());
-            assertTrue(3 == names.size());
+            assertFalse(names.isEmpty());
+            assertEquals(3, names.size());
             assertTrue(names.contains(new NameImpl("NO2")));
             assertTrue(names.contains(new NameImpl("O3")));
             assertTrue(names.contains(new NameImpl("V")));
@@ -151,7 +151,7 @@ public final class NetCDFBasicTest extends Assert {
     public void testImageReaderPolyphemusSimple2() throws Exception {
         // setup repository
         ShpFileStoreFactory dialect =
-                new ShpFileStoreFactory(new ShapefileDataStoreFactory(), new HashMap());
+                new ShpFileStoreFactory(new ShapefileDataStoreFactory(), new HashMap<>());
         File indexDirectory = new File("./target/polyphemus_simple_idx");
         FileUtils.deleteQuietly(indexDirectory);
         indexDirectory.mkdir();
@@ -179,7 +179,7 @@ public final class NetCDFBasicTest extends Assert {
         dataStore.dispose();
     }
 
-    public void testImageReaderPolyphemusSimple(Consumer<NetCDFImageReader> readerCustomizer)
+    protected void testImageReaderPolyphemusSimple(Consumer<NetCDFImageReader> readerCustomizer)
             throws Exception {
         final File file = TestData.file(this, "O3-NO2.nc");
         final NetCDFImageReaderSpi unidataImageReaderSpi = new NetCDFImageReaderSpi();
@@ -251,25 +251,24 @@ public final class NetCDFBasicTest extends Assert {
     @Test
     public void testNoValid2DVariable() throws Exception {
         final File file = TestData.file(this, "noVars.nc");
-        NetcdfDataset dataset = NetcdfDataset.acquireDataset(file.getAbsolutePath(), null);
-        List<Variable> variables = dataset.getVariables();
-        boolean speedVariableIsPresent = false;
-        String speedVariableName = "";
-
-        for (Variable variable : variables) {
-            if (variable.getShortName().equals("spd")) {
-                speedVariableIsPresent = true;
-                speedVariableName = variable.getFullName();
-                break;
-            }
-        }
-
-        assertTrue(speedVariableIsPresent);
-
-        final NetCDFImageReaderSpi unidataImageReaderSpi = new NetCDFImageReaderSpi();
-        assertTrue(unidataImageReaderSpi.canDecodeInput(file));
         NetCDFImageReader reader = null;
-        try {
+        try (NetcdfDataset dataset = NetcdfDataset.acquireDataset(file.getAbsolutePath(), null)) {
+            List<Variable> variables = dataset.getVariables();
+            boolean speedVariableIsPresent = false;
+            String speedVariableName = "";
+
+            for (Variable variable : variables) {
+                if (variable.getShortName().equals("spd")) {
+                    speedVariableIsPresent = true;
+                    speedVariableName = variable.getFullName();
+                    break;
+                }
+            }
+
+            assertTrue(speedVariableIsPresent);
+
+            final NetCDFImageReaderSpi unidataImageReaderSpi = new NetCDFImageReaderSpi();
+            assertTrue(unidataImageReaderSpi.canDecodeInput(file));
 
             // sample dataset containing a water_speed variable having
             // only time, depth dimensions. No lon/lat dims are present
@@ -288,10 +287,6 @@ public final class NetCDFBasicTest extends Assert {
             // Checking that only "mask" variable is found
             assertFalse(isSpeedCoverageAvailable);
         } finally {
-            if (dataset != null) {
-                dataset.close();
-            }
-
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -364,9 +359,9 @@ public final class NetCDFBasicTest extends Assert {
             // cloud_phase
             CoverageSourceDescriptor cd = reader.getCoverageDescriptor(new NameImpl("cloud_phase"));
             final List<AdditionalDomain> additionalDomains = cd.getAdditionalDomains();
-            assertTrue(!additionalDomains.isEmpty());
+            assertFalse(additionalDomains.isEmpty());
             final AdditionalDomain ad = additionalDomains.get(0);
-            assertTrue(ad.getType().equals(DomainType.NUMBER));
+            assertEquals(ad.getType(), DomainType.NUMBER);
             assertEquals("cloud_phase", ad.getName());
 
         } finally {
@@ -403,8 +398,8 @@ public final class NetCDFBasicTest extends Assert {
             // check coverage names
             final List<Name> names = reader.getCoveragesNames();
             assertNotNull(names);
-            assertTrue(!names.isEmpty());
-            assertTrue(1 == names.size());
+            assertFalse(names.isEmpty());
+            assertEquals(1, names.size());
             assertEquals("NO2", names.get(0).toString());
 
             // checking slice catalog
@@ -473,8 +468,8 @@ public final class NetCDFBasicTest extends Assert {
             // check coverage names
             final List<Name> names = reader.getCoveragesNames();
             assertNotNull(names);
-            assertTrue(!names.isEmpty());
-            assertTrue(1 == names.size());
+            assertFalse(names.isEmpty());
+            assertEquals(1, names.size());
             assertEquals("NO2", names.get(0).toString());
 
             // checking slice catalog
@@ -504,7 +499,7 @@ public final class NetCDFBasicTest extends Assert {
             // Check if the Auxiliary File Directory contains the origin.txt file
             FilenameFilter nameFileFilter = FileFilterUtils.nameFileFilter("origin.txt");
             File[] files = auxiliaryDir.listFiles(nameFileFilter);
-            assertTrue(files != null);
+            assertNotNull(files);
             assertTrue(files[0].exists());
         } finally {
             if (reader != null) {
@@ -546,8 +541,8 @@ public final class NetCDFBasicTest extends Assert {
             // check coverage names
             final List<Name> names = reader.getCoveragesNames();
             assertNotNull(names);
-            assertTrue(!names.isEmpty());
-            assertTrue(2 == names.size());
+            assertFalse(names.isEmpty());
+            assertEquals(2, names.size());
             assertEquals("cell_index", names.get(0).toString());
             assertEquals("f_land", names.get(1).toString());
 
@@ -648,20 +643,20 @@ public final class NetCDFBasicTest extends Assert {
 
             final List<DimensionDescriptor> dimensions = cd.getDimensionDescriptors();
             assertNotNull(dimensions);
-            assertTrue(!dimensions.isEmpty());
+            assertFalse(dimensions.isEmpty());
             assertEquals("wrong dimensions", 2, dimensions.size());
             DimensionDescriptor dim = dimensions.get(0);
-            assertTrue(dim.getName().equals("TIME"));
-            assertTrue(dim.getStartAttribute().equals("time"));
+            assertEquals("TIME", dim.getName());
+            assertEquals("time", dim.getStartAttribute());
             dim = dimensions.get(1);
-            assertTrue(dim.getName().equals("ELEVATION"));
-            assertTrue(dim.getStartAttribute().equals("z"));
+            assertEquals("ELEVATION", dim.getName());
+            assertEquals("z", dim.getStartAttribute());
 
             // check coverage names
             final List<Name> names = reader.getCoveragesNames();
             assertNotNull(names);
-            assertTrue(!names.isEmpty());
-            assertTrue(3 == names.size());
+            assertFalse(names.isEmpty());
+            assertEquals(3, names.size());
             assertTrue(names.contains(new NameImpl("NO2")));
             assertTrue(names.contains(new NameImpl("O3")));
             assertTrue(names.contains(new NameImpl("V")));
@@ -790,7 +785,7 @@ public final class NetCDFBasicTest extends Assert {
         final File inputFile = TestData.file(this, "times/times.nc");
         // Get format
         final AbstractGridFormat format =
-                (AbstractGridFormat) GridFormatFinder.findFormat(inputFile.toURI().toURL(), null);
+                GridFormatFinder.findFormat(inputFile.toURI().toURL(), null);
         final NetCDFReader reader = new NetCDFReader(inputFile, null);
         Assert.assertNotNull(format);
         Assert.assertNotNull(reader);
@@ -833,7 +828,7 @@ public final class NetCDFBasicTest extends Assert {
         final File inputFile = TestData.file(this, "axisorder.nc");
         // Get format
         final AbstractGridFormat format =
-                (AbstractGridFormat) GridFormatFinder.findFormat(inputFile.toURI().toURL(), null);
+                GridFormatFinder.findFormat(inputFile.toURI().toURL(), null);
         final NetCDFReader reader = new NetCDFReader(inputFile, null);
         Assert.assertNotNull(format);
         Assert.assertNotNull(reader);

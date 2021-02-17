@@ -17,14 +17,12 @@
 package org.geotools.filter.function;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 
 import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.filter.expression.Expression;
 import org.opengis.filter.expression.Function;
 import org.opengis.filter.expression.Literal;
 
@@ -38,7 +36,7 @@ public class CategorizeFunctionTest extends SEFunctionTestBase {
 
     @Before
     public void setup() {
-        parameters = new ArrayList<Expression>();
+        parameters = new ArrayList<>();
     }
 
     @Test
@@ -52,7 +50,7 @@ public class CategorizeFunctionTest extends SEFunctionTestBase {
         Function fn = finder.findFunction("categorize", parameters, fallback);
         Object result = fn.evaluate(feature(0));
 
-        assertFalse("Could not locate 'categorize' function", result.equals(fallback.getValue()));
+        assertNotEquals("Could not locate 'categorize' function", result, fallback.getValue());
     }
 
     @Test
@@ -148,7 +146,7 @@ public class CategorizeFunctionTest extends SEFunctionTestBase {
             throw new IllegalArgumentException("should be n thresholds and n+1 categories");
         }
 
-        parameters = new ArrayList<Expression>();
+        parameters = new ArrayList<>();
         parameters.add(ff2.property("value"));
 
         for (int i = 0; i < thresholds.length; i++) {

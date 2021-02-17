@@ -14,13 +14,14 @@
 package org.geotools.data.shapefile;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -83,18 +84,18 @@ public class DbaseFileTest extends TestCaseSupport {
     @Test
     public void testRowVsEntry() throws Exception {
         Object[] attrs = new Object[dbf.getHeader().getNumFields()];
-        DbaseFileReader dbf2 =
-                new DbaseFileReader(shpFiles, false, ShapefileDataStore.DEFAULT_STRING_CHARSET);
-        while (dbf.hasNext()) {
-            dbf.readEntry(attrs);
-            DbaseFileReader.Row r = dbf2.readRow();
-            for (int i = 0, ii = attrs.length; i < ii; i++) {
-                assertNotNull(attrs[i]);
-                assertNotNull(r.read(i));
-                assertEquals(attrs[i], r.read(i));
+        try (DbaseFileReader dbf2 =
+                new DbaseFileReader(shpFiles, false, ShapefileDataStore.DEFAULT_STRING_CHARSET)) {
+            while (dbf.hasNext()) {
+                dbf.readEntry(attrs);
+                DbaseFileReader.Row r = dbf2.readRow();
+                for (int i = 0, ii = attrs.length; i < ii; i++) {
+                    assertNotNull(attrs[i]);
+                    assertNotNull(r.read(i));
+                    assertEquals(attrs[i], r.read(i));
+                }
             }
         }
-        dbf2.close();
     }
 
     @Test
@@ -113,11 +114,11 @@ public class DbaseFileTest extends TestCaseSupport {
             header.addColumn("emptyDate", 'D', 20, 0);
             int length = header.getRecordLength();
             header.removeColumn("emptyDate");
-            assertTrue(length != header.getRecordLength());
+            assertNotEquals(length, header.getRecordLength());
             header.addColumn("emptyDate", 'D', 20, 0);
-            assertTrue(length == header.getRecordLength());
+            assertEquals(length, header.getRecordLength());
             header.removeColumn("billy");
-            assertTrue(length == header.getRecordLength());
+            assertEquals(length, header.getRecordLength());
         } finally {
             LOGGER.setLevel(before);
         }
@@ -155,9 +156,11 @@ public class DbaseFileTest extends TestCaseSupport {
         header.setNumRecords(20);
         File f = new File(System.getProperty("java.io.tmpdir"), "scratchDBF.dbf");
         f.deleteOnExit();
-        try (FileOutputStream fout = new FileOutputStream(f)) {
-            DbaseFileWriter dbf =
-                    new DbaseFileWriter(header, fout.getChannel(), Charset.defaultCharset());
+        try (FileOutputStream fout = new FileOutputStream(f);
+                DbaseFileWriter dbf =
+                        new DbaseFileWriter(
+                                header, fout.getChannel(), Charset.defaultCharset()); ) {
+
             for (int i = 0; i < header.getNumRecords(); i++) {
                 dbf.write(new Object[6]);
             }
@@ -170,7 +173,7 @@ public class DbaseFileTest extends TestCaseSupport {
             while (r.hasNext()) {
                 cnt++;
                 Object[] o = r.readEntry();
-                assertTrue(o.length == r.getHeader().getNumFields());
+                assertEquals(o.length, r.getHeader().getNumFields());
             }
             assertEquals("Bad number of records", cnt, 20);
         } finally {
@@ -197,5 +200,16 @@ public class DbaseFileTest extends TestCaseSupport {
         formattedString = formatter.getFieldString(10, stringWithInternationChars);
 
         assertEquals("          ".getBytes().length, formattedString.getBytes().length);
+    }
+
+    @Test
+    public void testUTF8Chars() throws Exception {
+        // looks like "A, B, C" in an editor, but the B and C are actually weird UTF-8 entities
+        DbaseFileWriter.FieldFormatter formatter =
+                new DbaseFileWriter.FieldFormatter(
+                        StandardCharsets.UTF_8, TimeZone.getDefault(), false);
+        String test = "A, \u0412, \u0421";
+        String formattedString = formatter.getFieldString(8, test);
+        assertEquals("        ".getBytes().length, formattedString.getBytes().length);
     }
 }

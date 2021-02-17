@@ -24,12 +24,13 @@ import org.opengis.feature.simple.SimpleFeatureType;
  *
  * @author Andrea Aime
  */
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCFeatureSourceExposePkOnlineTest extends JDBCFeatureSourceOnlineTest {
 
     @Override
     protected void connect() throws Exception {
         super.connect();
-        ((JDBCFeatureStore) featureSource).setExposePrimaryKeyColumns(true);
+        featureSource.setExposePrimaryKeyColumns(true);
     }
 
     public void testSchema() throws Exception {

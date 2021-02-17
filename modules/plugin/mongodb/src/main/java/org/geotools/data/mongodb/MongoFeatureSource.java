@@ -107,8 +107,7 @@ public class MongoFeatureSource extends ContentFeatureSource {
     @Override
     protected ReferencedEnvelope getBoundsInternal(Query query) throws IOException {
         // TODO: crs?
-        FeatureReader<SimpleFeatureType, SimpleFeature> r = getReader(query);
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> r = getReader(query)) {
             ReferencedEnvelope e = new ReferencedEnvelope();
             if (r.hasNext()) {
                 e.init(r.next().getBounds());
@@ -117,8 +116,6 @@ public class MongoFeatureSource extends ContentFeatureSource {
                 e.include(r.next().getBounds());
             }
             return e;
-        } finally {
-            r.close();
         }
     }
 
@@ -143,19 +140,18 @@ public class MongoFeatureSource extends ContentFeatureSource {
     }
 
     @Override
+    @SuppressWarnings("PMD.CloseResource") // r is re-assigned, but also wrapped
     protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
             throws IOException {
 
-        List<Filter> postFilterList = new ArrayList<Filter>();
-        List<String> postFilterAttributes = new ArrayList<String>();
+        List<Filter> postFilterList = new ArrayList<>();
+        List<String> postFilterAttributes = new ArrayList<>();
         @SuppressWarnings("PMD.CloseResource") // wrapped and returned
         DBCursor cursor = toCursor(query, postFilterList, postFilterAttributes);
         FeatureReader<SimpleFeatureType, SimpleFeature> r = new MongoFeatureReader(cursor, this);
 
         if (!postFilterList.isEmpty() && !isAll(postFilterList.get(0))) {
-            r =
-                    new FilteringFeatureReader<SimpleFeatureType, SimpleFeature>(
-                            r, postFilterList.get(0));
+            r = new FilteringFeatureReader<>(r, postFilterList.get(0));
 
             // check whether attributes not present in the original query have been
             // added to the set of retrieved attributes for the sake of

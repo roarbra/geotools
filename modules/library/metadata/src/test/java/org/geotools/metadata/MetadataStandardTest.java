@@ -18,6 +18,7 @@ package org.geotools.metadata;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -83,7 +84,7 @@ public final class MetadataStandardTest {
         assertTrue(identifiers instanceof Collection);
         assertTrue(PropertyAccessorTest.containsEPSG(identifiers));
 
-        final Map<String, Object> copy = new HashMap<String, Object>(map);
+        final Map<String, Object> copy = new HashMap<>(map);
         assertEquals(map, copy);
 
         // Note: AbstractCollection do not defines hashCode(); we have to wraps in a HashSet.
@@ -91,16 +92,16 @@ public final class MetadataStandardTest {
         assertEquals(
                 "hashCode() should be as in a Set.",
                 hashCode,
-                new HashSet<Object>(map.values()).hashCode());
+                new HashSet<>(map.values()).hashCode());
         assertEquals(
                 "hashCode() should be as in a Set.",
                 hashCode,
-                new HashSet<Object>(copy.values()).hashCode());
+                new HashSet<>(copy.values()).hashCode());
 
         map.remove("identifiers");
         final int newHashCode = citation.hashCode();
-        assertFalse(map.equals(copy));
-        assertFalse(hashCode == newHashCode);
-        assertEquals(newHashCode, new HashSet<Object>(map.values()).hashCode());
+        assertNotEquals(map, copy);
+        assertNotEquals(hashCode, newHashCode);
+        assertEquals(newHashCode, new HashSet<>(map.values()).hashCode());
     }
 }

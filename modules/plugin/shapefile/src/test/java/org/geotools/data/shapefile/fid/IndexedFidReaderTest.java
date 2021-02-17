@@ -17,7 +17,7 @@
 package org.geotools.data.shapefile.fid;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -92,17 +92,17 @@ public class IndexedFidReaderTest extends FIDTestCase {
     @Test
     public void testFindAllFids() throws Exception {
         int expectedCount = 0;
-        Set<String> expectedFids = new LinkedHashSet<String>();
+        Set<String> expectedFids = new LinkedHashSet<>();
         {
             ShapefileDataStore ds = new ShapefileDataStore(backshp.toURI().toURL());
             SimpleFeatureSource featureSource = ds.getFeatureSource();
-            SimpleFeatureIterator features = featureSource.getFeatures().features();
-            while (features.hasNext()) {
-                SimpleFeature next = features.next();
-                expectedCount++;
-                expectedFids.add(next.getID());
+            try (SimpleFeatureIterator features = featureSource.getFeatures().features()) {
+                while (features.hasNext()) {
+                    SimpleFeature next = features.next();
+                    expectedCount++;
+                    expectedFids.add(next.getID());
+                }
             }
-            features.close();
             ds.dispose();
         }
 
@@ -111,38 +111,38 @@ public class IndexedFidReaderTest extends FIDTestCase {
 
         for (String fid : expectedFids) {
             long offset = reader.findFid(fid);
-            assertFalse(-1 == offset);
+            assertNotEquals(-1, offset);
         }
     }
 
     @Test
     public void testFindAllFidsReverseOrder() throws Exception {
         int expectedCount = 0;
-        Set<String> expectedFids = new TreeSet<String>(Collections.reverseOrder());
+        Set<String> expectedFids = new TreeSet<>(Collections.reverseOrder());
         {
             ShapefileDataStore ds = new ShapefileDataStore(backshp.toURI().toURL());
             SimpleFeatureSource featureSource = ds.getFeatureSource();
-            SimpleFeatureIterator features = featureSource.getFeatures().features();
-            while (features.hasNext()) {
-                SimpleFeature next = features.next();
-                expectedCount++;
-                expectedFids.add(next.getID());
+            try (SimpleFeatureIterator features = featureSource.getFeatures().features()) {
+                while (features.hasNext()) {
+                    SimpleFeature next = features.next();
+                    expectedCount++;
+                    expectedFids.add(next.getID());
+                }
             }
-            features.close();
             ds.dispose();
         }
 
         assertTrue(expectedCount > 0);
         assertEquals(expectedCount, reader.getCount());
 
-        assertFalse("findFid for archsites.5 returned -1", -1 == reader.findFid("archsites.5"));
-        assertFalse("findFid for archsites.25 returned -1", -1 == reader.findFid("archsites.25"));
+        assertNotEquals("findFid for archsites.5 returned -1", -1, reader.findFid("archsites.5"));
+        assertNotEquals("findFid for archsites.25 returned -1", -1, reader.findFid("archsites.25"));
 
         for (String fid : expectedFids) {
             long offset = reader.findFid(fid);
             assertNotNull(offset);
             // System.out.print(fid + "=" + offset + ", ");
-            assertFalse("findFid for " + fid + " returned -1", -1 == offset);
+            assertNotEquals("findFid for " + fid + " returned -1", -1, offset);
         }
     }
 

@@ -21,7 +21,6 @@ package org.geotools.referencing.factory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -113,8 +112,7 @@ public class ThreadedAuthorityFactory extends AbstractAuthorityFactory implement
     private final OldReferencingObjectCache objectCache;
 
     /** The pool of objects identified by {@link find}. */
-    private final Map<IdentifiedObject, IdentifiedObject> findPool =
-            new WeakHashMap<IdentifiedObject, IdentifiedObject>();
+    private final Map<IdentifiedObject, IdentifiedObject> findPool = new WeakHashMap<>();
 
     /**
      * Constructs an instance wrapping the specified factory with a default number of entries to
@@ -252,13 +250,13 @@ public class ThreadedAuthorityFactory extends AbstractAuthorityFactory implement
             final Collection titles = citation.getAlternateTitles();
             InternationalString title = citation.getTitle();
             if (titles != null) {
-                for (final Iterator it = titles.iterator(); it.hasNext(); ) {
+                for (Object o : titles) {
                     /*
                      * Uses the longuest title instead of the main one. In Geotools
                      * implementation, the alternate title may contains usefull informations
                      * like the EPSG database version number and the database engine.
                      */
-                    final InternationalString candidate = (InternationalString) it.next();
+                    final InternationalString candidate = (InternationalString) o;
                     if (candidate.length() > title.length()) {
                         title = candidate;
                     }
@@ -323,10 +321,11 @@ public class ThreadedAuthorityFactory extends AbstractAuthorityFactory implement
      * @param type The spatial reference objects type.
      * @return The set of authority codes for spatial reference objects of the given type. If this
      *     factory doesn't contains any object of the given type, then this method returns an
-     *     {@linkplain java.util.Collections#EMPTY_SET empty set}.
+     *     {@linkplain java.util.Collections.emptySet() empty set}.
      * @throws FactoryException if access to the underlying database failed.
      */
-    public Set<String> getAuthorityCodes(final Class type) throws FactoryException {
+    public Set<String> getAuthorityCodes(final Class<? extends IdentifiedObject> type)
+            throws FactoryException {
         return getBackingStore().getAuthorityCodes(type);
     }
 
@@ -855,6 +854,7 @@ public class ThreadedAuthorityFactory extends AbstractAuthorityFactory implement
     }
 
     /** Returns an operation from coordinate reference system codes. */
+    @SuppressWarnings("unchecked")
     @Override
     public synchronized Set<CoordinateOperation> createFromCoordinateReferenceSystemCodes(
             final String sourceCode, final String targetCode) throws FactoryException {

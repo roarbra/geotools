@@ -25,11 +25,11 @@ import java.util.TreeSet;
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
 import org.geotools.data.ows.ControlledHttpClientFactory;
 import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.ows.Specification;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wmts.model.WMTSCapabilities;
 import org.geotools.ows.wmts.model.WMTSServiceType;
@@ -48,9 +48,7 @@ public class WMTSSpecification extends Specification {
     private WMTSServiceType type;
 
     /** */
-    public WMTSSpecification() {
-        // TODO Auto-generated constructor stub
-    }
+    public WMTSSpecification() {}
 
     @Override
     public String getVersion() {
@@ -60,14 +58,12 @@ public class WMTSSpecification extends Specification {
 
     @Override
     public GetCapabilitiesRequest createGetCapabilitiesRequest(URL server) {
-        // TODO Auto-generated method stub
         return new GetCapsRequest(server);
     }
 
     public GetTileRequest createGetTileRequest(
             URL server, Properties props, WMTSCapabilities caps) {
-        return this.createGetTileRequest(
-                server, props, caps, ControlledHttpClientFactory.wrap(new SimpleHttpClient()));
+        return this.createGetTileRequest(server, props, caps, HTTPClientFinder.createClient());
     }
 
     public GetTileRequest createGetTileRequest(
@@ -80,11 +76,7 @@ public class WMTSSpecification extends Specification {
         /** */
         public GetTileRequest(
                 URL onlineResource, Properties properties, WMTSCapabilities capabilities) {
-            this(
-                    onlineResource,
-                    properties,
-                    capabilities,
-                    ControlledHttpClientFactory.wrap(new SimpleHttpClient()));
+            this(onlineResource, properties, capabilities, HTTPClientFinder.createClient());
         }
 
         public GetTileRequest(
@@ -93,13 +85,21 @@ public class WMTSSpecification extends Specification {
                 WMTSCapabilities capabilities,
                 HTTPClient client) {
             super(onlineResource, properties, client);
-            this.type = capabilities.getType();
+            if (properties.containsKey("type")) {
+                String t = (String) properties.get("type");
+                if ("REST".equalsIgnoreCase(t)) {
+                    this.type = WMTSServiceType.REST;
+                } else if ("KVP".equalsIgnoreCase(t)) {
+                    this.type = WMTSServiceType.KVP;
+                }
+            } else {
+                this.type = capabilities.getType();
+            }
             this.capabilities = capabilities;
         }
 
         @Override
         public Response createResponse(HTTPResponse response) throws ServiceException, IOException {
-            // TODO Auto-generated method stub
             return new GetTileResponse(response, getType());
         }
 

@@ -30,7 +30,7 @@ public class SolrViewParametersTest extends SolrTestSupport {
 
     public void testSinglesQParameters() throws Exception {
         init("not-active");
-        Map<String, String> vparams = new HashMap<String, String>();
+        Map<String, String> vparams = new HashMap<>();
         vparams.put("q", "security_ss:WPA");
         Hints hints = new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, vparams);
         Query q = new Query(featureSource.getSchema().getTypeName());
@@ -40,14 +40,15 @@ public class SolrViewParametersTest extends SolrTestSupport {
         q.setFilter(filter);
         ContentFeatureCollection features = featureSource.getFeatures(q);
         assertEquals(1, features.size());
-        SimpleFeatureIterator fsi = features.features();
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getID(), "not-active.12");
+        try (SimpleFeatureIterator fsi = features.features()) {
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getID(), "not-active.12");
+        }
     }
 
     public void testMultipleQParameters() throws Exception {
         init();
-        Map<String, String> vparams = new HashMap<String, String>();
+        Map<String, String> vparams = new HashMap<>();
         vparams.put("q", "security_ss:WPA -modem_b:true");
         Hints hints = new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, vparams);
         Query q = new Query(featureSource.getSchema().getTypeName());
@@ -57,16 +58,17 @@ public class SolrViewParametersTest extends SolrTestSupport {
         q.setFilter(filter);
         ContentFeatureCollection features = featureSource.getFeatures(q);
         assertEquals(2, features.size());
-        SimpleFeatureIterator fsi = features.features();
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getAttribute("modem_b"), false);
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getAttribute("modem_b"), false);
+        try (SimpleFeatureIterator fsi = features.features()) {
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getAttribute("modem_b"), false);
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getAttribute("modem_b"), false);
+        }
     }
 
     public void testSinglesFQParameters() throws Exception {
         init("not-active");
-        Map<String, String> vparams = new HashMap<String, String>();
+        Map<String, String> vparams = new HashMap<>();
         vparams.put("fq", "security_ss:WPA");
         Hints hints = new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, vparams);
         Query q = new Query(featureSource.getSchema().getTypeName());
@@ -76,14 +78,15 @@ public class SolrViewParametersTest extends SolrTestSupport {
         q.setFilter(filter);
         ContentFeatureCollection features = featureSource.getFeatures(q);
         assertEquals(1, features.size());
-        SimpleFeatureIterator fsi = features.features();
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getID(), "not-active.12");
+        try (SimpleFeatureIterator fsi = features.features()) {
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getID(), "not-active.12");
+        }
     }
 
     public void testMultipleFQParameters() throws Exception {
         init();
-        Map<String, String> vparams = new HashMap<String, String>();
+        Map<String, String> vparams = new HashMap<>();
         vparams.put("fq", "security_ss:WPA -modem_b:true");
         Hints hints = new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, vparams);
         Query q = new Query(featureSource.getSchema().getTypeName());
@@ -93,16 +96,17 @@ public class SolrViewParametersTest extends SolrTestSupport {
         q.setFilter(filter);
         ContentFeatureCollection features = featureSource.getFeatures(q);
         assertEquals(2, features.size());
-        SimpleFeatureIterator fsi = features.features();
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getAttribute("modem_b"), false);
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getAttribute("modem_b"), false);
+        try (SimpleFeatureIterator fsi = features.features()) {
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getAttribute("modem_b"), false);
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getAttribute("modem_b"), false);
+        }
     }
 
     public void testMixQandFQParameters() throws Exception {
         init();
-        Map<String, String> vparams = new HashMap<String, String>();
+        Map<String, String> vparams = new HashMap<>();
         vparams.put("q", "security_ss:WPA");
         vparams.put("fq", "-modem_b:true");
         Hints hints = new Hints(Hints.VIRTUAL_TABLE_PARAMETERS, vparams);
@@ -113,10 +117,11 @@ public class SolrViewParametersTest extends SolrTestSupport {
         q.setFilter(filter);
         ContentFeatureCollection features = featureSource.getFeatures(q);
         assertEquals(2, features.size());
-        SimpleFeatureIterator fsi = features.features();
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getAttribute("modem_b"), false);
-        assertTrue(fsi.hasNext());
-        assertEquals(fsi.next().getAttribute("modem_b"), false);
+        try (SimpleFeatureIterator fsi = features.features()) {
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getAttribute("modem_b"), false);
+            assertTrue(fsi.hasNext());
+            assertEquals(fsi.next().getAttribute("modem_b"), false);
+        }
     }
 }

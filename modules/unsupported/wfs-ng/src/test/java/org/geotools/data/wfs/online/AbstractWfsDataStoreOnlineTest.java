@@ -155,7 +155,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         if (wfs == null && serviceAvailable.booleanValue()) {
             LOGGER.info("Creating test datastore for " + SERVER_URL);
 
-            Map<String, Serializable> params = new HashMap<String, Serializable>();
+            Map<String, Serializable> params = new HashMap<>();
             params.put(WFSDataStoreFactory.URL.key, SERVER_URL);
             params.put(WFSDataStoreFactory.GML_COMPATIBLE_TYPENAMES.key, true);
             params.put(WFSDataStoreFactory.AXIS_ORDER.key, axisOrder);
@@ -285,15 +285,13 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         SimpleFeatureType schema = features.getSchema();
         assertNotNull(schema);
 
-        SimpleFeatureIterator iterator = features.features();
-        assertNotNull(iterator);
-        try {
+        try (SimpleFeatureIterator iterator = features.features()) {
+            assertNotNull(iterator);
+
             assertTrue(iterator.hasNext());
             SimpleFeature next = iterator.next();
             assertNotNull(next);
             assertNotNull(next.getDefaultGeometry());
-        } finally {
-            iterator.close();
         }
     }
 
@@ -324,16 +322,12 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         SimpleFeatureType schema = features.getSchema();
         assertNotNull(schema);
 
-        SimpleFeatureIterator iterator = features.features();
-        assertNotNull(iterator);
-        try {
+        try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
             SimpleFeature next = iterator.next();
             assertNotNull(next);
             assertNotNull(next.getDefaultGeometry());
             assertFalse(iterator.hasNext());
-        } finally {
-            iterator.close();
         }
     }
 
@@ -349,8 +343,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         List<String> typeNames = Arrays.asList(types);
         assertTrue(typeNames.contains(testType.FEATURETYPENAME));
 
-        for (int i = 0; i < types.length; i++) {
-            String typeName = types[i];
+        for (String typeName : types) {
             SimpleFeatureType type = wfs.getSchema(typeName);
             type.getTypeName();
             type.getName().getNamespaceURI();
@@ -366,13 +359,10 @@ public abstract class AbstractWfsDataStoreOnlineTest {
             features = source.getFeatures(query);
             features.size();
 
-            SimpleFeatureIterator iterator = features.features();
-            try {
+            try (SimpleFeatureIterator iterator = features.features()) {
                 while (iterator.hasNext()) {
                     iterator.next();
                 }
-            } finally {
-                iterator.close();
             }
         }
 
@@ -412,13 +402,10 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         features = source.getFeatures(query);
         features.size();
 
-        SimpleFeatureIterator iterator = features.features();
-        try {
+        try (SimpleFeatureIterator iterator = features.features()) {
             while (iterator.hasNext()) {
                 iterator.next();
             }
-        } finally {
-            iterator.close();
         }
     }
 
@@ -490,17 +477,17 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         query.setFilter(strictBBox);
         query.setHandle("testDataStoreSupportsPlainBBOXInterface");
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            assertNotNull(reader);
+            assertTrue(reader.hasNext());
+        }
 
-        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        assertNotNull(reader);
-        assertTrue(reader.hasNext());
-        reader.close();
-
-        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        assertNotNull(reader);
-        assertTrue(reader.hasNext());
-        reader.close();
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            assertNotNull(reader);
+            assertTrue(reader.hasNext());
+        }
     }
 
     @Test

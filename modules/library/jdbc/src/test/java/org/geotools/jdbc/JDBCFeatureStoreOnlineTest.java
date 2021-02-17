@@ -22,7 +22,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -56,6 +55,7 @@ import org.opengis.filter.Id;
 import org.opengis.filter.PropertyIsEqualTo;
 import org.opengis.filter.identity.FeatureId;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
     JDBCFeatureStore featureStore;
 
@@ -88,8 +88,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
 
         FilterFactory ff = dataStore.getFilterFactory();
 
-        for (Iterator f = fids.iterator(); f.hasNext(); ) {
-            FeatureId identifier = (FeatureId) f.next();
+        for (FeatureId identifier : fids) {
             String fid = identifier.getID();
             Id filter = ff.id(Collections.singleton(identifier));
 
@@ -99,7 +98,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             try (SimpleFeatureIterator iterator = features.features()) {
                 assertTrue(iterator.hasNext());
 
-                SimpleFeature feature = (SimpleFeature) iterator.next();
+                SimpleFeature feature = iterator.next();
                 assertEquals(fid, feature.getID());
                 assertFalse(iterator.hasNext());
             }
@@ -181,9 +180,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
 
         FilterFactory ff = dataStore.getFilterFactory();
 
-        for (Iterator f = fids.iterator(); f.hasNext(); ) {
-            FeatureId identifier = (FeatureId) f.next();
-            String fid = identifier.getID();
+        for (FeatureId identifier : fids) {
             Id filter = ff.id(Collections.singleton(identifier));
 
             features = featureStore.getFeatures(filter);
@@ -307,13 +304,13 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         assertEquals(3, features.size());
 
         try (SimpleFeatureIterator iterator = features.features()) {
-            HashSet<Integer> numbers = new HashSet<Integer>();
+            HashSet<Integer> numbers = new HashSet<>();
             numbers.add(Integer.valueOf(3));
             numbers.add(Integer.valueOf(4));
             numbers.add(Integer.valueOf(5));
 
-            for (int i = 3; iterator.hasNext(); i++) {
-                SimpleFeature feature = (SimpleFeature) iterator.next();
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
                 assertTrue(
                         numbers.contains(
                                 ((Number) feature.getAttribute(aname("intProperty"))).intValue()));
@@ -324,7 +321,6 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
 
     public void testModifyFeatures() throws IOException {
         FeatureEventWatcher watcher = new FeatureEventWatcher();
-        SimpleFeatureType t = featureStore.getSchema();
 
         featureStore.addFeatureListener(watcher);
         featureStore.modifyFeatures(
@@ -341,7 +337,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertEquals("foo", feature.getAttribute(aname("stringProperty")));
             }
         }
@@ -349,7 +345,6 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
 
     public void testModifyGeometry() throws IOException {
         // GEOT-2371
-        SimpleFeatureType t = featureStore.getSchema();
         GeometryFactory gf = new GeometryFactory();
         Point point = gf.createPoint(new Coordinate(-10, 0));
         featureStore.modifyFeatures(
@@ -360,7 +355,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertTrue(point.equalsExact((Geometry) feature.getAttribute(aname("geometry"))));
             }
         }
@@ -368,7 +363,6 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
 
     public void testModifyMadeUpGeometry() throws IOException {
         // GEOT-2371
-        SimpleFeatureType t = featureStore.getSchema();
         GeometryFactory gf = new GeometryFactory();
         Point point = gf.createPoint(new Coordinate(-10, 0));
 
@@ -384,14 +378,13 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertTrue(point.equalsExact((Geometry) feature.getAttribute(aname("geometry"))));
             }
         }
     }
 
     public void testModifyFeaturesSingleAttribute() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         featureStore.modifyFeatures(new NameImpl(aname("stringProperty")), "foo", Filter.INCLUDE);
 
         SimpleFeatureCollection features = featureStore.getFeatures();
@@ -399,14 +392,13 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertEquals("foo", feature.getAttribute(aname("stringProperty")));
             }
         }
     }
 
     public void testModifyFeaturesInvalidFilter() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         PropertyIsEqualTo f = ff.equals(ff.property("invalidAttribute"), ff.literal(5));
 
@@ -433,7 +425,6 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
     }
 
     public void testRemoveFeaturesWithInvalidFilter() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         PropertyIsEqualTo f = ff.equals(ff.property("invalidAttribute"), ff.literal(5));
 

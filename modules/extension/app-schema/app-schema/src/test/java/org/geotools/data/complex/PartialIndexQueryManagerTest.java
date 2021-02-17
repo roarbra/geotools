@@ -23,12 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.geotools.data.Query;
 import org.geotools.data.complex.IndexQueryManager.PartialIndexQueryManager;
 import org.geotools.data.property.PropertyDataStore;
@@ -64,7 +61,7 @@ public class PartialIndexQueryManagerTest extends IndexesTest {
             // Check expected indexOnlyFilter:
             List<Filter> filters = Arrays.asList(totallyIndexedFilter(), totallyIndexedFilter2());
             Filter expectedFilter = ff.and(filters);
-            assertTrue(expectedFilter.equals(indexQuery.getFilter()));
+            assertEquals(expectedFilter, indexQuery.getFilter());
 
             // check build new combined query:
             Query combQuery = piqm.buildCombinedQuery(indexFeatureCollection());
@@ -83,7 +80,6 @@ public class PartialIndexQueryManagerTest extends IndexesTest {
 
     private FeatureCollection<? extends FeatureType, ? extends Feature> indexFeatureCollection()
             throws IOException, URISyntaxException {
-        Map<String, Serializable> params = new HashMap<>();
         File dir = new File(getClass().getResource("/test-data/index/").toURI());
         PropertyDataStore datastore = new PropertyDataStore(dir);
         FilterFactory ff1 = datastore.getFilterFactory();

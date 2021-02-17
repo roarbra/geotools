@@ -67,8 +67,6 @@ public class TestAxisOrder {
 
         assertNotNull(store);
         features = store.getFeatureSource(store.getTypeNames()[0]).getFeatures();
-        CoordinateReferenceSystem coordinateReferenceSystem =
-                features.getSchema().getCoordinateReferenceSystem();
 
         try { // Make sure the CRS is correctly set features = new
             ReprojectingFeatureCollection(features, CRS.decode("EPSG:4269"));
@@ -85,7 +83,7 @@ public class TestAxisOrder {
                 throw new IOException("could not delete: " + directory);
             }
         }
-        boolean created = directory.mkdirs();
+        directory.mkdirs();
     }
 
     private static void ReprojectingFeatureCollection(
@@ -174,9 +172,8 @@ public class TestAxisOrder {
         SimpleFeatureStore featureStored =
                 (SimpleFeatureStore) duplicate.getFeatureSource(typeName);
 
-        SimpleFeatureIterator dups = featureStored.getFeatures().features();
-        Point expected = gf.createPoint(new Coordinate(15.457678, 47.0850875));
-        try {
+        try (SimpleFeatureIterator dups = featureStored.getFeatures().features()) {
+            Point expected = gf.createPoint(new Coordinate(15.457678, 47.0850875));
             while (dups.hasNext()) {
                 SimpleFeature d = dups.next();
                 Geometry dgeom = (Geometry) d.getDefaultGeometry();
@@ -185,7 +182,6 @@ public class TestAxisOrder {
             }
 
         } finally {
-            dups.close();
             store.dispose();
         }
     }

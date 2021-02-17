@@ -19,8 +19,8 @@ package org.geotools.data.postgis;
 import java.io.IOException;
 import java.util.function.Predicate;
 import org.geotools.data.Query;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
-import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.jdbc.JDBC3DOnlineTest;
 import org.geotools.jdbc.JDBC3DTestSetup;
@@ -52,16 +52,16 @@ public class PostGIS3DOnlineTest extends JDBC3DOnlineTest {
     private void checkGeometryDimension(
             Query q, ContentFeatureSource fs, Predicate<Coordinate> testCondition)
             throws IOException {
-        FeatureCollection fc = fs.getFeatures(q);
-        FeatureIterator<SimpleFeature> fi = fc.features();
-        while (fi.hasNext()) {
-            SimpleFeature f = fi.next();
-            Geometry geom = (Geometry) f.getDefaultGeometry();
-            Coordinate[] coors = geom.getCoordinates();
-            for (Coordinate c : coors) {
-                assertTrue(testCondition.test(c));
+        SimpleFeatureCollection fc = fs.getFeatures(q);
+        try (FeatureIterator<SimpleFeature> fi = fc.features()) {
+            while (fi.hasNext()) {
+                SimpleFeature f = fi.next();
+                Geometry geom = (Geometry) f.getDefaultGeometry();
+                Coordinate[] coors = geom.getCoordinates();
+                for (Coordinate c : coors) {
+                    assertTrue(testCondition.test(c));
+                }
             }
         }
-        fi.close();
     }
 }

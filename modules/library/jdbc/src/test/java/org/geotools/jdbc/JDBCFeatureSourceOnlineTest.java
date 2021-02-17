@@ -56,6 +56,7 @@ import org.opengis.filter.spatial.BBOX;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
     protected JDBCFeatureStore featureSource;
 
@@ -147,7 +148,7 @@ public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
         try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
 
-            SimpleFeature feature = (SimpleFeature) iterator.next();
+            SimpleFeature feature = iterator.next();
             assertEquals("one", feature.getAttribute(aname("stringProperty")));
             assertEquals(Double.valueOf(1.1), feature.getAttribute(aname("doubleProperty")));
         }
@@ -179,7 +180,7 @@ public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
         try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
 
-            SimpleFeature feature = (SimpleFeature) iterator.next();
+            SimpleFeature feature = iterator.next();
             assertEquals("one", feature.getAttribute(aname("stringProperty")));
             assertEquals(Double.valueOf(1.1), feature.getAttribute(aname("doubleProperty")));
         }
@@ -210,7 +211,7 @@ public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
         try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
 
-            SimpleFeature feature = (SimpleFeature) iterator.next();
+            SimpleFeature feature = iterator.next();
             assertEquals(2, feature.getAttributeCount());
 
             assertEquals(Double.valueOf(1.1), feature.getAttribute(aname("doubleProperty")));
@@ -244,15 +245,15 @@ public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
         try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
 
-            f = (SimpleFeature) iterator.next();
+            f = iterator.next();
             assertEquals("one", f.getAttribute(aname("stringProperty")));
 
             assertTrue(iterator.hasNext());
-            f = (SimpleFeature) iterator.next();
+            f = iterator.next();
             assertEquals("two", f.getAttribute(aname("stringProperty")));
 
             assertTrue(iterator.hasNext());
-            f = (SimpleFeature) iterator.next();
+            f = iterator.next();
             assertEquals("zero", f.getAttribute(aname("stringProperty")));
         }
 
@@ -263,15 +264,15 @@ public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
         try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
 
-            f = (SimpleFeature) iterator.next();
+            f = iterator.next();
             assertEquals("zero", f.getAttribute(aname("stringProperty")));
 
             assertTrue(iterator.hasNext());
-            f = (SimpleFeature) iterator.next();
+            f = iterator.next();
             assertEquals("two", f.getAttribute(aname("stringProperty")));
 
             assertTrue(iterator.hasNext());
-            f = (SimpleFeature) iterator.next();
+            f = iterator.next();
             assertEquals("one", f.getAttribute(aname("stringProperty")));
         }
     }
@@ -547,12 +548,13 @@ public abstract class JDBCFeatureSourceOnlineTest extends JDBCTestSupport {
         JDBCFeatureStore ft1 = (JDBCFeatureStore) dataStore.getFeatureSource(tname("ft1"));
         try (Transaction transaction = new DefaultTransaction()) {
             ft1.setTransaction(transaction);
-            Connection connection = ft1.getDataStore().getConnection(ft1.getState());
-            assertFalse("connection established", connection.isClosed());
+            try (Connection connection = ft1.getDataStore().getConnection(ft1.getState())) {
+                assertFalse("connection established", connection.isClosed());
 
-            ft1.accepts(Query.ALL, visitor, null);
+                ft1.accepts(Query.ALL, visitor, null);
 
-            assertFalse("connection maintained", connection.isClosed());
+                assertFalse("connection maintained", connection.isClosed());
+            }
         }
     }
 

@@ -77,7 +77,7 @@ public class PropSelectionTest extends AppSchemaTestSupport {
         ff = new FilterFactoryImplNamespaceAware(namespaces);
 
         /** Load mapped feature data access */
-        Map<String, Serializable> dsParams = new HashMap<String, Serializable>();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = PropSelectionTest.class.getResource(schemaBase + "MappedFeaturePropertyfile.xml");
         assertNotNull(url);
 
@@ -90,7 +90,7 @@ public class PropSelectionTest extends AppSchemaTestSupport {
         url = PropSelectionTest.class.getResource(schemaBase + "GeologicUnit.xml");
         assertNotNull(url);
 
-        dsParams = new HashMap<String, Serializable>();
+        dsParams = new HashMap<>();
         dsParams.put("dbtype", "app-schema");
         dsParams.put("url", url.toExternalForm());
         DataAccess<FeatureType, Feature> guDataAccess = DataAccessFinder.getDataStore(dsParams);
@@ -108,39 +108,39 @@ public class PropSelectionTest extends AppSchemaTestSupport {
         PropertyName propertyName2 =
                 ff.property("gsml:specification/gsml:GeologicUnit/gsml:occurrence");
 
-        List<PropertyName> properties = new ArrayList<PropertyName>();
+        List<PropertyName> properties = new ArrayList<>();
         properties.add(propertyName1);
         Query query = new Query();
         query.setProperties(properties);
 
         FeatureCollection<FeatureType, Feature> mfCollection = mfSource.getFeatures(query);
 
-        FeatureIterator iterator = mfCollection.features();
+        try (FeatureIterator iterator = mfCollection.features()) {
+            int i = 0;
+            while (iterator.hasNext()) {
+                Feature feature = iterator.next();
+                assertNotNull(propertyName1.evaluate(feature));
+                assertNull(propertyName2.evaluate(feature));
+                i++;
+            }
+            assertEquals(4, i);
 
-        int i = 0;
-        while (iterator.hasNext()) {
-            Feature feature = iterator.next();
-            assertNotNull(propertyName1.evaluate(feature));
-            assertNull(propertyName2.evaluate(feature));
-            i++;
+            properties = new ArrayList<>();
+            properties.add(propertyName2);
+            query.setProperties(properties);
+
+            mfCollection = mfSource.getFeatures(query);
         }
-        assertEquals(4, i);
 
-        properties = new ArrayList<PropertyName>();
-        properties.add(propertyName2);
-        query.setProperties(properties);
-
-        mfCollection = mfSource.getFeatures(query);
-
-        iterator = mfCollection.features();
-
-        i = 0;
-        while (iterator.hasNext()) {
-            Feature feature = iterator.next();
-            assertNotNull(propertyName2.evaluate(feature));
-            assertNull(propertyName1.evaluate(feature));
-            i++;
+        try (FeatureIterator iterator = mfCollection.features()) {
+            int i = 0;
+            while (iterator.hasNext()) {
+                Feature feature = iterator.next();
+                assertNotNull(propertyName2.evaluate(feature));
+                assertNull(propertyName1.evaluate(feature));
+                i++;
+            }
+            assertEquals(4, i);
         }
-        assertEquals(4, i);
     }
 }

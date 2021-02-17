@@ -33,7 +33,6 @@ import net.opengis.wps10.ResponseFormType;
 import net.opengis.wps10.Wps10Factory;
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
 import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
 import org.geotools.data.wps.request.AbstractDescribeProcessRequest;
 import org.geotools.data.wps.request.AbstractExecuteProcessRequest;
@@ -42,6 +41,7 @@ import org.geotools.data.wps.request.ExecuteProcessRequest;
 import org.geotools.data.wps.response.DescribeProcessResponse;
 import org.geotools.data.wps.response.ExecuteProcessResponse;
 import org.geotools.data.wps.response.WPSGetCapabilitiesResponse;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 
 /**
@@ -147,6 +147,7 @@ public class WPS1_0_0 extends WPSSpecification {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public ResponseDocumentType createResponseDocumentType(
             boolean lineage, boolean status, boolean storeExecuteResponse, String outputType) {
         ResponseDocumentType responseDoc = wpsFactory.createResponseDocumentType();

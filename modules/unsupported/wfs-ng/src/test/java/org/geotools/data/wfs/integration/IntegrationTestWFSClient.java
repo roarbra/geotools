@@ -40,12 +40,9 @@ import org.geotools.data.DataUtilities;
 import org.geotools.data.Diff;
 import org.geotools.data.DiffFeatureReader;
 import org.geotools.data.FeatureReader;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.TestHttpResponse;
-import org.geotools.data.wfs.internal.AbstractWFSStrategy;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
 import org.geotools.data.wfs.internal.GetCapabilitiesRequest;
@@ -64,6 +61,8 @@ import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.data.wfs.internal.parsers.PullParserFeatureReader;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.wfs.v1_1.WFS;
 import org.geotools.xml.XMLHandlerHints;
@@ -85,14 +84,14 @@ public class IntegrationTestWFSClient extends WFSClient {
     private boolean failOnTransaction;
     protected URL baseDirectory;
 
-    private Map<QName, Diff> diffs = new HashMap<QName, Diff>();
+    private Map<QName, Diff> diffs = new HashMap<>();
 
-    private Map<QName, SimpleFeatureType> featureTypes = new HashMap<QName, SimpleFeatureType>();
+    private Map<QName, SimpleFeatureType> featureTypes = new HashMap<>();
 
     public IntegrationTestWFSClient(final String baseDirectory, WFSConfig config)
             throws ServiceException, IOException {
 
-        super(url(baseDirectory + "/GetCapabilities.xml"), new SimpleHttpClient(), config);
+        super(url(baseDirectory + "/GetCapabilities.xml"), HTTPClientFinder.createClient(), config);
 
         this.baseDirectory = url(baseDirectory);
     }
@@ -150,6 +149,7 @@ public class IntegrationTestWFSClient extends WFSClient {
         return ret;
     }
 
+    @SuppressWarnings("PMD.CloseResource") // readers are wrapped and returned in the response
     protected Response mockGetFeature(GetFeatureRequest request) throws IOException {
 
         final QName typeName = request.getTypeName();
@@ -207,7 +207,7 @@ public class IntegrationTestWFSClient extends WFSClient {
                             });
         }
 
-        final List<SimpleFeature> originalFeatures = new ArrayList<SimpleFeature>();
+        final List<SimpleFeature> originalFeatures = new ArrayList<>();
         {
             SimpleFeature feature;
             while ((feature = allFeatures.parse()) != null) {
@@ -217,8 +217,7 @@ public class IntegrationTestWFSClient extends WFSClient {
 
         WFSStrategy strategy = getStrategy();
 
-        final Filter serverFiler =
-                ((AbstractWFSStrategy) strategy).splitFilters(typeName, request.getFilter())[0];
+        final Filter serverFiler = strategy.splitFilters(typeName, request.getFilter())[0];
 
         final Diff diff = diff(typeName);
 
@@ -229,14 +228,12 @@ public class IntegrationTestWFSClient extends WFSClient {
         }
 
         FeatureReader<SimpleFeatureType, SimpleFeature> allFeaturesReader = null;
-        if (originalFeatures.size() > 0) {
+        if (!originalFeatures.isEmpty()) {
             allFeaturesReader = DataUtilities.reader(originalFeatures);
         }
 
         final DiffFeatureReader<SimpleFeatureType, SimpleFeature> serverFilteredReader;
-        serverFilteredReader =
-                new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(
-                        allFeaturesReader, diff, serverFiler);
+        serverFilteredReader = new DiffFeatureReader<>(allFeaturesReader, diff, serverFiler);
         final GetParser<SimpleFeature> filteredParser =
                 new GetParser<SimpleFeature>() {
 
@@ -254,6 +251,7 @@ public class IntegrationTestWFSClient extends WFSClient {
                     }
 
                     @Override
+                    @SuppressWarnings("PMD.CloseResource") // reaaders are from memory lists
                     public int getNumberOfFeatures() {
                         if (-1 != allFeatures.getNumberOfFeatures()) {
                             // only if the original response included number of features (i.e. the
@@ -262,14 +260,12 @@ public class IntegrationTestWFSClient extends WFSClient {
 
                             FeatureReader<SimpleFeatureType, SimpleFeature> all = null;
                             try {
-                                if (originalFeatures.size() > 0) {
+                                if (!originalFeatures.isEmpty()) {
                                     all = DataUtilities.reader(originalFeatures);
                                 }
                                 final DiffFeatureReader<SimpleFeatureType, SimpleFeature>
                                         serverFiltered;
-                                serverFiltered =
-                                        new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(
-                                                all, diff);
+                                serverFiltered = new DiffFeatureReader<>(all, diff);
                                 try {
                                     int count = 0;
                                     while (serverFiltered.hasNext()) {
@@ -309,7 +305,7 @@ public class IntegrationTestWFSClient extends WFSClient {
 
     protected Response mockTransactionSuccess(TransactionRequest request) throws IOException {
 
-        List<String> added = new ArrayList<String>();
+        List<String> added = new ArrayList<>();
         int deleted = 0, updated = 0;
 
         for (TransactionElement e : request.getTransactionElements()) {
@@ -403,7 +399,7 @@ public class IntegrationTestWFSClient extends WFSClient {
 
         GetFeatureResponse response = (GetFeatureResponse) mockGetFeature(gf);
         GetParser<SimpleFeature> features = response.getFeatures();
-        List<SimpleFeature> result = new ArrayList<SimpleFeature>();
+        List<SimpleFeature> result = new ArrayList<>();
         SimpleFeature f;
         while ((f = features.parse()) != null) {
             result.add(f);

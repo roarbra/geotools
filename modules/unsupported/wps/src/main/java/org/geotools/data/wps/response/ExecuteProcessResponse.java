@@ -22,8 +22,8 @@ import java.io.InputStream;
 import javax.xml.parsers.ParserConfigurationException;
 import net.opengis.ows11.ExceptionReportType;
 import net.opengis.wps10.ExecuteResponseType;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.wps.WPSConfiguration;
 import org.geotools.xsd.Configuration;
@@ -112,9 +112,7 @@ public class ExecuteProcessResponse extends Response {
         try {
             // object = DocumentFactory.getInstance(inputStream, hints, Level.WARNING);
             object = parser.parse(inputStream);
-        } catch (SAXException e) {
-            throw (IOException) new IOException().initCause(e);
-        } catch (ParserConfigurationException e) {
+        } catch (SAXException | ParserConfigurationException e) {
             throw (IOException) new IOException().initCause(e);
         }
 

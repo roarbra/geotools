@@ -16,16 +16,19 @@
  */
 package org.geotools.filter.v2_0.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.List;
-import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.v1_1.FilterMockData;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.filter.v2_0.FESTestSupport;
 import org.geotools.gml3.v3_2.GML;
+import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
 import org.opengis.filter.And;
 import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 import org.opengis.filter.Id;
 import org.opengis.filter.Or;
 import org.opengis.filter.PropertyIsBetween;
@@ -41,7 +44,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.helpers.NamespaceSupport;
 
 public class FilterTypeBindingTest extends FESTestSupport {
-
+    @Test
     public void testParseId() throws Exception {
         String xml =
                 "<fes:Filter xmlns:fes='http://www.opengis.net/fes/2.0'>"
@@ -56,6 +59,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertEquals("InWaterA_1M.1234", f.getIdentifiers().iterator().next().getID());
     }
 
+    @Test
     public void testParseSpatial() throws Exception {
         String xml =
                 "<fes:Filter"
@@ -87,6 +91,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertTrue(e2.getValue() instanceof Polygon);
     }
 
+    @Test
     public void testParseSpatialLocalNamespace() throws Exception {
         String xml =
                 "<fes:Filter"
@@ -120,6 +125,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertTrue(e2.getValue() instanceof Polygon);
     }
 
+    @Test
     public void testParseLogical() throws Exception {
         String xml =
                 "<fes:Filter "
@@ -155,17 +161,18 @@ public class FilterTypeBindingTest extends FESTestSupport {
 
         PropertyIsEqualTo f11 = (PropertyIsEqualTo) f1.getChildren().get(0);
         assertEquals("FIELD1", ((PropertyName) f11.getExpression1()).getPropertyName());
-        assertEquals("10", ((Literal) f11.getExpression2()).evaluate(null, String.class));
+        assertEquals("10", f11.getExpression2().evaluate(null, String.class));
 
         PropertyIsEqualTo f12 = (PropertyIsEqualTo) f1.getChildren().get(1);
         assertEquals("FIELD1", ((PropertyName) f12.getExpression1()).getPropertyName());
-        assertEquals("20", ((Literal) f12.getExpression2()).evaluate(null, String.class));
+        assertEquals("20", f12.getExpression2().evaluate(null, String.class));
 
         PropertyIsEqualTo f2 = (PropertyIsEqualTo) f.getChildren().get(1);
         assertEquals("STATUS", ((PropertyName) f2.getExpression1()).getPropertyName());
-        assertEquals("VALID", ((Literal) f2.getExpression2()).evaluate(null, String.class));
+        assertEquals("VALID", f2.getExpression2().evaluate(null, String.class));
     }
 
+    @Test
     public void testParse1() throws Exception {
         String xml =
                 "<fes:Filter "
@@ -215,6 +222,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertEquals(800, f2.getUpperBoundary().evaluate(null, Integer.class).intValue());
     }
 
+    @Test
     public void testEncodeId() throws Exception {
         Document doc = encode(FilterMockData.id(), FES.Filter);
         assertEquals("fes:Filter", doc.getDocumentElement().getNodeName());
@@ -222,6 +230,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertEquals(3, getElementsByQName(doc, FES.ResourceId).getLength());
     }
 
+    @Test
     public void testEncodeRsourceId() throws Exception {
         Document doc = encode(FilterMockData.resourceId(), FES.Filter);
         assertEquals("fes:Filter", doc.getDocumentElement().getNodeName());
@@ -230,6 +239,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertEquals(4, getElementsByQName(doc, FES.ResourceId).getLength());
     }
 
+    @Test
     public void testEncodeSpatial() throws Exception {
         Document doc = encode(FilterMockData.intersects(), FES.Filter);
         assertEquals("fes:Filter", doc.getDocumentElement().getNodeName());
@@ -241,6 +251,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertNotNull(getElementByQName(e, GML.Point));
     }
 
+    @Test
     public void testEncodeBoundingBox() throws Exception {
         Document doc = encode(FilterMockData.bbox(), FES.Filter);
 
@@ -250,6 +261,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertEquals(1, doc.getElementsByTagNameNS(GML.NAMESPACE, "lowerCorner").getLength());
     }
 
+    @Test
     public void testEncodeComparison() throws Exception {
         Document doc = encode(FilterMockData.propertyIsEqualTo(), FES.Filter);
         assertEquals("fes:Filter", doc.getDocumentElement().getNodeName());
@@ -262,6 +274,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertNotNull(getElementByQName(e, FES.Literal));
     }
 
+    @Test
     public void testEncodeLogic() throws Exception {
         Document doc = encode(FilterMockData.and(), FES.Filter);
         assertEquals("fes:Filter", doc.getDocumentElement().getNodeName());
@@ -273,6 +286,7 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertNotNull(getElementByQName(e, FES.PropertyIsNotEqualTo));
     }
 
+    @Test
     public void testParseGmlWithoutSchemaLocation() throws Exception {
         String xml =
                 "<fes:Filter xmlns:gml='http://www.opengis.net/gml/3.2' xmlns:fes='http://www.opengis.net/fes/2.0'> "
@@ -290,9 +304,8 @@ public class FilterTypeBindingTest extends FESTestSupport {
         assertTrue(f.getExpression2() instanceof Literal);
     }
 
+    @Test
     public void testParseExtendedOperator() throws Exception {
-        final FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
-
         String xml =
                 "<fes:Filter "
                         + "xmlns:fes='http://www.opengis.net/fes/2.0' xmlns:myops='http://www.someserver.com/myops/1.0'> "

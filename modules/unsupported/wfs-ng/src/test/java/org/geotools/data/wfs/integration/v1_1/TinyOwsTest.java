@@ -31,12 +31,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.IOUtils;
 import org.custommonkey.xmlunit.XMLAssert;
 import org.geotools.data.Query;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.wfs.AbstractTestHTTPClient;
 import org.geotools.data.wfs.TestHttpResponse;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSTestData;
@@ -44,6 +41,9 @@ import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.identity.FeatureIdImpl;
+import org.geotools.http.AbstractHttpClient;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.util.factory.GeoTools;
 import org.junit.Test;
@@ -211,7 +211,7 @@ public class TinyOwsTest {
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
 
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Set<FeatureId> fids = new HashSet<FeatureId>();
+        Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
         Query query = new Query(typeName.getLocalPart(), ff.id(fids));
         iterate(source.getFeatures(query), 1, true);
@@ -296,7 +296,7 @@ public class TinyOwsTest {
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
 
-        Set<FeatureId> fids = new HashSet<FeatureId>();
+        Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
 
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
@@ -342,7 +342,7 @@ public class TinyOwsTest {
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
 
-        Set<FeatureId> fids = new HashSet<FeatureId>();
+        Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
 
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
@@ -394,7 +394,7 @@ public class TinyOwsTest {
         SimpleFeatureSource source = wfs.getFeatureSource(typeName);
         SimpleFeature sf = getSampleSimpleFeature(source);
 
-        Set<FeatureId> fids = new HashSet<FeatureId>();
+        Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
 
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
@@ -418,14 +418,11 @@ public class TinyOwsTest {
 
     private SimpleFeature getSampleSimpleFeature(SimpleFeatureSource source) throws IOException {
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Set<FeatureId> fids = new HashSet<FeatureId>();
+        Set<FeatureId> fids = new HashSet<>();
         fids.add(new FeatureIdImpl("comuni11.2671"));
         Query query = new Query(typeName.getLocalPart(), ff.id(fids));
-        SimpleFeatureIterator reader = source.getFeatures(query).features();
-        try {
+        try (SimpleFeatureIterator reader = source.getFeatures(query).features()) {
             return reader.next();
-        } finally {
-            reader.close();
         }
     }
 
@@ -491,13 +488,13 @@ public class TinyOwsTest {
         return sf;
     }
 
-    class TinyOwsMockHttpClient extends AbstractTestHTTPClient {
+    class TinyOwsMockHttpClient extends AbstractHttpClient {
         @Override
         public HTTPResponse get(URL url) throws IOException {
             if (url.getQuery().contains("REQUEST=GetCapabilities")) {
                 return new TestHttpResponse(url("tinyows/GetCapabilities.xml"), "text/xml");
             } else {
-                return super.get(url);
+                throw new IOException("Url not supported by mock client:" + url.toString());
             }
         }
 
@@ -515,8 +512,7 @@ public class TinyOwsTest {
             } else if (isDescribeFeatureRequest(request)) {
                 return new TestHttpResponse(url("tinyows/DescribeFeatureType.xsd"), "text/xml");
             } else {
-                return super.post(
-                        url, new ByteArrayInputStream(request.getBytes("UTF-8")), postContentType);
+                throw new IOException("Request not supported by mock client.");
             }
         }
     }

@@ -36,12 +36,6 @@ import org.opengis.referencing.operation.TransformException;
  * @author Martin Desruisseaux (IRD)
  */
 public final class CategoryListTest {
-    /** Set to {@code true} in order to print diagnostic messages. */
-    private static final boolean VERBOSE = false;
-
-    /** Small value for comparaisons. */
-    private static final double EPS = 1E-9;
-
     /** Random number generator for this test. */
     private static final Random random = new Random(1471753385855374101L);
 
@@ -79,8 +73,8 @@ public final class CategoryListTest {
             for (int i = 0; i < categories.length; i++) {
                 array[i] = categories[i].minimum;
             }
-            for (int i = 0; i < categories.length; i++) {
-                final double expected = categories[i].minimum;
+            for (Category category : categories) {
+                final double expected = category.minimum;
                 final int foundAt = CategoryList.binarySearch(array, expected);
                 final double actual = categories[foundAt].minimum;
                 assertEquals("binarySearch", toHexString(expected), toHexString(actual));
@@ -103,19 +97,13 @@ public final class CategoryListTest {
             new CategoryList(categories, null);
             fail("Argument check");
         } catch (IllegalArgumentException exception) {
-            if (VERBOSE) {
-                // System.out.println(exception.getLocalizedMessage());
-                // This is the expected exception.
-            }
+            // expected
         }
         try {
             new CategoryList(categories, null);
             fail("Argument check");
         } catch (IllegalArgumentException exception) {
-            if (VERBOSE) {
-                // System.out.println(exception.getLocalizedMessage());
-                // This is the expected exception.
-            }
+            // expected
         }
         // Removes the wrong category. Now, construction should succed.
         categories = XArray.resize(categories, categories.length - 1);
@@ -147,8 +135,8 @@ public final class CategoryListTest {
             final Range range = list.getRange();
             assertEquals("min", 0, ((Number) range.getMinValue()).doubleValue(), 0);
             assertEquals("max", 120, ((Number) range.getMaxValue()).doubleValue(), 0);
-            assertTrue("min included", range.isMinIncluded() == true);
-            assertTrue("max included", range.isMaxIncluded() == false);
+            assertEquals("min included", true, range.isMinIncluded());
+            assertEquals("max included", false, range.isMaxIncluded());
             /*
              * Checks category search.
              */

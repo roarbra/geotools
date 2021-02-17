@@ -38,6 +38,7 @@ import org.opengis.filter.expression.Function;
  *
  * @author Andrea Aime - GeoSolutions
  */
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCFunctionOnlineTest extends JDBCTestSupport {
     static final Logger LOGGER = Logging.getLogger(JDBCFunctionOnlineTest.class);
 
@@ -325,7 +326,7 @@ public abstract class JDBCFunctionOnlineTest extends JDBCTestSupport {
 
     void assertFeatures(SimpleFeatureSource fs2, Filter filter, String... ids) throws IOException {
 
-        Set<String> idSet = new HashSet<String>(Arrays.asList(ids));
+        Set<String> idSet = new HashSet<>(Arrays.asList(ids));
         int count = 0;
         try (SimpleFeatureIterator fi = fs.getFeatures(filter).features()) {
             while (fi.hasNext()) {

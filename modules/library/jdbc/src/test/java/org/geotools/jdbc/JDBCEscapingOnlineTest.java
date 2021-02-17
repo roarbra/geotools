@@ -8,6 +8,7 @@ import org.geotools.data.store.ContentFeatureCollection;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCEscapingOnlineTest extends JDBCTestSupport {
 
     protected SimpleFeatureType escapingSchema;
@@ -32,7 +33,7 @@ public abstract class JDBCEscapingOnlineTest extends JDBCTestSupport {
 
         try (FeatureWriter<SimpleFeatureType, SimpleFeature> fw =
                 dataStore.getFeatureWriterAppend(tname(ESCAPING), Transaction.AUTO_COMMIT)) {
-            SimpleFeature f = (SimpleFeature) fw.next();
+            SimpleFeature f = fw.next();
             f.setAttribute(aname(ID), 1);
             f.setAttribute(aname(NAME), "abc");
             fw.write();

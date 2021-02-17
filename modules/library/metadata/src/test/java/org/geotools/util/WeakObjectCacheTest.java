@@ -32,23 +32,23 @@ import org.junit.Test;
 public final class WeakObjectCacheTest {
     private Integer key1 = 1;
     private Integer key2 = 2;
-    private String value1 = new String("value 1");
-    private String value2 = new String("value 2");
-    private String value3 = new String("value 3");
+    private String value1 = "value 1";
+    private String value2 = "value 2";
+    private String value3 = "value 3";
 
     @Test
     public void testSimple() {
-        ObjectCache cache = new WeakObjectCache();
+        ObjectCache<Integer, String> cache = new WeakObjectCache<>();
         assertNotNull(cache);
 
-        assertEquals(null, cache.get(key1));
+        assertNull(cache.get(key1));
 
         cache.writeLock(key1);
         cache.put(key1, value1);
         cache.writeUnLock(key1);
         assertEquals(value1, cache.get(key1));
 
-        assertEquals(null, cache.get(key2));
+        assertNull(cache.get(key2));
 
         // test getKeys()
         assertEquals(1, cache.getKeys().size());
@@ -57,17 +57,17 @@ public final class WeakObjectCacheTest {
 
     @Test
     public void testRemoveSimple() {
-        ObjectCache cache = new WeakObjectCache();
+        ObjectCache<Integer, String> cache = new WeakObjectCache<>();
         assertNotNull(cache);
 
-        assertEquals(null, cache.get(key1));
+        assertNull(cache.get(key1));
 
         cache.writeLock(key1);
         cache.put(key1, value1);
         cache.writeUnLock(key1);
         assertEquals(value1, cache.get(key1));
 
-        assertEquals(null, cache.get(key2));
+        assertNull(cache.get(key2));
 
         // test getKeys()
         assertEquals(1, cache.getKeys().size());
@@ -80,7 +80,7 @@ public final class WeakObjectCacheTest {
 
     @Test
     public void testConcurrent() throws InterruptedException {
-        ObjectCache cache = new WeakObjectCache();
+        ObjectCache<Integer, String> cache = new WeakObjectCache<>();
 
         // lock the cache as if we were writing
         cache.writeLock(key1);
@@ -126,10 +126,10 @@ public final class WeakObjectCacheTest {
 
     private class WriterThread implements Runnable {
 
-        ObjectCache cache = null;
+        ObjectCache<Integer, String> cache = null;
         Object[] values = null;
 
-        public WriterThread(ObjectCache cache) {
+        public WriterThread(ObjectCache<Integer, String> cache) {
             this.cache = cache;
         }
 

@@ -27,7 +27,6 @@ import java.awt.RenderingHints;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.media.jai.JAI;
 import org.apache.commons.logging.LogFactory;
@@ -62,7 +61,7 @@ public final class GeoToolsTest {
         final Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
         assertFalse(hints.isEmpty());
 
-        Map<RenderingHints.Key, Object> map = new HashMap<RenderingHints.Key, Object>();
+        Map<RenderingHints.Key, Object> map = new HashMap<>();
         assertNull(map.put(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.FALSE));
         map = Collections.unmodifiableMap(map);
         assertFalse(map.isEmpty());
@@ -118,7 +117,6 @@ public final class GeoToolsTest {
         // this should always be generated during a maven or ide build
         Manifest metadata = GeoTools.getManifest(GeoTools.class);
         assertFalse("manifest metadata", metadata.getMainAttributes().isEmpty());
-        Attributes attributes = metadata.getAttributes("Project-Version");
         assertEquals(
                 GeoTools.getVersion().toString(),
                 metadata.getMainAttributes().getValue("Project-Version"));

@@ -20,6 +20,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.Properties;
 import javax.imageio.ImageIO;
 import javax.mail.internet.ContentType;
-import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.StringBuilderWriter;
 import org.geotools.brewer.styling.builder.NamedLayerBuilder;
@@ -40,9 +40,10 @@ import org.geotools.data.ows.OperationType;
 import org.geotools.data.ows.Specification;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.commons.MultithreadedHttpClient;
 import org.geotools.ows.wms.CRSEnvelope;
 import org.geotools.ows.wms.Layer;
-import org.geotools.ows.wms.MultithreadedHttpClient;
 import org.geotools.ows.wms.WMS1_1_1;
 import org.geotools.ows.wms.WMSCapabilities;
 import org.geotools.ows.wms.WebMapServer;
@@ -61,8 +62,12 @@ import org.geotools.styling.StyleFactory;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.styling.StyledLayerDescriptor;
 import org.geotools.util.factory.GeoTools;
+import org.geotools.util.factory.Hints;
 import org.geotools.xml.styling.SLDParser;
 import org.geotools.xml.styling.SLDTransformer;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
@@ -110,7 +115,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *
  * @author Jody Garnett
  */
-public class LocalGeoServerOnlineTest extends TestCase {
+public class LocalGeoServerOnlineTest {
 
     private static String LOCAL_GEOSERVER = "http://127.0.0.1:8080/geoserver/ows?SERVICE=WMS&";
     private static String LOCAL_LAYERS = "test_shp:TRONCON_ROUTE";
@@ -127,11 +132,10 @@ public class LocalGeoServerOnlineTest extends TestCase {
         } catch (MalformedURLException e) {
             serverURL = null;
         }
-        ;
     }
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         // System.out.println("CRS configured to
         // forceXY"+System.getProperty("org.geotools.referencing.forceXY"));
         // Hints.putSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
@@ -139,7 +143,13 @@ public class LocalGeoServerOnlineTest extends TestCase {
             // do setup once!
             if (serverURL != null) {
                 try {
-                    wms = new WebMapServer(serverURL, new MultithreadedHttpClient());
+                    wms =
+                            new WebMapServer(
+                                    serverURL,
+                                    HTTPClientFinder.createClient(
+                                            new Hints(
+                                                    Hints.HTTP_CLIENT,
+                                                    MultithreadedHttpClient.class)));
                     capabilities = wms.getCapabilities();
                 } catch (Exception eek) {
                     serverURL = null;
@@ -149,40 +159,43 @@ public class LocalGeoServerOnlineTest extends TestCase {
         }
     }
 
+    @Test
     public void testCRSEnvelope() {
         CRSEnvelope test = new CRSEnvelope(null, -20, -100, 20, 100);
         test.setSRSName("EPSG:4326", false);
         CoordinateReferenceSystem crs = test.getCoordinateReferenceSystem();
-        assertEquals(AxisOrder.NORTH_EAST, CRS.getAxisOrder(crs));
+        Assert.assertEquals(AxisOrder.NORTH_EAST, CRS.getAxisOrder(crs));
 
         test = new CRSEnvelope(null, 100, -20, 100, 20);
         test.setSRSName("EPSG:4326", true);
         crs = test.getCoordinateReferenceSystem();
-        assertEquals(AxisOrder.EAST_NORTH, CRS.getAxisOrder(crs));
+        Assert.assertEquals(AxisOrder.EAST_NORTH, CRS.getAxisOrder(crs));
     }
 
+    @Test
     public void testLocalGeoServer() {
-        assertNotNull(wms);
-        assertNotNull(capabilities);
+        Assert.assertNotNull(wms);
+        Assert.assertNotNull(capabilities);
 
-        assertEquals("Version Negotiation", "1.3.0", capabilities.getVersion());
+        Assert.assertEquals("Version Negotiation", "1.3.0", capabilities.getVersion());
         Layer root = capabilities.getLayer();
-        assertNotNull(root);
-        assertNull("root layer does not have a name", root.getName());
-        assertNotNull("title", root.getTitle());
+        Assert.assertNotNull(root);
+        Assert.assertNull("root layer does not have a name", root.getName());
+        Assert.assertNotNull("title", root.getTitle());
     }
 
+    @Test
     public void testStates() {
         Layer states = find("topp:states");
-        assertNotNull(states);
+        Assert.assertNotNull(states);
 
         ResourceInfo info = wms.getInfo(states);
-        assertNotNull(info);
-        assertEquals(states.getTitle(), info.getTitle());
+        Assert.assertNotNull(info);
+        Assert.assertEquals(states.getTitle(), info.getTitle());
 
         ReferencedEnvelope bounds = info.getBounds();
-        assertNotNull(bounds);
-        assertFalse(bounds.isEmpty());
+        Assert.assertNotNull(bounds);
+        Assert.assertFalse(bounds.isEmpty());
     }
 
     private Layer find(String name, WMSCapabilities caps) {
@@ -198,29 +211,32 @@ public class LocalGeoServerOnlineTest extends TestCase {
         return find(name, capabilities);
     }
 
+    @Test
     public void testServiceInfo() {
         ServiceInfo info = wms.getInfo();
-        assertNotNull(info);
+        Assert.assertNotNull(info);
 
-        assertEquals(serverURL, wms.getCapabilities().getRequest().getGetCapabilities().getGet());
-        assertEquals("GeoServer Web Map Service", info.getTitle());
+        Assert.assertEquals(
+                serverURL, wms.getCapabilities().getRequest().getGetCapabilities().getGet());
+        Assert.assertEquals("GeoServer Web Map Service", info.getTitle());
 
-        assertNotNull(info.getDescription());
+        Assert.assertNotNull(info.getDescription());
     }
 
     String axisName(CoordinateReferenceSystem crs, int dimension) {
         return crs.getCoordinateSystem().getAxis(dimension).getName().getCode();
     }
 
+    @Test
     public void testImgSample130() throws Exception {
         Layer water_bodies = find("topp:tasmania_water_bodies");
-        assertNotNull("Img_Sample layer found", water_bodies);
+        Assert.assertNotNull("Img_Sample layer found", water_bodies);
         CRSEnvelope latLon = water_bodies.getLatLonBoundingBox();
-        assertEquals(
+        Assert.assertEquals(
                 "LatLonBoundingBox axis 0 name",
                 "Geodetic longitude",
                 axisName(latLon.getCoordinateReferenceSystem(), 0));
-        assertEquals(
+        Assert.assertEquals(
                 "LatLonBoundingBox axis 0 name",
                 "Geodetic latitude",
                 axisName(latLon.getCoordinateReferenceSystem(), 1));
@@ -231,22 +247,22 @@ public class LocalGeoServerOnlineTest extends TestCase {
         CoordinateReferenceSystem boundsCRS = bounds.getCoordinateReferenceSystem();
         if (globalXY) {
             // ensure WMS CRSEnvelope returned according to application globalXY setting
-            assertEquals("EPSG:4326", AxisOrder.EAST_NORTH, CRS.getAxisOrder(boundsCRS));
+            Assert.assertEquals("EPSG:4326", AxisOrder.EAST_NORTH, CRS.getAxisOrder(boundsCRS));
         } else {
-            assertEquals("EPSG:4326", AxisOrder.NORTH_EAST, CRS.getAxisOrder(boundsCRS));
+            Assert.assertEquals("EPSG:4326", AxisOrder.NORTH_EAST, CRS.getAxisOrder(boundsCRS));
         }
         if (CRS.getAxisOrder(boundsCRS) == AxisOrder.EAST_NORTH) {
-            assertEquals("axis order 0 min", latLon.getMinimum(1), bounds.getMinimum(1));
-            assertEquals("axis order 1 min", latLon.getMinimum(0), bounds.getMinimum(0));
-            assertEquals("axis order 1 max", latLon.getMaximum(0), bounds.getMaximum(0));
-            assertEquals("axis order 1 min", latLon.getMaximum(1), bounds.getMaximum(1));
+            Assert.assertEquals("axis order 0 min", latLon.getMinimum(1), bounds.getMinimum(1), 0d);
+            Assert.assertEquals("axis order 1 min", latLon.getMinimum(0), bounds.getMinimum(0), 0d);
+            Assert.assertEquals("axis order 1 max", latLon.getMaximum(0), bounds.getMaximum(0), 0d);
+            Assert.assertEquals("axis order 1 min", latLon.getMaximum(1), bounds.getMaximum(1), 0d);
         }
 
         if (CRS.getAxisOrder(boundsCRS) == AxisOrder.NORTH_EAST) {
-            assertEquals("axis order 0 min", latLon.getMinimum(1), bounds.getMinimum(0));
-            assertEquals("axis order 1 min", latLon.getMinimum(0), bounds.getMinimum(1));
-            assertEquals("axis order 1 max", latLon.getMaximum(0), bounds.getMaximum(1));
-            assertEquals("axis order 1 min", latLon.getMaximum(1), bounds.getMaximum(0));
+            Assert.assertEquals("axis order 0 min", latLon.getMinimum(1), bounds.getMinimum(0), 0d);
+            Assert.assertEquals("axis order 1 min", latLon.getMinimum(0), bounds.getMinimum(1), 0d);
+            Assert.assertEquals("axis order 1 max", latLon.getMaximum(0), bounds.getMaximum(1), 0d);
+            Assert.assertEquals("axis order 1 min", latLon.getMaximum(1), bounds.getMaximum(0), 0d);
         }
 
         // GETMAP
@@ -262,32 +278,32 @@ public class LocalGeoServerOnlineTest extends TestCase {
         checkGetFeatureInfo(wms, water_bodies, CRS.decode("urn:x-ogc:def:crs:EPSG::4326"));
     }
 
+    @Test
     public void testImageSample111() throws Exception {
         WebMapServer wms111 = new WebMapServer(new URL(serverURL + "&VERSION=1.1.1"));
         WMSCapabilities caps = wms111.getCapabilities();
-        assertEquals("1.1.1", caps.getVersion());
+        Assert.assertEquals("1.1.1", caps.getVersion());
 
         Layer water_bodies = find("topp:tasmania_water_bodies", caps);
-        assertNotNull("Img_Sample layer found", water_bodies);
+        Assert.assertNotNull("Img_Sample layer found", water_bodies);
         CRSEnvelope latLon = water_bodies.getLatLonBoundingBox();
-        assertEquals(
+        Assert.assertEquals(
                 "LatLonBoundingBox axis 0 name",
                 "Geodetic longitude",
                 axisName(latLon.getCoordinateReferenceSystem(), 0));
-        assertEquals(
+        Assert.assertEquals(
                 "LatLonBoundingBox axis 1 name",
                 "Geodetic latitude",
                 axisName(latLon.getCoordinateReferenceSystem(), 1));
 
         CRSEnvelope bounds = water_bodies.getBoundingBoxes().get("EPSG:4326");
         CoordinateReferenceSystem boundsCRS = bounds.getCoordinateReferenceSystem();
-        assertEquals("EPSG:4326", AxisOrder.EAST_NORTH, CRS.getAxisOrder(boundsCRS));
-        ;
+        Assert.assertEquals("EPSG:4326", AxisOrder.EAST_NORTH, CRS.getAxisOrder(boundsCRS));
 
-        assertEquals("axis order 0 min", latLon.getMinimum(0), bounds.getMinimum(0));
-        assertEquals("axis order 1 min", latLon.getMinimum(1), bounds.getMinimum(1));
-        assertEquals("axis order 1 max", latLon.getMaximum(0), bounds.getMaximum(0));
-        assertEquals("axis order 1 min", latLon.getMaximum(1), bounds.getMaximum(1));
+        Assert.assertEquals("axis order 0 min", latLon.getMinimum(0), bounds.getMinimum(0), 0d);
+        Assert.assertEquals("axis order 1 min", latLon.getMinimum(1), bounds.getMinimum(1), 0d);
+        Assert.assertEquals("axis order 1 max", latLon.getMaximum(0), bounds.getMaximum(0), 0d);
+        Assert.assertEquals("axis order 1 min", latLon.getMaximum(1), bounds.getMaximum(1), 0d);
 
         // GETMAP
         checkGetMap(wms111, water_bodies, DefaultGeographicCRS.WGS84);
@@ -320,10 +336,9 @@ public class LocalGeoServerOnlineTest extends TestCase {
             throws Exception {
 
         layer.clearCache();
-        CRSEnvelope latLon = layer.getLatLonBoundingBox();
         GeneralEnvelope envelope = wms.getEnvelope(layer, crs);
-        assertFalse(envelope.isEmpty() || envelope.isNull() || envelope.isInfinite());
-        assertNotNull("Envelope " + CRS.toSRS(crs), envelope);
+        Assert.assertFalse(envelope.isEmpty() || envelope.isNull() || envelope.isInfinite());
+        Assert.assertNotNull("Envelope " + CRS.toSRS(crs), envelope);
 
         GetMapRequest getMap = wms.createGetMapRequest();
         OperationType operationType = wms.getCapabilities().getRequest().getGetMap();
@@ -340,11 +355,11 @@ public class LocalGeoServerOnlineTest extends TestCase {
         } else if (properties.containsKey("CRS")) {
             srs = properties.getProperty("CRS");
         }
-        assertNotNull("setBBox supplied SRS information", srs);
+        Assert.assertNotNull("setBBox supplied SRS information", srs);
         String expectedSRS = CRS.toSRS(envelope.getCoordinateReferenceSystem());
-        assertEquals("srs matches CRS.toSRS", expectedSRS, srs);
+        Assert.assertEquals("srs matches CRS.toSRS", expectedSRS, srs);
 
-        assertTrue("cite authority:" + srs, srs.contains("CRS") || srs.contains("EPSG"));
+        Assert.assertTrue("cite authority:" + srs, srs.contains("CRS") || srs.contains("EPSG"));
 
         // getMap.setSRS( srs );
 
@@ -352,26 +367,24 @@ public class LocalGeoServerOnlineTest extends TestCase {
         getMap.setFormat(format);
         getMap.setDimensions(500, 500);
 
-        URL url = getMap.getFinalURL();
         GetMapResponse response = wms.issueRequest(getMap);
-        assertEquals("image/jpeg", response.getContentType());
+        Assert.assertEquals("image/jpeg", response.getContentType());
 
-        InputStream stream = response.getInputStream();
-        BufferedImage image = ImageIO.read(stream);
-        assertNotNull("jpeg", image);
-        assertEquals(500, image.getWidth());
-        assertEquals(500, image.getHeight());
+        try (InputStream stream = response.getInputStream()) {
+            BufferedImage image = ImageIO.read(stream);
+            Assert.assertNotNull("jpeg", image);
+            Assert.assertEquals(500, image.getWidth());
+            Assert.assertEquals(500, image.getHeight());
 
-        int rgb = image.getRGB(70, 420);
-        Color sample = new Color(rgb);
-        boolean forceXY = Boolean.getBoolean(GeoTools.FORCE_LONGITUDE_FIRST_AXIS_ORDER);
-        String context = "srs=" + srs + " forceXY=" + forceXY + " Version=" + version;
-        if (Color.WHITE.equals(sample)) {
-            // System.out.println("FAIL: " + context + ": GetMap BBOX=" + envelope);
-            // System.out.println("--> " + url);
-            fail(context + ": GetMap BBOX=" + envelope);
-        } else {
-            // System.out.println("PASS: "+ context+": GetMap BBOX=" + bbox);
+            int rgb = image.getRGB(70, 420);
+            Color sample = new Color(rgb);
+            boolean forceXY = Boolean.getBoolean(GeoTools.FORCE_LONGITUDE_FIRST_AXIS_ORDER);
+            String context = "srs=" + srs + " forceXY=" + forceXY + " Version=" + version;
+            if (Color.WHITE.equals(sample)) {
+                // System.out.println("FAIL: " + context + ": GetMap BBOX=" + envelope);
+                // System.out.println("--> " + url);
+                Assert.fail(context + ": GetMap BBOX=" + envelope);
+            }
         }
     }
 
@@ -384,10 +397,9 @@ public class LocalGeoServerOnlineTest extends TestCase {
             throws Exception {
 
         layer.clearCache();
-        CRSEnvelope latLon = layer.getLatLonBoundingBox();
         GeneralEnvelope envelope = wms.getEnvelope(layer, crs);
-        assertFalse(envelope.isEmpty() || envelope.isNull() || envelope.isInfinite());
-        assertNotNull("Envelope " + CRS.toSRS(crs), envelope);
+        Assert.assertFalse(envelope.isEmpty() || envelope.isNull() || envelope.isInfinite());
+        Assert.assertNotNull("Envelope " + CRS.toSRS(crs), envelope);
 
         GetMapRequest getMap = wms.createGetMapRequest();
         OperationType operationType = wms.getCapabilities().getRequest().getGetMap();
@@ -399,33 +411,33 @@ public class LocalGeoServerOnlineTest extends TestCase {
         String format = format(operationType, "jpeg");
         getMap.setFormat(format);
         getMap.setDimensions(500, 500);
-        URL url = getMap.getFinalURL();
 
         GetFeatureInfoRequest getFeatureInfo = wms.createGetFeatureInfoRequest(getMap);
         getFeatureInfo.setInfoFormat("text/html");
         getFeatureInfo.setQueryLayers(Collections.singleton(layer));
         getFeatureInfo.setQueryPoint(75, 100);
-        URL url2 = getFeatureInfo.getFinalURL();
 
         GetFeatureInfoResponse response = wms.issueRequest(getFeatureInfo);
-        assertEquals("text/html", response.getContentType());
-        InputStream stream = response.getInputStream();
-        StringBuilderWriter writer = new StringBuilderWriter();
-        IOUtils.copy(stream, writer, "UTF-8");
+        Assert.assertEquals("text/html", response.getContentType());
+        try (InputStream stream = response.getInputStream();
+                StringBuilderWriter writer = new StringBuilderWriter()) {
+            IOUtils.copy(stream, writer, "UTF-8");
 
-        String info = writer.toString();
-        assertTrue("response available", !info.isEmpty());
-        assertTrue("html", info.contains("<html") || info.contains("<HTML"));
-        boolean forceXY = Boolean.getBoolean(GeoTools.FORCE_LONGITUDE_FIRST_AXIS_ORDER);
-        String context = "srs=" + srs + " forceXY=" + forceXY + " Version=" + version;
-        if (!info.contains("tasmania_water_bodies.3")) {
-            // System.out.println("FAIL: " + context + ": GetFeatureInfo BBOX=" + envelope);
-            // System.out.println("GETMAP         --> " + url);
-            // System.out.println("GETFEATUREINFO --> " + url2);
-            fail(context + ": GetFeatureInfo BBOX=" + envelope);
+            String info = writer.toString();
+            Assert.assertFalse("response available", info.isEmpty());
+            Assert.assertTrue("html", info.contains("<html") || info.contains("<HTML"));
+            boolean forceXY = Boolean.getBoolean(GeoTools.FORCE_LONGITUDE_FIRST_AXIS_ORDER);
+            String context = "srs=" + srs + " forceXY=" + forceXY + " Version=" + version;
+            if (!info.contains("tasmania_water_bodies.3")) {
+                // System.out.println("FAIL: " + context + ": GetFeatureInfo BBOX=" + envelope);
+                // System.out.println("GETMAP         --> " + url);
+                // System.out.println("GETFEATUREINFO --> " + url2);
+                Assert.fail(context + ": GetFeatureInfo BBOX=" + envelope);
+            }
         }
     }
 
+    @Test
     public void testGetStyle() throws Exception {
 
         String baseUrl = LocalGeoServerOnlineTest.LOCAL_GEOSERVER;
@@ -450,53 +462,61 @@ public class LocalGeoServerOnlineTest extends TestCase {
         wmsRequest.setLayers(layers);
         // Test URL
         String queryParamters = wmsRequest.getFinalURL().getQuery();
-        Map parameters = new HashMap();
+        Map<String, String> parameters = new HashMap<>();
         String[] rawParameters = queryParamters.split("&");
         for (String param : rawParameters) {
             String[] keyValue = param.split("=");
             parameters.put(keyValue[0], keyValue[1]);
         }
 
-        assertTrue(parameters.size() >= 4);
-        assertEquals("WMS", parameters.get("SERVICE"));
-        assertEquals("GetStyles", parameters.get("REQUEST"));
-        assertEquals("1.1.1", parameters.get("VERSION"));
-        assertEquals(layers, parameters.get("LAYERS"));
+        Assert.assertTrue(parameters.size() >= 4);
+        Assert.assertEquals("WMS", parameters.get("SERVICE"));
+        Assert.assertEquals("GetStyles", parameters.get("REQUEST"));
+        Assert.assertEquals("1.1.1", parameters.get("VERSION"));
+        Assert.assertEquals(layers, parameters.get("LAYERS"));
 
         wmsResponse = server.issueRequest(wmsRequest);
 
         // Set encoding of response from HTTP content-type header
         ContentType contentType = new ContentType(wmsResponse.getContentType());
+        try (InputStreamReader stream = getInputStreamReader(wmsResponse, contentType)) {
+
+            Style[] styles = (new SLDParser(styleFactory, stream)).readXML();
+
+            assert styles.length > 0;
+
+            SLDTransformer styleTransform = new SLDTransformer();
+            StyledLayerDescriptorBuilder SLDBuilder = new StyledLayerDescriptorBuilder();
+
+            NamedLayerBuilder namedLayerBuilder = SLDBuilder.namedLayer();
+            namedLayerBuilder.name(layers);
+            StyleBuilder styleBuilder = namedLayerBuilder.style();
+
+            for (int i = 0; i < styles.length; i++) {
+                styleBuilder.reset(styles[i]);
+                styles[i] = styleBuilder.build();
+            }
+
+            NamedLayer namedLayer = namedLayerBuilder.build();
+
+            for (Style style : styles) namedLayer.addStyle(style);
+
+            StyledLayerDescriptor sld = (new StyledLayerDescriptorBuilder()).build();
+            sld.addStyledLayer(namedLayer);
+            String xml = styleTransform.transform(sld);
+            assert xml.length() > 300;
+        }
+    }
+
+    private InputStreamReader getInputStreamReader(
+            GetStylesResponse wmsResponse, ContentType contentType)
+            throws UnsupportedEncodingException {
         InputStreamReader stream;
         if (contentType.getParameter("charset") != null)
             stream =
                     new InputStreamReader(
                             wmsResponse.getInputStream(), contentType.getParameter("charset"));
         else stream = new InputStreamReader(wmsResponse.getInputStream());
-
-        Style[] styles = (new SLDParser(styleFactory, stream)).readXML();
-
-        assert styles.length > 0;
-
-        SLDTransformer styleTransform = new SLDTransformer();
-        StyledLayerDescriptorBuilder SLDBuilder = new StyledLayerDescriptorBuilder();
-
-        NamedLayerBuilder namedLayerBuilder = SLDBuilder.namedLayer();
-        namedLayerBuilder.name(layers);
-        StyleBuilder styleBuilder = namedLayerBuilder.style();
-
-        for (int i = 0; i < styles.length; i++) {
-            styleBuilder.reset(styles[i]);
-            styles[i] = styleBuilder.build();
-        }
-
-        NamedLayer namedLayer = namedLayerBuilder.build();
-
-        for (Style style : styles) namedLayer.addStyle(style);
-
-        StyledLayerDescriptor sld = (new StyledLayerDescriptorBuilder()).build();
-        sld.addStyledLayer(namedLayer);
-        String xml = styleTransform.transform(sld);
-        assert xml.length() > 300;
+        return stream;
     }
 }

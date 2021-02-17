@@ -23,10 +23,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import org.geotools.data.*;
+import java.util.Map;
+import org.geotools.data.FeatureReader;
+import org.geotools.data.FeatureWriter;
+import org.geotools.data.Query;
+import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.NameImpl;
@@ -46,10 +49,11 @@ import org.opengis.filter.FilterFactory;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
     public void testGetNames() throws IOException {
         String[] typeNames = dataStore.getTypeNames();
-        assertTrue(new HashSet(Arrays.asList(typeNames)).contains(tname("ft1")));
+        assertTrue(new HashSet<>(Arrays.asList(typeNames)).contains(tname("ft1")));
     }
 
     public void testGetSchema() throws Exception {
@@ -128,7 +132,7 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
         SimpleFeatureType featureType = builder.buildFeatureType();
         dataStore.createSchema(featureType);
 
-        SimpleFeatureType ft2 = dataStore.getSchema(tname("ft2"));
+        dataStore.getSchema(tname("ft2"));
         // assertEquals(ft2, featureType);
 
         // grab a writer
@@ -413,8 +417,7 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
                 dataStore.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             for (int i = 0; i < 1; i++) {
                 assertTrue(reader.hasNext());
-
-                SimpleFeature feature = reader.next();
+                reader.next();
             }
 
             assertFalse(reader.hasNext());
@@ -481,8 +484,8 @@ public abstract class JDBCDataStoreOnlineTest extends JDBCTestSupport {
     }
 
     @Override
-    protected HashMap createDataStoreFactoryParams() throws Exception {
-        HashMap params = super.createDataStoreFactoryParams();
+    protected Map<String, Object> createDataStoreFactoryParams() throws Exception {
+        Map<String, Object> params = super.createDataStoreFactoryParams();
         // This test expects the write to happen right away. Disable buffering.
         params.put(JDBCDataStoreFactory.BATCH_INSERT_SIZE.key, 1);
         return params;

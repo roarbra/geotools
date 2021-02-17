@@ -18,7 +18,6 @@
 package org.geotools.filter.function;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
@@ -26,7 +25,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.expression.Expression;
 import org.opengis.filter.expression.Function;
 import org.opengis.filter.expression.Literal;
 
@@ -43,7 +41,7 @@ public class RecodeFunctionTest extends SEFunctionTestBase {
 
     @Before
     public void setup() {
-        parameters = new ArrayList<Expression>();
+        parameters = new ArrayList<>();
     }
 
     @Test
@@ -55,7 +53,7 @@ public class RecodeFunctionTest extends SEFunctionTestBase {
         Function fn = finder.findFunction("recode", parameters, fallback);
         Object result = fn.evaluate(feature(ints[0]));
 
-        assertFalse("Could not locate 'recode' function", result.equals(fallback.getValue()));
+        assertNotEquals("Could not locate 'recode' function", result, fallback.getValue());
     }
 
     @Test
@@ -103,7 +101,7 @@ public class RecodeFunctionTest extends SEFunctionTestBase {
             throw new IllegalArgumentException("data and values arrays should be the same length");
         }
 
-        parameters = new ArrayList<Expression>();
+        parameters = new ArrayList<>();
         parameters.add(ff2.property("value"));
 
         for (int i = 0; i < data.length; i++) {

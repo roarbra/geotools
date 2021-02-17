@@ -59,18 +59,6 @@
       </modules>
     </profile>
     <profile>
-      <id>geometry</id>
-      <activation>
-        <property>
-          <name>all</name>
-        </property>
-      </activation>
-      <modules>
-        <module>jts-wrapper</module>
-        <module>geometry</module>
-      </modules>
-    </profile>
-    <profile>
       <id>wps</id>
       <activation>
         <property>
@@ -214,17 +202,6 @@
       <id>arcgis-rest</id>
       <modules>
         <module>arcgis-rest</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>arcsde</id>
-      <activation>
-        <property>
-          <name>all</name>
-        </property>
-      </activation>
-      <modules>
-        <module>arcsde</module>
       </modules>
     </profile>
   </profiles>

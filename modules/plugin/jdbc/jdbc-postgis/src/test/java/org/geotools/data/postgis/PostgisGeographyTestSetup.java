@@ -23,6 +23,7 @@ import org.geotools.jdbc.JDBCGeographyTestSetup;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.util.Version;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class PostgisGeographyTestSetup extends JDBCGeographyTestSetup {
 
     public PostgisGeographyTestSetup(JDBCTestSetup delegate) {
@@ -48,22 +49,14 @@ public class PostgisGeographyTestSetup extends JDBCGeographyTestSetup {
 
     @Override
     public boolean isGeographySupportAvailable() throws Exception {
-        Connection cx = null;
-        Statement st = null;
-        ResultSet rs = null;
-        try {
-            cx = getDataSource().getConnection();
-            st = cx.createStatement();
-            rs = st.executeQuery("select PostGIS_Lib_Version()");
+        try (Connection cx = getDataSource().getConnection();
+                Statement st = cx.createStatement();
+                ResultSet rs = st.executeQuery("select PostGIS_Lib_Version()")) {
             if (rs.next()) {
                 return new Version(rs.getString(1)).compareTo(new Version("1.5.0")) >= 0;
             } else {
                 return true;
             }
-        } finally {
-            rs.close();
-            st.close();
-            cx.close();
         }
     }
 

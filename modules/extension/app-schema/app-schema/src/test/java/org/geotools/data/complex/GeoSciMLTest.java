@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.geotools.data.DataAccess;
 import org.geotools.data.DataAccessFinder;
@@ -62,24 +61,17 @@ import org.opengis.feature.type.Name;
  * @since 2.4
  */
 public class GeoSciMLTest extends AppSchemaTestSupport {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GeoSciMLTest.class);
-
     private static final String GSMLNS = "http://www.cgi-iugs.org/xml/GeoSciML/2";
-
-    private static final String GMLNS = "http://www.opengis.net/gml";
 
     private static final String schemaBase = "/test-data/";
 
     private static EmfComplexFeatureReader reader;
 
-    private FeatureSource source;
-
     private static DataAccess<FeatureType, Feature> mappingDataStore;
 
     @BeforeClass
     public static void oneTimeSetUp() throws IOException {
-        final Map<String, Serializable> dsParams = new HashMap<String, Serializable>();
+        final Map<String, Serializable> dsParams = new HashMap<>();
         final URL url = GeoSciMLTest.class.getResource(schemaBase + "mappedPolygons.xml");
         dsParams.put("dbtype", "app-schema");
         dsParams.put("url", url.toExternalForm());
@@ -194,23 +186,22 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
             FeatureType boreholeType = mappingDataStore.getSchema(typeName);
             assertNotNull(boreholeType);
 
-            FeatureSource fSource = (FeatureSource) mappingDataStore.getFeatureSource(typeName);
+            FeatureSource fSource = mappingDataStore.getFeatureSource(typeName);
 
             final int EXPECTED_RESULT_COUNT = 2;
 
-            FeatureCollection features = (FeatureCollection) fSource.getFeatures();
+            FeatureCollection features = fSource.getFeatures();
 
             int resultCount = getCount(features);
             assertEquals(EXPECTED_RESULT_COUNT, resultCount);
 
-            Feature feature;
             int count = 0;
-            FeatureIterator it = features.features();
-            for (; it.hasNext(); ) {
-                feature = (Feature) it.next();
-                count++;
+            try (FeatureIterator it = features.features()) {
+                while (it.hasNext()) {
+                    it.next();
+                    count++;
+                }
             }
-            it.close();
 
             assertEquals(EXPECTED_RESULT_COUNT, count);
         } catch (Exception e) {
@@ -247,6 +238,7 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
         assertNotNull(features);
         try (final Stream<Feature> featureStream = toFeatureStream(features)) {
             Optional<Feature> first = featureStream.findFirst();
+            @SuppressWarnings("unchecked")
             Optional<Map<String, String>> mapOpt =
                     first.map(Feature::getDescriptor)
                             .map(AttributeDescriptor::getType)
@@ -273,13 +265,10 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
 
     private int size(FeatureCollection<FeatureType, Feature> features) {
         int size = 0;
-        FeatureIterator<Feature> i = features.features();
-        try {
+        try (FeatureIterator<Feature> i = features.features()) {
             for (; i.hasNext(); i.next()) {
                 size++;
             }
-        } finally {
-            i.close();
         }
         return size;
     }

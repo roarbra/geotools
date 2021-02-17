@@ -87,9 +87,8 @@ public class EmfAppSchemaParserTest {
         // setting expectedAttributeCount back to 10
         final int expectedAttributeCount = 10;
 
-        SimpleFeatureType ftype =
-                testParseDescribeSimpleFeatureType(
-                        featureTypeName, schemaLocation, expectedAttributeCount);
+        // SimpleFeatureType ftype =
+        testParseDescribeSimpleFeatureType(featureTypeName, schemaLocation, expectedAttributeCount);
         /*
         for (AttributeDescriptor descriptor : ftype.getAttributeDescriptors()) {
              System.out.print(descriptor.getName().getNamespaceURI());
@@ -129,7 +128,7 @@ public class EmfAppSchemaParserTest {
         assertSame(crs, featureType.getCoordinateReferenceSystem());
 
         List<AttributeDescriptor> attributes = featureType.getAttributeDescriptors();
-        List<String> names = new ArrayList<String>(attributes.size());
+        List<String> names = new ArrayList<>(attributes.size());
         for (AttributeDescriptor desc : attributes) {
             names.add(desc.getLocalName());
         }

@@ -286,7 +286,7 @@ public class NetCDFUtilities {
 
     public static final String UNIQUE_TIME_ATTRIBUTE = "uniqueTimeAttribute";
 
-    static final Set<String> EXCLUDED_ATTRIBUTES = new HashSet<String>();
+    static final Set<String> EXCLUDED_ATTRIBUTES = new HashSet<>();
 
     public static final String ENHANCE_COORD_SYSTEMS =
             "org.geotools.coverage.io.netcdf.enhance.CoordSystems";
@@ -394,12 +394,12 @@ public class NetCDFUtilities {
      * The data type to accept in images. Used for automatic detection of which
      * coverageDescriptorsCache to assign to images.
      */
-    public static final Set<DataType> VALID_TYPES = new HashSet<DataType>(12);
+    public static final Set<DataType> VALID_TYPES = new HashSet<>(12);
 
     public static final String NC4_ERROR_MESSAGE =
             "Native NetCDF C library is not available. "
                     + "Unable to handle NetCDF4 files on input/output."
-                    + "\nPlease make sure to add the paht of the Native NetCDF C libraries to the "
+                    + "\nPlease make sure to add the path of the Native NetCDF C libraries to the "
                     + "PATH environment variable\n if you want to support NetCDF4-Classic files";
 
     static {
@@ -423,7 +423,7 @@ public class NetCDFUtilities {
         EXCLUDED_ATTRIBUTES.add(DESCRIPTION);
         EXCLUDED_ATTRIBUTES.add(STANDARD_NAME);
 
-        HashSet<String> unsupportedSet = new HashSet<String>();
+        HashSet<String> unsupportedSet = new HashSet<>();
         unsupportedSet.add("OSEQD");
         UNSUPPORTED_DIMENSIONS = Collections.unmodifiableSet(unsupportedSet);
 
@@ -472,7 +472,7 @@ public class NetCDFUtilities {
     private static Set<String> initializeIgnoreSet() {
         Set<CoordinateHandlerSpi> handlers = CoordinateHandlerFinder.getAvailableHandlers();
         Iterator<CoordinateHandlerSpi> iterator = handlers.iterator();
-        Set<String> ignoredSet = new HashSet<String>();
+        Set<String> ignoredSet = new HashSet<>();
         while (iterator.hasNext()) {
             CoordinateHandlerSpi handler = iterator.next();
             Set<String> ignored = handler.getIgnoreSet();
@@ -759,9 +759,7 @@ public class NetCDFUtilities {
                 if ("featureCollection".equals(reader.getName().getLocalPart())) {
                     return FileFormat.FC;
                 }
-            } catch (XMLStreamException e) {
-
-            } catch (FactoryConfigurationError e) {
+            } catch (XMLStreamException | FactoryConfigurationError e) {
 
             } finally {
                 if (input != null) {
@@ -854,7 +852,9 @@ public class NetCDFUtilities {
         } else if (input instanceof AccessibleStream) {
             final AccessibleStream<?> stream = (AccessibleStream<?>) input;
             if (stream.getBinding().isAssignableFrom(File.class)) {
-                final File file = ((AccessibleStream<File>) input).getTarget();
+                @SuppressWarnings("unchecked")
+                AccessibleStream<File> as = (AccessibleStream<File>) input;
+                final File file = as.getTarget();
                 if (!file.isDirectory()) {
                     dataset = acquireDataset(file.toURI());
                 } else {
@@ -862,7 +862,9 @@ public class NetCDFUtilities {
                             "Error occurred during NetCDF file reading: The input file is a Directory.");
                 }
             } else if (stream.getBinding().isAssignableFrom(URI.class)) {
-                final URI uri = ((AccessibleStream<URI>) input).getTarget();
+                @SuppressWarnings("unchecked")
+                AccessibleStream<URI> as = (AccessibleStream<URI>) input;
+                final URI uri = as.getTarget();
                 dataset = acquireDataset(uri);
             }
         }
@@ -895,7 +897,9 @@ public class NetCDFUtilities {
         } else if (input instanceof AccessibleStream) {
             final AccessibleStream<?> stream = (AccessibleStream<?>) input;
             if (stream.getBinding().isAssignableFrom(File.class)) {
-                guessedFile = ((AccessibleStream<File>) input).getTarget();
+                @SuppressWarnings("unchecked")
+                AccessibleStream<File> as = (AccessibleStream<File>) input;
+                guessedFile = as.getTarget();
             }
         }
         // check
@@ -1456,7 +1460,7 @@ public class NetCDFUtilities {
     }
 
     public static void refreshParameterBehaviors() {
-        PARAMS_MAX = new HashSet<String>();
+        PARAMS_MAX = new HashSet<>();
         String maxProperty = System.getProperty(PARAMS_MAX_KEY);
         if (maxProperty != null) {
             for (String param : maxProperty.split(",")) {
@@ -1465,7 +1469,7 @@ public class NetCDFUtilities {
         }
 
         String minProperty = System.getProperty(PARAMS_MIN_KEY);
-        PARAMS_MIN = new HashSet<String>();
+        PARAMS_MIN = new HashSet<>();
         if (minProperty != null) {
             for (String param : minProperty.split(",")) {
                 PARAMS_MIN.add(param.trim().toUpperCase());

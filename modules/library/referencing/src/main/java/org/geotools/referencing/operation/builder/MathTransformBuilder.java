@@ -23,7 +23,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -112,7 +111,7 @@ import org.opengis.util.InternationalString;
  */
 public abstract class MathTransformBuilder {
     /** The list of mapped positions. */
-    private final List<MappedPosition> positions = new ArrayList<MappedPosition>();
+    private final List<MappedPosition> positions = new ArrayList<>();
 
     /** An unmodifiable view of mapped positions to be returned by {@link #getMappedPositions}. */
     private final List<MappedPosition> unmodifiablePositions =
@@ -212,7 +211,7 @@ public abstract class MathTransformBuilder {
     private static DirectPosition[] getPoints(List<MappedPosition> positions, boolean target) {
         final DirectPosition[] points = new DirectPosition[positions.size()];
         for (int i = 0; i < points.length; i++) {
-            final MappedPosition mp = (MappedPosition) positions.get(i);
+            final MappedPosition mp = positions.get(i);
             points[i] = target ? mp.getTarget() : mp.getSource();
         }
         return points;
@@ -346,9 +345,7 @@ public abstract class MathTransformBuilder {
                  */
             }
             table.setAlignment(TableWriter.ALIGN_RIGHT);
-            for (final Iterator<MappedPosition> it = getMappedPositions().iterator();
-                    it.hasNext(); ) {
-                final MappedPosition mp = (MappedPosition) it.next();
+            for (final MappedPosition mp : getMappedPositions()) {
                 DirectPosition point = mp.getSource();
                 int dimension = point.getDimension();
                 for (int i = 0; i < dimension; i++) {
@@ -427,7 +424,7 @@ public abstract class MathTransformBuilder {
      * @throws FactoryException if the CRS can't be created.
      */
     private EngineeringCRS createEngineeringCRS(final boolean target) throws FactoryException {
-        final Map<String, Object> properties = new HashMap<String, Object>(4);
+        final Map<String, Object> properties = new HashMap<>(4);
         properties.put(
                 CoordinateReferenceSystem.NAME_KEY, Vocabulary.format(VocabularyKeys.UNKNOWN));
         final GeographicExtent validArea = getValidArea(target);
@@ -490,8 +487,7 @@ public abstract class MathTransformBuilder {
     private GeneralEnvelope getEnvelope(final boolean target) {
         GeneralEnvelope envelope = null;
         CoordinateReferenceSystem crs = null;
-        for (final Iterator<MappedPosition> it = getMappedPositions().iterator(); it.hasNext(); ) {
-            final MappedPosition mp = (MappedPosition) it.next();
+        for (final MappedPosition mp : getMappedPositions()) {
             final DirectPosition point = target ? mp.getTarget() : mp.getSource();
             if (point != null) {
                 if (envelope == null) {
@@ -630,8 +626,7 @@ public abstract class MathTransformBuilder {
         final MathTransform mt = getMathTransform();
         final Statistics stats = new Statistics();
         final DirectPosition buffer = new GeneralDirectPosition(getDimension());
-        for (final Iterator<MappedPosition> it = getMappedPositions().iterator(); it.hasNext(); ) {
-            final MappedPosition mp = (MappedPosition) it.next();
+        for (final MappedPosition mp : getMappedPositions()) {
             /*
              * Transforms the source point using the math transform calculated by this class.
              * If the transform can't be applied, then we consider this failure as if it was
@@ -682,7 +677,7 @@ public abstract class MathTransformBuilder {
      */
     public Transformation getTransformation() throws FactoryException {
         if (transformation == null) {
-            final Map<String, Object> properties = new HashMap<String, Object>();
+            final Map<String, Object> properties = new HashMap<>();
             properties.put(Transformation.NAME_KEY, getName());
             /*
              * Set the valid area as the intersection of source CRS and target CRS valid area.

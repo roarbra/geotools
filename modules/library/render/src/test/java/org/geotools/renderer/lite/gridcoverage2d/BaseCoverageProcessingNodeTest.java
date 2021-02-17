@@ -18,7 +18,6 @@ package org.geotools.renderer.lite.gridcoverage2d;
 
 import java.awt.Color;
 import javax.media.jai.PlanarImage;
-import junit.framework.TestCase;
 import org.geotools.coverage.Category;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.GridSampleDimension;
@@ -29,11 +28,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * {@link TestCase} subclass for {@link BaseCoverageProcessingNode} .
- *
- * @author Simone Giannecchini, GeoSlutions.
- */
 public class BaseCoverageProcessingNodeTest {
 
     private BaseCoverageProcessingNode testedObject;
@@ -124,7 +118,7 @@ public class BaseCoverageProcessingNodeTest {
             // trying to get the output from a disposed coverage should throw an
             // error
             testedObject.getOutput();
-            Assert.assertTrue(false);
+            Assert.fail();
         } catch (Exception e) {
 
         }
@@ -143,7 +137,7 @@ public class BaseCoverageProcessingNodeTest {
         testedObject.addSink((testedObject2));
         try {
             testedObject2.addSink((testedObject));
-            Assert.assertTrue(false);
+            Assert.fail();
         } catch (IllegalStateException e) {
             // TODO: handle exception
         }

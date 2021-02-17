@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import org.geotools.data.ows.AbstractOpenWebService;
 import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
 import org.geotools.data.ows.Specification;
@@ -42,6 +41,7 @@ import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_x_Strategy;
 import org.geotools.data.wfs.internal.v2_0.ArcGisStrategy_2_0;
 import org.geotools.data.wfs.internal.v2_0.StrictWFS_2_0_Strategy;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClient;
 import org.geotools.ows.ServiceException;
 import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.Version;
@@ -62,7 +62,7 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
 
     public WFSClient(URL capabilitiesURL, HTTPClient httpClient, WFSConfig config)
             throws IOException, ServiceException {
-        this(capabilitiesURL, httpClient, config, (WFSGetCapabilities) null);
+        this(capabilitiesURL, httpClient, config, null);
     }
 
     public WFSClient(

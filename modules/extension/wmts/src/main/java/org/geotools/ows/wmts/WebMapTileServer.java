@@ -25,10 +25,10 @@ import java.util.Set;
 import org.geotools.data.ResourceInfo;
 import org.geotools.data.ServiceInfo;
 import org.geotools.data.ows.AbstractOpenWebService;
-import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.OperationType;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.CRSEnvelope;
 import org.geotools.ows.wms.Layer;
@@ -76,7 +76,7 @@ public class WebMapTileServer extends AbstractOpenWebService<WMTSCapabilities, L
 
     /** */
     public WebMapTileServer(URL serverURL) throws IOException, ServiceException {
-        super(serverURL);
+        this(serverURL, HTTPClientFinder.createClient(), null);
         setType(capabilities.getType());
     }
 
@@ -84,7 +84,7 @@ public class WebMapTileServer extends AbstractOpenWebService<WMTSCapabilities, L
     public WebMapTileServer(WMTSCapabilities capabilities) throws ServiceException, IOException {
         super(
                 capabilities.getRequest().getGetCapabilities().getGet(),
-                new SimpleHttpClient(),
+                HTTPClientFinder.createClient(),
                 capabilities);
         setType(capabilities.getType());
     }
@@ -128,17 +128,21 @@ public class WebMapTileServer extends AbstractOpenWebService<WMTSCapabilities, L
     public GetTileRequest createGetTileRequest() {
 
         URL url;
-
+        OperationType getTile = getCapabilities().getRequest().getGetTile();
+        if (getTile == null) {
+            type = WMTSServiceType.REST;
+        }
         if (WMTSServiceType.KVP.equals(type)) {
-            url = findURL(getCapabilities().getRequest().getGetTile());
+            url = findURL(getTile);
         } else {
+            type = WMTSServiceType.REST;
             url = serverURL;
         }
-
+        Properties props = new Properties();
+        props.put("type", type.name());
         GetTileRequest request =
                 ((WMTSSpecification) specification)
-                        .createGetTileRequest(
-                                url, (Properties) null, capabilities, this.getHTTPClient());
+                        .createGetTileRequest(url, props, capabilities, this.getHTTPClient());
 
         request.getHeaders().putAll(headers);
 
@@ -146,6 +150,10 @@ public class WebMapTileServer extends AbstractOpenWebService<WMTSCapabilities, L
     }
 
     private URL findURL(OperationType operation) {
+        if (operation == null) {
+            type = WMTSServiceType.REST;
+            return null;
+        }
         if (WMTSServiceType.KVP.equals(type)) {
             if (operation.getGet() != null) {
                 return operation.getGet();

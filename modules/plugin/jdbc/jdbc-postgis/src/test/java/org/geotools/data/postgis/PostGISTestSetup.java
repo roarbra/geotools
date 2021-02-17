@@ -24,6 +24,7 @@ import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.util.Version;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not a test by itself
 public class PostGISTestSetup extends JDBCTestSetup {
 
     protected Version postgisVersion, pgsqlVersion;
@@ -31,13 +32,10 @@ public class PostGISTestSetup extends JDBCTestSetup {
     @Override
     protected void initializeDatabase() throws Exception {
         DataSource dataSource = getDataSource();
-        Connection cx = dataSource.getConnection();
-        try {
+        try (Connection cx = dataSource.getConnection()) {
             PostGISDialect dialect = new PostGISDialect(new JDBCDataStore());
             postgisVersion = dialect.getVersion(cx);
             pgsqlVersion = dialect.getPostgreSQLVersion(cx);
-        } finally {
-            cx.close();
         }
     }
 

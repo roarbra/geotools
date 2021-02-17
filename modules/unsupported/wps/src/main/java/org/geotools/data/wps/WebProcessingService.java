@@ -39,14 +39,14 @@ import org.geotools.data.ResourceInfo;
 import org.geotools.data.ServiceInfo;
 import org.geotools.data.ows.ControlledHttpClientFactory;
 import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.ows.Specification;
 import org.geotools.data.wps.request.DescribeProcessRequest;
 import org.geotools.data.wps.request.ExecuteProcessRequest;
 import org.geotools.data.wps.response.DescribeProcessResponse;
 import org.geotools.data.wps.response.ExecuteProcessResponse;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.wps.WPS;
 
@@ -88,13 +88,15 @@ public class WebProcessingService extends AbstractWPS<WPSCapabilitiesType, Objec
      * @return the URL of the given operation from the capabilities doc, or null if not found
      */
     public static URL getOperationURL(String operation, WPSCapabilitiesType cap, boolean getGet) {
+        @SuppressWarnings("unchecked")
         Iterator<OperationType> iterator = cap.getOperationsMetadata().getOperation().iterator();
         while (iterator.hasNext()) {
-            OperationType next = (OperationType) iterator.next();
+            OperationType next = iterator.next();
             if (operation.compareToIgnoreCase(next.getName()) == 0) {
+                @SuppressWarnings("unchecked")
                 Iterator<DCPType> iterator2 = next.getDCP().iterator();
                 while (iterator2.hasNext()) {
-                    DCPType next2 = (DCPType) iterator2.next();
+                    DCPType next2 = iterator2.next();
                     HTTPType http = next2.getHTTP();
                     if (getGet && !http.getGet().isEmpty()) {
                         RequestMethodType rmt = (RequestMethodType) http.getGet().get(0);
@@ -144,7 +146,7 @@ public class WebProcessingService extends AbstractWPS<WPSCapabilitiesType, Objec
             throws IOException, ServiceException {
         super(
                 getOperationURL("getcapabilities", capabilities, true),
-                ControlledHttpClientFactory.wrap(new SimpleHttpClient()),
+                HTTPClientFinder.createClient(),
                 capabilities);
     }
 
@@ -222,7 +224,7 @@ public class WebProcessingService extends AbstractWPS<WPSCapabilitiesType, Objec
      * @return a WPSCapabilitiesType object, representing the Capabilities of the server
      */
     public WPSCapabilitiesType getCapabilities() {
-        return (WPSCapabilitiesType) capabilities;
+        return capabilities;
     }
 
     public DescribeProcessRequest createDescribeProcessRequest()
@@ -301,7 +303,7 @@ public class WebProcessingService extends AbstractWPS<WPSCapabilitiesType, Objec
         private Set<String> keywords;
 
         WPSInfo() {
-            keywords = new HashSet<String>();
+            keywords = new HashSet<>();
             keywords.add("WPS");
             keywords.add(serverURL.toString());
         }
@@ -349,8 +351,7 @@ public class WebProcessingService extends AbstractWPS<WPSCapabilitiesType, Objec
 
                 // URL source = getCapabilities().getRequest().getGetCapabilities().getGet();
                 return source.toURI();
-            } catch (NullPointerException huh) {
-            } catch (URISyntaxException e) {
+            } catch (NullPointerException | URISyntaxException huh) {
             }
             try {
                 return serverURL.toURI();

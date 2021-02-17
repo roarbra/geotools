@@ -16,6 +16,13 @@
  */
 package org.geotools.ows.wms.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,6 +38,7 @@ import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.request.GetFeatureInfoRequest;
 import org.geotools.ows.wms.request.GetMapRequest;
 import org.geotools.ows.wms.response.GetFeatureInfoResponse;
+import org.junit.Test;
 import org.xml.sax.SAXException;
 
 /** @author rgould */
@@ -51,6 +59,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
                         "http://demo.cubewerx.com/demo/cubeserv/cubeserv.cgi?CONFIG=main&REQUEST=GetCapabilities&VERSION=1.3.0");
     }
 
+    @Test
     public void testGetVersion() {
         assertEquals(spec.getVersion(), "1.3.0");
     }
@@ -61,6 +70,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
         assertEquals(properties.get("SERVICE"), "WMS");
     }
 
+    @Test
     public void testCreateParser() throws Exception {
         try {
             WMSCapabilities capabilities = createCapabilities("1.3.0Capabilities.xml");
@@ -111,7 +121,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
                     capabilities.getRequest().getGetFeatureInfo().getGet(),
                     new URL("http://www2.demis.nl/wms/wms.asp?wms=WorldMap&"));
 
-            Layer topLayer = (Layer) capabilities.getLayerList().get(0);
+            Layer topLayer = capabilities.getLayerList().get(0);
             assertNotNull(topLayer);
             assertNull(topLayer.getParent());
             assertFalse(topLayer.isQueryable());
@@ -128,7 +138,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
 
             assertEquals(topLayer.getBoundingBoxes().size(), 1);
 
-            CRSEnvelope bbox = (CRSEnvelope) topLayer.getBoundingBoxes().get("CRS:84");
+            CRSEnvelope bbox = topLayer.getBoundingBoxes().get("CRS:84");
             assertNotNull(bbox);
             assertEquals(bbox.getEPSGCode(), "CRS:84");
             assertEquals(bbox.getMinX(), -184, 0.0);
@@ -136,7 +146,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             assertEquals(bbox.getMinY(), -90.0000000017335, 0.0);
             assertEquals(bbox.getMaxY(), 90, 0.0);
 
-            Layer layer = (Layer) capabilities.getLayerList().get(1);
+            Layer layer = capabilities.getLayerList().get(1);
             assertEquals(layer.getParent(), topLayer);
             assertTrue(layer.isQueryable());
             assertEquals(layer.getName(), "Bathymetry");
@@ -150,7 +160,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             assertEquals(llbbox.getMinY(), -90, 0.0);
             assertEquals(llbbox.getMaxY(), 90, 0.0);
 
-            bbox = (CRSEnvelope) layer.getBoundingBoxes().get("CRS:84");
+            bbox = layer.getBoundingBoxes().get("CRS:84");
             assertNotNull(bbox);
             assertEquals(bbox.getEPSGCode(), "CRS:84");
             assertEquals(bbox.getMinX(), -180, 0.0);
@@ -160,7 +170,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
 
             assertEquals(capabilities.getLayerList().size(), 21);
 
-            layer = (Layer) capabilities.getLayerList().get(20);
+            layer = capabilities.getLayerList().get(20);
             assertEquals(layer.getParent(), topLayer);
             assertTrue(layer.isQueryable());
             assertEquals(layer.getName(), "Ocean features");
@@ -174,7 +184,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             assertEquals(llbbox.getMinY(), -90, 0.0);
             assertEquals(llbbox.getMaxY(), 90, 0.0);
 
-            bbox = (CRSEnvelope) layer.getBoundingBoxes().get("CRS:84");
+            bbox = layer.getBoundingBoxes().get("CRS:84");
             assertNotNull(bbox);
             assertEquals(bbox.getEPSGCode(), "CRS:84");
             assertEquals(bbox.getMinX(), -180, 0.0);
@@ -183,13 +193,14 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             assertEquals(bbox.getMaxY(), 68.6906585693359, 0.0);
         } catch (java.net.ConnectException ce) {
             if (ce.getMessage().indexOf("timed out") > 0) {
-                // System.err.println("Unable to test - timed out: " + ce);
+                LOGGER.warning("Unable to test - timed out: " + ce);
             } else {
                 throw (ce);
             }
         }
     }
 
+    @Test
     public void testGEOT4706() {
         try {
             WMSCapabilities capabilities = createCapabilities("envitia-OGC.xml");
@@ -199,7 +210,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             assertEquals(capabilities.getVersion(), "1.3.0");
             assertEquals(capabilities.getService().getName(), "WMS");
 
-            Layer topLayer = (Layer) capabilities.getLayerList().get(0);
+            Layer topLayer = capabilities.getLayerList().get(0);
             assertNotNull(topLayer);
             assertNull(topLayer.getParent());
             assertFalse(topLayer.isQueryable());
@@ -211,6 +222,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
         }
     }
 
+    @Test
     public void testCreateGetMapRequest() throws Exception {
         WebMapServer wms = new WebMapServer(server2);
         GetMapRequest request = wms.createGetMapRequest();
@@ -220,6 +232,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
         assertTrue(request.getFinalURL().toExternalForm().indexOf("image%2Fjpeg") >= 0);
     }
 
+    @Test
     public void testCreateGetFeatureInfoRequest() throws Exception {
         try {
             URL featureURL =
@@ -254,7 +267,6 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             //
             // http://demo.cubewerx.com/cipi12/cubeserv/cubeserv.cgi?INFO_FORMAT=text/html&LAYERS=ETOPO2:Foundation&FORMAT=image/png&HEIGHT=400&J=200&REQUEST=GetFeatureInfo&I=200&BBOX=-34.12087,15.503481,1.8462441,35.6043956&WIDTH=400&STYLES=&SRS=EPSG:4326&QUERY_LAYERS=ETOPO2:Foundation&VERSION=1.3.0
             getMapRequest.setBBox("-34.12087,15.503481,1.8462441,35.6043956");
-            URL url2 = getMapRequest.getFinalURL();
 
             GetFeatureInfoRequest request = wms.createGetFeatureInfoRequest(getMapRequest);
             //        request.setQueryLayers(request.getQueryableLayers());
@@ -265,31 +277,33 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
             // System.out.println(request.getFinalURL());
 
             //     TODO   Currently this server rtreturns code 400 !?
-            GetFeatureInfoResponse response = (GetFeatureInfoResponse) wms.issueRequest(request);
+            GetFeatureInfoResponse response = wms.issueRequest(request);
             // System.out.println(response.getContentType());
-            assertTrue(response.getContentType().indexOf("text/html") != -1);
-            BufferedReader in =
-                    new BufferedReader(new InputStreamReader(response.getInputStream()));
-            String line;
+            assertNotEquals(response.getContentType().indexOf("text/html"), -1);
+            try (BufferedReader in =
+                    new BufferedReader(new InputStreamReader(response.getInputStream()))) {
+                String line;
 
-            boolean textFound = false;
-            while ((line = in.readLine()) != null) {
-                // System.out.println(line);
-                if (line.indexOf("CubeSERV Feature Query") != -1) {
-                    textFound = true;
-                    break;
+                boolean textFound = false;
+                while ((line = in.readLine()) != null) {
+                    // System.out.println(line);
+                    if (line.indexOf("CubeSERV Feature Query") != -1) {
+                        textFound = true;
+                        break;
+                    }
                 }
+                assertTrue(textFound);
             }
-            assertTrue(textFound);
         } catch (java.net.ConnectException ce) {
             if (ce.getMessage().indexOf("timed out") > 0) {
-                // System.err.println("Unable to test - timed out: " + ce);
+                LOGGER.warning("Unable to test - timed out: " + ce);
             } else {
                 throw (ce);
             }
         }
     }
 
+    @Test
     public void testCreateDescribeLayerRequest() throws Exception {
         /*try{
 
@@ -330,6 +344,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
                 }*/
     }
 
+    @Test
     public void testCreateGetLegendGraphicRequest() throws Exception {
         /*try{
             WebMapServer wms = new CustomWMS(server2);
@@ -374,6 +389,7 @@ public class WMS1_3_0_OnlineTest extends WMS1_1_1_OnlineTest {
         }*/
     }
 
+    @Test
     public void testParamEncoding() throws Exception {
         // this request does not work because it is encoded properly
         // Let's make sure that this doesn't happen again.

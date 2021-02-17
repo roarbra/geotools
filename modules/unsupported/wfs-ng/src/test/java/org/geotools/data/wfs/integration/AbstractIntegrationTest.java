@@ -142,7 +142,7 @@ public abstract class AbstractIntegrationTest {
     protected abstract TestDataType createSecondType() throws Exception;
 
     private void completeTestDataType(TestDataType test) throws IOException {
-        FilterFactory2 ff = (FilterFactory2) CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
 
         SimpleFeatureSource source = data.getFeatureSource(test.typeName);
         test.features = grabArray(source.getFeatures());
@@ -198,14 +198,14 @@ public abstract class AbstractIntegrationTest {
             store1.setTransaction(transaction);
             class Listener implements FeatureListener {
 
-                List<FeatureEvent> events = new ArrayList<FeatureEvent>();
+                List<FeatureEvent> events = new ArrayList<>();
 
                 public void changed(FeatureEvent featureEvent) {
                     this.events.add(featureEvent);
                 }
 
                 FeatureEvent getEvent(int i) {
-                    return (FeatureEvent) events.get(i);
+                    return events.get(i);
                 }
             }
 
@@ -301,7 +301,7 @@ public abstract class AbstractIntegrationTest {
             assertTrue(contains(names, first.typeName));
             assertTrue(contains(names, second.typeName));
         } catch (IOException e) {
-            java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+            java.util.logging.Logger.getGlobal().log(Level.INFO, "", e);
             fail("Fail with an IOException trying to getTypeNames()");
         }
     }
@@ -311,8 +311,8 @@ public abstract class AbstractIntegrationTest {
             return false;
         }
 
-        for (int i = 0; i < array.length; i++) {
-            if (array[i].equals(expected)) {
+        for (Object o : array) {
+            if (o.equals(expected)) {
                 return true;
             }
         }
@@ -347,8 +347,8 @@ public abstract class AbstractIntegrationTest {
             return false;
         }
 
-        for (int i = 0; i < array.length; i++) {
-            if (isFeatureEqual((SimpleFeature) array[i], (SimpleFeature) expected)) {
+        for (Object o : array) {
+            if (isFeatureEqual((SimpleFeature) o, (SimpleFeature) expected)) {
                 return true;
             }
         }
@@ -402,8 +402,8 @@ public abstract class AbstractIntegrationTest {
 
         // SimpleFeatureType type = expected.getFeatureType();
 
-        for (int i = 0; i < array.length; i++) {
-            if (match(array[i], expected)) {
+        for (SimpleFeature simpleFeature : array) {
+            if (match(simpleFeature, expected)) {
                 return true;
             }
         }
@@ -464,39 +464,42 @@ public abstract class AbstractIntegrationTest {
 
         SimpleFeature f;
 
-        for (SimpleFeatureIterator i = c1.features(); i.hasNext(); ) {
-            f = i.next();
-            assertTrue(msg + " " + f.getID(), containsFeatureCollection(c2, f)); // c2.contains(f));
+        try (SimpleFeatureIterator i = c1.features()) {
+            while (i.hasNext()) {
+                f = i.next();
+                assertTrue(msg + " " + f.getID(), containsFeatureCollection(c2, f));
+            }
         }
     }
 
     @Test
     public void testGetFeatureReader() throws Exception {
         Query query = new Query(first.typeName);
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
-        reader = data.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        assertCovered(first.features, reader);
-        assertEquals(false, reader.hasNext());
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                data.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            assertCovered(first.features, reader);
+            assertFalse(reader.hasNext());
+        }
     }
 
     @Test
     public void testGetFeatureReaderMutability() throws IOException {
         Query query = new Query(first.typeName);
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                data.getFeatureReader(query, Transaction.AUTO_COMMIT);
         SimpleFeature feature;
-
-        while (reader.hasNext()) {
-            feature = (SimpleFeature) reader.next();
-            feature.setAttribute(first.stringAttribute, null);
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                data.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            while (reader.hasNext()) {
+                feature = reader.next();
+                feature.setAttribute(first.stringAttribute, null);
+            }
         }
 
-        reader.close();
-
-        reader = data.getFeatureReader(query, Transaction.AUTO_COMMIT);
+        @SuppressWarnings("PMD.CloseResource") // used to test behavior after close
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                data.getFeatureReader(query, Transaction.AUTO_COMMIT);
 
         while (reader.hasNext()) {
-            feature = (SimpleFeature) reader.next();
+            feature = reader.next();
             assertNotNull(feature.getAttribute(first.stringAttribute));
         }
 
@@ -505,129 +508,143 @@ public abstract class AbstractIntegrationTest {
         try {
             reader.next();
             fail("next should fail with an IOException or NoSuchElementException");
-        } catch (IOException expected) {
-        } catch (NoSuchElementException expected) {
+        } catch (IOException | NoSuchElementException expected) {
         }
     }
 
     @Test
     public void testGetFeatureReaderConcurency() throws Exception {
         Query query = new Query(first.typeName);
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader1 =
-                data.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader2 =
-                data.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        query = new Query(second.typeName);
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader1 =
+                        data.getFeatureReader(query, Transaction.AUTO_COMMIT);
+                FeatureReader<SimpleFeatureType, SimpleFeature> reader2 =
+                        data.getFeatureReader(query, Transaction.AUTO_COMMIT);
+                FeatureReader<SimpleFeatureType, SimpleFeature> reader3 =
+                        data.getFeatureReader(
+                                new Query(second.typeName), Transaction.AUTO_COMMIT)) {
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader3 =
-                data.getFeatureReader(query, Transaction.AUTO_COMMIT);
+            while (reader1.hasNext() || reader2.hasNext() || reader3.hasNext()) {
+                assertTrue(containsFeature(first.features, reader1.next()));
+                assertTrue(containsFeature(first.features, reader2.next()));
 
-        while (reader1.hasNext() || reader2.hasNext() || reader3.hasNext()) {
-            assertTrue(containsFeature(first.features, reader1.next()));
-            assertTrue(containsFeature(first.features, reader2.next()));
+                if (reader3.hasNext()) {
+                    assertTrue(containsFeature(second.features, reader3.next()));
+                }
+            }
 
-            if (reader3.hasNext()) {
-                assertTrue(containsFeature(second.features, reader3.next()));
+            try {
+                reader1.next();
+                fail("next should fail with an IOException or NoSuchElementException");
+            } catch (IOException | NoSuchElementException expected) {
+            }
+
+            try {
+                reader2.next();
+                fail("next should fail with an IOException or NoSuchElementException");
+            } catch (IOException | NoSuchElementException expected) {
+            }
+
+            try {
+                reader3.next();
+                fail("next should fail with an IOException or NoSuchElementException");
+            } catch (IOException | NoSuchElementException expected) {
             }
         }
-
-        try {
-            reader1.next();
-            fail("next should fail with an IOException or NoSuchElementException");
-        } catch (IOException expected) {
-        } catch (NoSuchElementException expected) {
-        }
-
-        try {
-            reader2.next();
-            fail("next should fail with an IOException or NoSuchElementException");
-        } catch (IOException expected) {
-        } catch (NoSuchElementException expected) {
-        }
-
-        try {
-            reader3.next();
-            fail("next should fail with an IOException or NoSuchElementException");
-        } catch (IOException expected) {
-        } catch (NoSuchElementException expected) {
-        }
-
-        reader1.close();
-        reader2.close();
-        reader3.close();
     }
 
     @Test
     public void testGetFeatureReaderFilterAutoCommit() throws Exception {
         SimpleFeatureType type = data.getSchema(first.typeName);
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
 
         Query query = new Query(first.typeName);
-        reader = data.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        assertFalse(reader instanceof FilteringFeatureReader);
-        assertEquals(type, reader.getFeatureType());
-        assertEquals(first.features.length, count(reader));
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                data.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            assertFalse(reader instanceof FilteringFeatureReader);
+            assertEquals(type, reader.getFeatureType());
+            assertEquals(first.features.length, count(reader));
+        }
 
-        reader =
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 data.getFeatureReader(
-                        new Query(first.typeName, Filter.EXCLUDE), Transaction.AUTO_COMMIT);
+                        new Query(first.typeName, Filter.EXCLUDE), Transaction.AUTO_COMMIT)) {
 
-        assertEquals(type, reader.getFeatureType());
-        assertEquals(0, count(reader));
+            assertEquals(type, reader.getFeatureType());
+            assertEquals(0, count(reader));
+        }
 
-        reader =
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 data.getFeatureReader(
-                        new Query(first.typeName, first.feat1Filter), Transaction.AUTO_COMMIT);
+                        new Query(first.typeName, first.feat1Filter), Transaction.AUTO_COMMIT)) {
 
-        assertEquals(type, reader.getFeatureType());
-        assertEquals(1, count(reader));
+            assertEquals(type, reader.getFeatureType());
+            assertEquals(1, count(reader));
+        }
     }
 
     @Test
     public void testGetFeatureReaderFilterTransaction() throws Exception {
+        SimpleFeatureType type = data.getSchema(first.typeName);
         try (Transaction t = new DefaultTransaction()) {
-            SimpleFeatureType type = data.getSchema(first.typeName);
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader;
 
-            reader = data.getFeatureReader(new Query(first.typeName, Filter.EXCLUDE), t);
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName, Filter.EXCLUDE), t)) {
 
-            assertEquals(type, reader.getFeatureType());
-            assertEquals(0, count(reader));
+                assertEquals(type, reader.getFeatureType());
+                assertEquals(0, count(reader));
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName), t);
-            assertTrue(reader instanceof DiffFeatureReader);
-            assertEquals(type, reader.getFeatureType());
-            assertEquals(first.features.length, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName), t)) {
+                assertTrue(reader instanceof DiffFeatureReader);
+                assertEquals(type, reader.getFeatureType());
+                assertEquals(first.features.length, count(reader));
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName, first.feat1Filter), t);
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName, first.feat1Filter), t)) {
 
-            // assertTrue(reader instanceof DiffFeatureReader);//Currently wrapped by a filtering
-            // feature reader
-            assertEquals(type, reader.getFeatureType());
-            assertEquals(1, count(reader));
+                // assertTrue(reader instanceof DiffFeatureReader);//Currently wrapped by a
+                // filtering
+                // feature reader
+                assertEquals(type, reader.getFeatureType());
+                assertEquals(1, count(reader));
 
-            SimpleFeatureStore store = (SimpleFeatureStore) data.getFeatureSource(first.typeName);
-            store.setTransaction(t);
-            store.removeFeatures(first.feat1Filter);
+                SimpleFeatureStore store =
+                        (SimpleFeatureStore) data.getFeatureSource(first.typeName);
+                store.setTransaction(t);
+                store.removeFeatures(first.feat1Filter);
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName, Filter.EXCLUDE), t);
-            assertEquals(0, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName, Filter.EXCLUDE), t)) {
+                assertEquals(0, count(reader));
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName), t);
-            assertEquals(first.features.length - 1, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName), t)) {
+                assertEquals(first.features.length - 1, count(reader));
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName, first.feat1Filter), t);
-            assertEquals(0, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName, first.feat1Filter), t)) {
+                assertEquals(0, count(reader));
+            }
 
             t.rollback();
-            reader = data.getFeatureReader(new Query(first.typeName, Filter.EXCLUDE), t);
-            assertEquals(0, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName, Filter.EXCLUDE), t)) {
+                assertEquals(0, count(reader));
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName), t);
-            assertEquals(first.features.length, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName), t)) {
+                assertEquals(first.features.length, count(reader));
+            }
 
-            reader = data.getFeatureReader(new Query(first.typeName, first.feat1Filter), t);
-            assertEquals(1, count(reader));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(new Query(first.typeName, first.feat1Filter), t)) {
+                assertEquals(1, count(reader));
+            }
         }
     }
 
@@ -636,14 +653,9 @@ public abstract class AbstractIntegrationTest {
             throws Exception {
         int count = 0;
 
-        try {
-            while (reader.hasNext()) {
-                assertTrue(containsFeature(features, reader.next()));
-                count++;
-            }
-        } finally {
-            // This is not a good idea, since later tests try and run a reader.hasNext() !!
-            // reader.close();
+        while (reader.hasNext()) {
+            assertTrue(containsFeature(features, reader.next()));
+            count++;
         }
 
         assertEquals(features.length, count);
@@ -657,17 +669,14 @@ public abstract class AbstractIntegrationTest {
 
         SimpleFeature feature;
         int count = 0;
-        SimpleFeatureIterator i = features.features();
-        try {
+        try (SimpleFeatureIterator i = features.features()) {
             while (i.hasNext()) {
-                feature = (SimpleFeature) i.next();
+                feature = i.next();
                 if (!containsFeature(array, feature)) {
                     return false;
                 }
                 count++;
             }
-        } finally {
-            i.close();
         }
         return count == array.length;
     }
@@ -778,117 +787,119 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    void dump(Object[] array) {
-        for (int i = 0; i < array.length; i++) {
-            LOGGER.fine(i + " feature:" + array[i]);
-        }
-    }
-
     /*
      * Test for FeatureWriter getFeatureWriter(String, Filter, Transaction)
      */
     @Test
     public void testGetFeatureWriter() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
-        assertEquals(first.features.length, count(writer));
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
+            assertEquals(first.features.length, count(writer));
 
-        try {
-            writer.hasNext();
-            fail("Should not be able to use a closed writer");
-        } catch (IOException expected) {
-        }
+            try {
+                writer.hasNext();
+                fail("Should not be able to use a closed writer");
+            } catch (IOException expected) {
+            }
 
-        try {
-            writer.next();
-            fail("Should not be able to use a closed writer");
-        } catch (IOException expected) {
+            try {
+                writer.next();
+                fail("Should not be able to use a closed writer");
+            } catch (IOException expected) {
+            }
         }
     }
 
     @Test
     public void testGetFeatureWriterRemove() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
-        SimpleFeature feature;
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
+            SimpleFeature feature;
 
-        while (writer.hasNext()) {
-            feature = writer.next();
+            while (writer.hasNext()) {
+                feature = writer.next();
 
-            if (feature.getID().equals(first.features[0].getID())) {
-                writer.remove();
+                if (feature.getID().equals(first.features[0].getID())) {
+                    writer.remove();
+                }
             }
         }
 
-        writer = data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
-        assertEquals(first.features.length - 1, count(writer));
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
+            assertEquals(first.features.length - 1, count(writer));
+        }
     }
 
     @Test
     public void testGetFeaturesWriterAdd() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
-        SimpleFeature feature;
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
+            SimpleFeature feature;
 
-        while (writer.hasNext()) {
-            feature = (SimpleFeature) writer.next();
+            while (writer.hasNext()) {
+                writer.next();
+            }
+
+            assertFalse(writer.hasNext());
+            feature = writer.next();
+            feature.setAttributes(first.newFeature.getAttributes());
+            writer.write();
+            assertFalse(writer.hasNext());
         }
 
-        assertFalse(writer.hasNext());
-        feature = (SimpleFeature) writer.next();
-        feature.setAttributes(first.newFeature.getAttributes());
-        writer.write();
-        assertFalse(writer.hasNext());
-
-        writer = data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
-        assertEquals(first.features.length + 1, count(writer));
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
+            assertEquals(first.features.length + 1, count(writer));
+        }
     }
 
     @Test
     public void testGetFeaturesWriterModify() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-        writer = data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
 
-        SimpleFeature feature;
+            SimpleFeature feature;
 
-        while (writer.hasNext()) {
-            feature = writer.next();
+            while (writer.hasNext()) {
+                feature = writer.next();
 
-            if (feature.getID().equals(first.features[0].getID())) {
-                feature.setAttribute(first.stringAttribute, "changed");
-                writer.write();
+                if (feature.getID().equals(first.features[0].getID())) {
+                    feature.setAttribute(first.stringAttribute, "changed");
+                    writer.write();
+                }
+            }
+
+            feature = null;
+
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(
+                            new Query(first.typeName, first.feat1Filter),
+                            Transaction.AUTO_COMMIT)) {
+
+                if (reader.hasNext()) {
+                    feature = reader.next();
+                }
+
+                assertEquals("changed", feature.getAttribute(first.stringAttribute));
             }
         }
-
-        feature = null;
-
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                data.getFeatureReader(
-                        new Query(first.typeName, first.feat1Filter), Transaction.AUTO_COMMIT);
-
-        if (reader.hasNext()) {
-            feature = reader.next();
-        }
-
-        assertEquals("changed", feature.getAttribute(first.stringAttribute));
     }
 
     @Test
     public void testGetFeatureWriterTypeNameTransaction() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-
-        writer = data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT);
-        assertEquals(first.features.length, count(writer));
-        writer.close();
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Transaction.AUTO_COMMIT)) {
+            assertEquals(first.features.length, count(writer));
+        }
     }
 
     @Test
     public void testGetFeatureWriterAppendTypeNameTransaction() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-
-        writer = data.getFeatureWriterAppend(first.typeName, Transaction.AUTO_COMMIT);
-        assertEquals(0, count(writer));
-        writer.close();
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriterAppend(first.typeName, Transaction.AUTO_COMMIT)) {
+            assertEquals(0, count(writer));
+        }
     }
 
     /*
@@ -896,33 +907,34 @@ public abstract class AbstractIntegrationTest {
      */
     @Test
     public void testGetFeatureWriterFilter() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Filter.EXCLUDE, Transaction.AUTO_COMMIT)) {
+            assertFalse(writer.hasNext());
+            assertEquals(0, count(writer));
+        }
 
-        writer = data.getFeatureWriter(first.typeName, Filter.EXCLUDE, Transaction.AUTO_COMMIT);
-        assertFalse(writer.hasNext());
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, Filter.INCLUDE, Transaction.AUTO_COMMIT)) {
+            assertFalse(writer instanceof FilteringFeatureWriter);
+            assertEquals(first.features.length, count(writer));
+        }
 
-        assertEquals(0, count(writer));
-
-        writer = data.getFeatureWriter(first.typeName, Filter.INCLUDE, Transaction.AUTO_COMMIT);
-        assertFalse(writer instanceof FilteringFeatureWriter);
-        assertEquals(first.features.length, count(writer));
-
-        writer = data.getFeatureWriter(first.typeName, first.feat1Filter, Transaction.AUTO_COMMIT);
-
-        assertEquals(1, count(writer));
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                data.getFeatureWriter(first.typeName, first.feat1Filter, Transaction.AUTO_COMMIT)) {
+            assertEquals(1, count(writer));
+        }
     }
 
     /** Test two transactions one removing feature, and one adding a feature. */
     @Test
     public void testGetFeatureWriterTransaction() throws Exception {
         try (Transaction t1 = new DefaultTransaction();
-                Transaction t2 = new DefaultTransaction()) {
-            FeatureWriter<SimpleFeatureType, SimpleFeature> writer1 =
-                    data.getFeatureWriter(first.typeName, first.feat1Filter, t1);
-            FeatureWriter<SimpleFeatureType, SimpleFeature> writer2 =
-                    data.getFeatureWriterAppend(first.typeName, t2);
+                Transaction t2 = new DefaultTransaction();
+                FeatureWriter<SimpleFeatureType, SimpleFeature> writer1 =
+                        data.getFeatureWriter(first.typeName, first.feat1Filter, t1);
+                FeatureWriter<SimpleFeatureType, SimpleFeature> writer2 =
+                        data.getFeatureWriterAppend(first.typeName, t2)) {
 
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader;
             SimpleFeature feature;
             SimpleFeature[] ORIGIONAL = first.features;
             SimpleFeature[] REMOVE = new SimpleFeature[ORIGIONAL.length - 1];
@@ -954,25 +966,31 @@ public abstract class AbstractIntegrationTest {
 
             // start of with ORIGINAL
             final Query allRoadsQuery = new Query(first.typeName);
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            assertTrue(covers(reader, ORIGIONAL));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
+                assertTrue(covers(reader, ORIGIONAL));
+            }
 
             // writer 1 removes road.rd1 on t1
             // -------------------------------
             // - tests transaction independence from DataStore
             while (writer1.hasNext()) {
-                feature = (SimpleFeature) writer1.next();
+                feature = writer1.next();
                 assertEquals(first.features[0].getID(), feature.getID());
                 writer1.remove();
             }
 
             // still have ORIGIONAL and t1 has REMOVE
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
 
-            assertTrue(covers(reader, ORIGIONAL));
+                assertTrue(covers(reader, ORIGIONAL));
+            }
 
-            reader = data.getFeatureReader(allRoadsQuery, t1);
-            assertTrue(covers(reader, REMOVE));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t1)) {
+                assertTrue(covers(reader, REMOVE));
+            }
 
             // close writer1
             // --------------
@@ -980,23 +998,32 @@ public abstract class AbstractIntegrationTest {
             writer1.close();
 
             // We still have ORIGIONAL and t1 has REMOVE
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            assertTrue(covers(reader, ORIGIONAL));
-            reader = data.getFeatureReader(allRoadsQuery, t1);
-            assertTrue(covers(reader, REMOVE));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
+                assertTrue(covers(reader, ORIGIONAL));
+            }
+
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t1)) {
+                assertTrue(covers(reader, REMOVE));
+            }
 
             // writer 2 adds road.rd4 on t2
             // ----------------------------
             // - tests transaction independence from each other
-            feature = (SimpleFeature) writer2.next();
+            feature = writer2.next();
             feature.setAttributes(first.newFeature.getAttributes());
             writer2.write();
 
             // We still have ORIGIONAL and t2 has ADD
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            assertTrue(covers(reader, ORIGIONAL));
-            reader = data.getFeatureReader(allRoadsQuery, t2);
-            assertTrue(coversLax(reader, ADD));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
+                assertTrue(covers(reader, ORIGIONAL));
+            }
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t2)) {
+                assertTrue(coversLax(reader, ADD));
+            }
 
             // close writer2
             // -------------
@@ -1004,10 +1031,14 @@ public abstract class AbstractIntegrationTest {
             writer2.close();
 
             // Still have ORIGIONAL and t2 has ADD
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            assertTrue(covers(reader, ORIGIONAL));
-            reader = data.getFeatureReader(allRoadsQuery, t2);
-            assertTrue(coversLax(reader, ADD));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
+                assertTrue(covers(reader, ORIGIONAL));
+            }
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t2)) {
+                assertTrue(coversLax(reader, ADD));
+            }
 
             // commit t1
             // ---------
@@ -1017,12 +1048,18 @@ public abstract class AbstractIntegrationTest {
 
             // We now have REMOVE, as does t1 (which has not additional diffs)
             // t2 will have FINAL
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            assertTrue(covers(reader, REMOVE));
-            reader = data.getFeatureReader(allRoadsQuery, t1);
-            assertTrue(covers(reader, REMOVE));
-            reader = data.getFeatureReader(allRoadsQuery, t2);
-            assertTrue(coversLax(reader, FINAL));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
+                assertTrue(covers(reader, REMOVE));
+            }
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t1)) {
+                assertTrue(covers(reader, REMOVE));
+            }
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t2)) {
+                assertTrue(coversLax(reader, FINAL));
+            }
 
             // commit t2
             // ---------
@@ -1030,17 +1067,22 @@ public abstract class AbstractIntegrationTest {
             t2.commit();
 
             // We now have Number( remove one and add one)
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
-            assertTrue(coversLax(reader, FINAL));
-            reader = data.getFeatureReader(allRoadsQuery, t1);
-            assertTrue(coversLax(reader, FINAL));
-            reader = data.getFeatureReader(allRoadsQuery, t2);
-            assertTrue(coversLax(reader, FINAL));
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT)) {
+                assertTrue(coversLax(reader, FINAL));
+            }
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t1)) {
+                assertTrue(coversLax(reader, FINAL));
+            }
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                    data.getFeatureReader(allRoadsQuery, t2)) {
+                assertTrue(coversLax(reader, FINAL));
+            }
         }
     }
 
-    public void testGetFeatureSource(TestDataType test) throws Exception {
+    protected void testGetFeatureSource(TestDataType test) throws Exception {
         SimpleFeatureSource source = data.getFeatureSource(test.typeName);
 
         assertSchemaEqual(test.featureType, source.getSchema());
@@ -1080,9 +1122,10 @@ public abstract class AbstractIntegrationTest {
         assertEquals(2, half.size());
         assertEquals(2, half.getSchema().getAttributeCount());
 
-        SimpleFeatureIterator reader = half.features();
-        SimpleFeatureType type = half.getSchema();
-        reader.close();
+        SimpleFeatureType type;
+        try (SimpleFeatureIterator reader = half.features()) {
+            type = half.getSchema();
+        }
 
         SimpleFeatureType actual = half.getSchema();
 
@@ -1146,33 +1189,36 @@ public abstract class AbstractIntegrationTest {
 
     @Test
     public void testGetFeatureStoreAddFeatures() throws IOException {
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 DataUtilities.reader(
                         new SimpleFeature[] {
                             first.newFeature,
-                        });
-        SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(first.typeName);
+                        })) {
+            SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(first.typeName);
 
-        road.addFeatures(DataUtilities.collection(reader));
-        assertEquals(first.features.length + 1, road.getFeatures().size());
+            road.addFeatures(DataUtilities.collection(reader));
+            assertEquals(first.features.length + 1, road.getFeatures().size());
+        }
     }
 
     @Test
     public void testGetFeatureStoreSetFeatures() throws IOException {
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
-        reader =
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
                 DataUtilities.reader(
                         new SimpleFeature[] {
                             first.newFeature,
-                        });
-        SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(first.typeName);
+                        })) {
+            SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(first.typeName);
 
-        assertEquals(3, road.getFeatures().size());
-        road.setFeatures(reader);
-        assertEquals(
-                1,
-                count(data.getFeatureReader(new Query(first.typeName), Transaction.AUTO_COMMIT)));
-        assertEquals(1, road.getFeatures().size());
+            assertEquals(3, road.getFeatures().size());
+            road.setFeatures(reader);
+            assertEquals(
+                    1,
+                    count(
+                            data.getFeatureReader(
+                                    new Query(first.typeName), Transaction.AUTO_COMMIT)));
+            assertEquals(1, road.getFeatures().size());
+        }
     }
 
     @Test
@@ -1450,7 +1496,7 @@ public abstract class AbstractIntegrationTest {
             assertEquals("AdditionalErrorMessage", exceptionData.get(0).getTexts().get(1));
             return;
         }
-        assertTrue(false);
+        fail();
     }
 
     /**
@@ -1499,7 +1545,7 @@ public abstract class AbstractIntegrationTest {
 
     protected static SimpleFeature[] grabArray(SimpleFeatureCollection features) {
         SimpleFeature array[] = new SimpleFeature[features.size()];
-        array = (SimpleFeature[]) features.toArray(array);
+        array = features.toArray(array);
         assertNotNull(array);
 
         return array;

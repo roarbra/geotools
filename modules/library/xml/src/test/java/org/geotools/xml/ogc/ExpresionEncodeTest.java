@@ -20,32 +20,29 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 import javax.naming.OperationNotSupportedException;
-import junit.framework.TestCase;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.xml.DocumentWriter;
 import org.geotools.xml.filter.FilterSchema;
+import org.junit.Test;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.Id;
 import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.Expression;
 
 /**
  * For now just writes the expression built.
  *
  * @author David Zwiers, Refractions Research
  */
-public class ExpresionEncodeTest extends TestCase {
+public class ExpresionEncodeTest {
     /** Standard logging instance */
     protected static final Logger LOGGER =
             org.geotools.util.logging.Logging.getLogger(ExpresionEncodeTest.class);
     /** Constructor with test name. */
     String dataFolder = "";
 
-    public ExpresionEncodeTest(String testName) {
-        super(testName);
-
+    public ExpresionEncodeTest() {
         // _log.getLoggerRepository().setThreshold(Level.DEBUG);
         LOGGER.finer("running XMLEncoderTests");
 
@@ -59,6 +56,7 @@ public class ExpresionEncodeTest extends TestCase {
         }
     }
 
+    @Test
     public void testPropBetweenFilter()
             throws IllegalFilterException, OperationNotSupportedException, IOException {
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
@@ -70,10 +68,10 @@ public class ExpresionEncodeTest extends TestCase {
         //        System.out.println(output);
     }
 
+    @Test
     public void testLikeFilter()
             throws IllegalFilterException, OperationNotSupportedException, IOException {
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Expression testAttribute = ff.property("testString");
 
         PropertyIsLike lf = ff.like(ff.property("testString"), "test*", "*", ".", "!");
 
@@ -83,6 +81,7 @@ public class ExpresionEncodeTest extends TestCase {
         // System.out.println(output);
     }
 
+    @Test
     public void testFidFilter() throws OperationNotSupportedException, IOException {
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
 

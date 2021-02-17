@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
@@ -45,6 +47,7 @@ import org.geotools.data.joining.JoiningQuery.QueryJoin;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.filter.FilterAttributeExtractor;
 import org.geotools.filter.visitor.PostPreProcessFilterSplittingVisitor;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.jdbc.JDBCDataStore;
@@ -58,6 +61,7 @@ import org.geotools.jdbc.PrimaryKey;
 import org.geotools.jdbc.PrimaryKeyColumn;
 import org.geotools.jdbc.PrimaryKeyFIDValidator;
 import org.geotools.jdbc.SQLDialect;
+import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
 import org.opengis.feature.simple.SimpleFeature;
@@ -87,6 +91,8 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
     public static final String FOREIGN_ID = "FOREIGN_ID";
     // attribute to indicate primary key column, so it can be retrieved from the feature type
     public static final String PRIMARY_KEY = "PARENT_TABLE_PKEY";
+
+    private static final String COUNT_TABLE_ALIAS = "COUNT_TABLE";
 
     public JoiningJDBCFeatureSource(JDBCFeatureSource featureSource) throws IOException {
         super(featureSource);
@@ -155,17 +161,17 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
             Set<String> orderByFields,
             StringBuffer sql)
             throws IOException, SQLException {
-        for (int i = 0; i < sort.length; i++) {
-            if (SortBy.NATURAL_ORDER.equals(sort[i]) || SortBy.REVERSE_ORDER.equals(sort[i])) {
+        for (SortBy sortBy : sort) {
+            if (SortBy.NATURAL_ORDER.equals(sortBy) || SortBy.REVERSE_ORDER.equals(sortBy)) {
                 throw new IOException("Cannot do natural order in joining queries");
             } else {
                 StringBuffer mySql = new StringBuffer();
                 if (alias != null) {
                     encodeColumnName2(
-                            sort[i].getPropertyName().getPropertyName(), alias, mySql, null);
+                            sortBy.getPropertyName().getPropertyName(), alias, mySql, null);
                 } else {
                     encodeColumnName(
-                            sort[i].getPropertyName().getPropertyName(), typeName, mySql, null);
+                            sortBy.getPropertyName().getPropertyName(), typeName, mySql, null);
                 }
                 if (!mySql.toString().isEmpty() && orderByFields.add(mySql.toString())) {
                     // if it's not already in ORDER BY (because you can't have duplicate column
@@ -176,7 +182,7 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
                     }
                     sql.append(mySql);
 
-                    if (sort[i].getSortOrder() == SortOrder.DESCENDING) {
+                    if (sortBy.getSortOrder() == SortOrder.DESCENDING) {
                         sql.append(" DESC");
                     } else {
                         sql.append(" ASC");
@@ -251,7 +257,7 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
     protected void sort(
             JoiningQuery query, StringBuffer sql, String[] aliases, Set<String> pkColumnNames)
             throws IOException, SQLException, FilterToSQLException {
-        Set<String> orderByFields = new LinkedHashSet<String>();
+        Set<String> orderByFields = new LinkedHashSet<>();
         StringBuffer joinOrders = new StringBuffer();
         for (int j = query.getQueryJoins() == null ? -1 : query.getQueryJoins().size() - 1;
                 j >= -1;
@@ -339,8 +345,7 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
     protected FilterToSQL createFilterToSQL(
             SimpleFeatureType ft, boolean usePreparedStatementParameters) {
         if (getDataStore().getSQLDialect() instanceof PreparedStatementSQLDialect) {
-            PreparedFilterToSQL pfsql =
-                    (PreparedFilterToSQL) getDataStore().createPreparedFilterToSQL(ft);
+            PreparedFilterToSQL pfsql = getDataStore().createPreparedFilterToSQL(ft);
             pfsql.setPrepareEnabled(usePreparedStatementParameters);
             return pfsql;
         } else {
@@ -369,11 +374,33 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
      *     than the native one)
      * @param query the query to be run. The type name and property will be ignored, as they are
      *     supposed to have been already embedded into the provided feature type
+     * @param toSQLref atomic reference to a FilterToSQL able to works with PreparedStament
+     *     parameters
      */
     public String selectSQL(
             SimpleFeatureType featureType,
             JoiningQuery query,
             AtomicReference<PreparedFilterToSQL> toSQLref)
+            throws SQLException, IOException, FilterToSQLException {
+        return selectSQL(featureType, query, toSQLref, false);
+    }
+
+    /**
+     * Generates a 'SELECT p1, p2, ... FROM ... WHERE ...' prepared statement.
+     *
+     * @param featureType the feature type that the query must return (may contain less attributes
+     *     than the native one)
+     * @param query the query to be run. The type name and property will be ignored, as they are
+     *     supposed to have been already embedded into the provided feature type
+     * @param toSQLref atomic reference to a FilterToSQL able to works with PreparedStament
+     *     parameters
+     * @param isCount avoid the encoding of unnecessary SQL pieces when a count query is needed
+     */
+    public String selectSQL(
+            SimpleFeatureType featureType,
+            JoiningQuery query,
+            AtomicReference<PreparedFilterToSQL> toSQLref,
+            boolean isCount)
             throws IOException, SQLException, FilterToSQLException {
 
         // first we create from clause, for aliases
@@ -381,7 +408,7 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
         StringBuffer joinClause = new StringBuffer();
 
         // joining
-        Set<String> tableNames = new HashSet<String>();
+        Set<String> tableNames = new HashSet<>();
 
         String lastTypeName = featureType.getTypeName();
         String curTypeName = lastTypeName;
@@ -400,6 +427,11 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
                 JoiningQuery.QueryJoin join = query.getQueryJoins().get(i);
 
                 joinClause.append(" INNER JOIN ");
+
+                // for count query the table joined might be different from
+                // the lastTypeName (last table joining)
+                if (isCount && join.getJoinedTypeName() != null)
+                    lastTypeName = join.getJoinedTypeName();
 
                 FilterToSQL toSQL1 =
                         createFilterToSQL(getDataStore().getSchema(lastTypeName), toSQLref != null);
@@ -435,7 +467,10 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
                 }
 
                 joinClause.append(" = ");
-                String fromTypeName = curTypeName;
+                String fromTypeName;
+                if (isCount && join.getJoinedTypeName() != null)
+                    fromTypeName = join.getJoinedTypeName();
+                else fromTypeName = curTypeName;
                 toSQL1.setFieldEncoder(new JoiningFieldEncoder(fromTypeName, getDataStore()));
                 joinClause.append(toSQL1.encodeToString(join.getJoiningKeyName()));
                 joinClause.append(") ");
@@ -451,20 +486,10 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
         sql.append("SELECT ");
 
         // primary key
-        PrimaryKey key = null;
-
-        try {
-            key = getDataStore().getPrimaryKey(featureType);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        Set<String> pkColumnNames = new HashSet<String>();
-        String colName;
-        for (PrimaryKeyColumn col : key.getColumns()) {
-            colName = col.getName();
+        Set<String> pkColumnNames = getAllPrimaryKeys(featureType);
+        for (String colName : pkColumnNames) {
             encodeColumnName(colName, featureType.getTypeName(), sql, query.getHints());
             sql.append(",");
-            pkColumnNames.add(colName);
         }
         Set<String> lastPkColumnNames = pkColumnNames;
 
@@ -601,45 +626,25 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
                                 getDataStore().getSchema(lastTableName), toSQLref != null);
 
                 // apply paging to the root feature if applicable
-                Collection<String> ids = new ArrayList<String>();
+                Collection<String> ids = new ArrayList<>();
 
-                if (isRootFeature && query.isDenormalised()) {
-                    // apply inner join for paging to root feature
-                    // if not denormalised, it will apply the maxFeatures and offset in the query
-                    // directly later
+                if (!isCount)
                     pagingApplied =
                             applyPaging(
                                     query,
+                                    isRootFeature,
                                     sql,
+                                    featureType,
                                     pkColumnNames,
-                                    featureType.getTypeName(),
-                                    featureType.getTypeName(),
                                     tableNames,
                                     toSQL,
                                     filter,
-                                    ids);
-                }
+                                    ids,
+                                    aliases);
 
-                if (!isRootFeature) {
-                    // also we always need to apply paging for the last queryJoin since it is the
-                    // join to
-                    // the root feature type (where the original paging parameters come from)
-                    QueryJoin lastJoin =
-                            query.getQueryJoins().get(query.getQueryJoins().size() - 1);
-                    pagingApplied =
-                            applyPaging(
-                                    lastJoin,
-                                    sql,
-                                    pkColumnNames,
-                                    lastTableName,
-                                    lastTableAlias,
-                                    tableNames,
-                                    toSQL,
-                                    filter,
-                                    ids);
-                }
-
-                if (lastSortBy != null && (lastSortBy.length > 0 || !lastPkColumnNames.isEmpty())) {
+                if (lastSortBy != null
+                        && (lastSortBy.length > 0 || !lastPkColumnNames.isEmpty())
+                        && !isCount) {
                     buildFilter(
                             query,
                             sql,
@@ -649,7 +654,8 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
                             lastSortBy,
                             lastTableName,
                             lastTableAlias,
-                            ids);
+                            ids,
+                            curTypeName);
                 } else if (!pagingApplied) {
                     toSQL.setFieldEncoder(new JoiningFieldEncoder(curTypeName, getDataStore()));
                     if (NestedFilterToSQL.isNestedFilter(filter)) {
@@ -661,50 +667,29 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
             } catch (FilterToSQLException e) {
                 throw new RuntimeException(e);
             }
-        } else {
-            if (isRootFeature && query.isDenormalised()) {
-                // apply inner join for paging to root feature
-                pagingApplied =
-                        applyPaging(
-                                query,
-                                sql,
-                                pkColumnNames,
-                                featureType.getTypeName(),
-                                featureType.getTypeName(),
-                                tableNames,
-                                null,
-                                null,
-                                null);
-            }
-            if (!isRootFeature) {
-                // also we always need to apply paging for the last queryJoin since it is the join
-                // to
-                // the root feature type (where the original paging parameters come from)
-                QueryJoin lastJoin = query.getQueryJoins().get(query.getQueryJoins().size() - 1);
-                String lastTableAlias =
-                        aliases[query.getQueryJoins().size() - 1] == null
-                                ? lastJoin.getJoiningTypeName()
-                                : aliases[query.getQueryJoins().size() - 1];
-                pagingApplied =
-                        applyPaging(
-                                lastJoin,
-                                sql,
-                                pkColumnNames,
-                                lastJoin.getJoiningTypeName(),
-                                lastTableAlias,
-                                tableNames,
-                                null,
-                                null,
-                                null);
-            }
+        } else if (!isCount) {
+            pagingApplied =
+                    applyPaging(
+                            query,
+                            isRootFeature,
+                            sql,
+                            featureType,
+                            pkColumnNames,
+                            tableNames,
+                            null,
+                            null,
+                            null,
+                            aliases);
         }
 
         // sorting
-        sort(query, sql, aliases, pkColumnNames);
+        if (!isCount) {
+            sort(query, sql, aliases, pkColumnNames);
 
-        // finally encode limit/offset, if not already done in the INNER JOIN
-        if (!pagingApplied) {
-            getDataStore().applyLimitOffset(sql, query);
+            // finally encode limit/offset, if not already done in the INNER JOIN
+            if (!pagingApplied) {
+                getDataStore().applyLimitOffset(sql, query);
+            }
         }
 
         if (toSQLref != null && toSQL instanceof PreparedFilterToSQL) {
@@ -712,6 +697,60 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
         }
 
         return sql.toString();
+    }
+
+    private boolean applyPaging(
+            JoiningQuery query,
+            boolean isRootFeature,
+            StringBuffer sql,
+            SimpleFeatureType featureType,
+            Set<String> pkColumnNames,
+            Set<String> tableNames,
+            FilterToSQL toSQL,
+            Filter filter,
+            Collection<String> ids,
+            String[] aliases)
+            throws IOException, SQLException, FilterToSQLException {
+        boolean pagingApplied = false;
+
+        if (isRootFeature && query.isDenormalised()) {
+            // apply inner join for paging to root feature
+            // if not denormalised, it will apply the maxFeatures and offset in the query
+            // directly later
+            pagingApplied =
+                    applyPaging(
+                            query,
+                            sql,
+                            pkColumnNames,
+                            featureType.getTypeName(),
+                            featureType.getTypeName(),
+                            tableNames,
+                            toSQL,
+                            filter,
+                            ids);
+        } else if (!isRootFeature) {
+            // also we always need to apply paging for the last queryJoin since it is the
+            // join to
+            // the root feature type (where the original paging parameters come from)
+
+            int lastJoinIndex = query.getQueryJoins().size() - 1;
+            QueryJoin lastJoin = query.getQueryJoins().get(lastJoinIndex);
+            String lastTableName = query.getQueryJoins().get(lastJoinIndex).getJoiningTypeName();
+            String lastTableAlias =
+                    aliases[lastJoinIndex] == null ? lastTableName : aliases[lastJoinIndex];
+            pagingApplied =
+                    applyPaging(
+                            lastJoin,
+                            sql,
+                            pkColumnNames,
+                            lastTableName,
+                            lastTableAlias,
+                            tableNames,
+                            toSQL,
+                            filter,
+                            ids);
+        }
+        return pagingApplied;
     }
 
     private void buildFilter(
@@ -723,8 +762,9 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
             SortBy[] lastSortBy,
             String lastTableName,
             String lastTableAlias,
-            Collection<String> ids)
-            throws SQLException, FilterToSQLException {
+            Collection<String> ids,
+            String curTypeName)
+            throws SQLException, FilterToSQLException, IOException {
         // we will use another join for the filter
         // assuming that the last sort by specifies the ID of the parent feature
         // this way we will ensure that if the table is denormalized, that all rows
@@ -759,25 +799,36 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
 
         if (lastSortBy.length == 0) {
             // GEOT-4554: if ID expression is not specified, use PK
+            Set<String> lastTablePk = getAllPrimaryKeys(getDataStore().getSchema(lastTableName));
             int i = 0;
-            for (String pk : lastPkColumnNames) {
-                if (!ids.contains(pk)) {
-                    getDataStore().dialect.encodeColumnName(null, pk, sortBySQL);
-                    sortBySQL.append(" FROM ");
-                    getDataStore().encodeTableName(lastTableName, sortBySQL, query.getHints());
-                    sortBySQL.append(" ").append(toSQL.encodeToString(filter));
-                    sortBySQL.append(" ) ");
-                    getDataStore().dialect.encodeTableName(TEMP_FILTER_ALIAS, sortBySQL);
-                    sortBySQL.append(" ON ( ");
-                    encodeColumnName2(pk, lastTableAlias, sortBySQL, null);
-                    sortBySQL.append(" = ");
-                    encodeColumnName2(pk, TEMP_FILTER_ALIAS, sortBySQL, null);
-                    if (i < lastPkColumnNames.size() - 1) {
-                        sortBySQL.append(" AND ");
-                    }
-                    i++;
-                    hasSortBy = true;
+            for (String pk : lastTablePk) {
+                getDataStore().dialect.encodeColumnName(null, pk, sortBySQL);
+                sortBySQL.append(" FROM ");
+                if (!lastTableAlias.equals(lastTableName))
+                    getDataStore()
+                            .encodeAliasedTableName(
+                                    lastTableName, sortBySQL, query.getHints(), lastTableAlias);
+                else getDataStore().encodeTableName(lastTableName, sortBySQL, query.getHints());
+                toSQL.setFieldEncoder(new JoiningFieldEncoder(curTypeName, getDataStore()));
+                String sqlFilter;
+                if (NestedFilterToSQL.isNestedFilter(filter)) {
+                    sortBySQL.append(" WHERE ");
+                    sqlFilter = createNestedFilter(filter, query, toSQL).toString();
+                } else {
+                    sqlFilter = toSQL.encodeToString(filter);
                 }
+                sortBySQL.append(" ").append(sqlFilter);
+                sortBySQL.append(" ) ");
+                getDataStore().dialect.encodeTableName(TEMP_FILTER_ALIAS, sortBySQL);
+                sortBySQL.append(" ON ( ");
+                encodeColumnName2(pk, lastTableAlias, sortBySQL, null);
+                sortBySQL.append(" = ");
+                encodeColumnName2(pk, TEMP_FILTER_ALIAS, sortBySQL, null);
+                if (i < lastPkColumnNames.size() - 1) {
+                    sortBySQL.append(" AND ");
+                }
+                i++;
+                hasSortBy = true;
             }
         }
         if (hasSortBy) {
@@ -990,7 +1041,7 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
 
                     // apply SORTBY
                     SortBy[] sort = query.getSortBy();
-                    Set<String> orderByFields = new LinkedHashSet<String>();
+                    Set<String> orderByFields = new LinkedHashSet<>();
                     StringBuffer sortSQL = new StringBuffer();
                     if (sort != null) {
                         sort(typeName, null, sort, orderByFields, sortSQL);
@@ -1060,7 +1111,7 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
             SimpleFeatureType featureType, JoiningQuery query, Connection cx)
             throws SQLException, IOException, FilterToSQLException {
 
-        AtomicReference<PreparedFilterToSQL> toSQLref = new AtomicReference<PreparedFilterToSQL>();
+        AtomicReference<PreparedFilterToSQL> toSQLref = new AtomicReference<>();
         String sql = selectSQL(featureType, query, toSQLref);
 
         LOGGER.fine(sql);
@@ -1340,14 +1391,11 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
     }
 
     protected Query resolvePropertyNames(Query query) {
-        /*if (query instanceof JoiningQuery) {
-            JoiningQuery jQuery = new JoiningQuery (super.resolvePropertyNames(query));
-            jQuery.setJoins(((JoiningQuery)query).getQueryJoins());
-            return jQuery;
+        if (query instanceof JoiningQuery) {
+            return query;
         } else {
             return super.resolvePropertyNames(query);
-        }*/
-        return query;
+        }
     }
 
     protected Query joinQuery(Query query) {
@@ -1382,5 +1430,138 @@ public class JoiningJDBCFeatureSource extends JDBCFeatureSource {
 
     protected boolean isOrUnionReplacementEnabled() {
         return AppSchemaDataAccessConfigurator.isOrUnionReplacementEnabled();
+    }
+
+    @Override
+    protected int getCountInternal(Query query) throws IOException {
+        // the primaryKey from the wrapped JDBCSource
+        String idColumnName = getIdColumnName(getSchema());
+        JoiningQuery jQuery = (JoiningQuery) query;
+        FilterAttributeExtractor extractor = new FilterAttributeExtractor();
+        jQuery.getRootMapping().getFeatureIdExpression().accept(extractor, null);
+        String[] attributes = extractor.getAttributeNames();
+        // the id from the app-schema configuration
+        String idMapping = attributes.length > 0 ? extractor.getAttributeNames()[0] : null;
+        boolean idsColumnEquals = idColumnName.equals(idMapping);
+        boolean isJoining = jQuery.getQueryJoins().size() > 0;
+        // they are equals we can delegate the count to the underlying JDBCFeatureSource
+        if (idsColumnEquals && !isJoining) return super.getCountInternal(query);
+
+        // not equals the count should be over the actually used
+        // field for the ComplexFeature's id
+        if (!idsColumnEquals && idMapping != null) idColumnName = idMapping;
+
+        // rebuild a new query with the same params, but just the pre-filter
+
+        // Build the feature type returned by this query. Also build an eventual extra feature type
+        // containing the attributes we might need in order to evaluate the post filter
+        SimpleFeatureType querySchema = getSchema();
+
+        // grab connection
+        JDBCDataStore store = getDataStore();
+        Connection cx = store.getConnection(getState().getTransaction());
+        Statement st = null;
+        ResultSet rs = null;
+        try {
+
+            SQLDialect dialect = store.getSQLDialect();
+
+            if (dialect instanceof PreparedStatementSQLDialect) {
+                AtomicReference<PreparedFilterToSQL> toSQLref = new AtomicReference<>();
+                String sql =
+                        !isJoining
+                                ? createCountQuery(dialect, querySchema, jQuery, idColumnName)
+                                : createJoiningCountQuery(
+                                        dialect, querySchema, jQuery, idColumnName, toSQLref);
+                st =
+                        cx.prepareStatement(
+                                sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                st.setFetchSize(getDataStore().fetchSize);
+                rs = ((PreparedStatement) st).executeQuery();
+            } else {
+                String sql =
+                        !isJoining
+                                ? createCountQuery(dialect, querySchema, jQuery, idColumnName)
+                                : createJoiningCountQuery(
+                                        dialect, querySchema, jQuery, idColumnName, null);
+                st = cx.createStatement();
+                rs = st.executeQuery(sql);
+            }
+            int result = 0;
+            if (rs.next()) {
+                Object value = rs.getObject(1);
+                result = Converters.convert(value, Integer.class);
+            }
+            int maxFeatures = query.getMaxFeatures();
+            if (maxFeatures > 0 && result > maxFeatures) result = query.getMaxFeatures();
+            return result;
+        } catch (Exception e) {
+            // safely rethrow
+            throw (IOException) new IOException().initCause(e);
+        } finally {
+            store.closeSafe(rs);
+            store.closeSafe(st);
+            store.closeSafe(cx);
+        }
+    }
+
+    private String createCountQuery(
+            SQLDialect dialect,
+            SimpleFeatureType querySchema,
+            JoiningQuery query,
+            String idColumnName)
+            throws FilterToSQLException, SQLException {
+        StringBuffer countSQL = new StringBuffer("SELECT COUNT(").append("DISTINCT ");
+        getDataStore().encodeTableName(querySchema.getTypeName(), countSQL, query.getHints());
+        countSQL.append(".");
+        dialect.encodeColumnName(null, idColumnName, countSQL);
+        countSQL.append(")").append(" FROM ");
+        getDataStore().encodeTableName(querySchema.getTypeName(), countSQL, query.getHints());
+        if (!query.getFilter().equals(Filter.INCLUDE)) {
+            FilterToSQL toSql = createFilterToSQL(querySchema);
+            countSQL.append(toSql.encodeToString(query.getFilter()));
+        }
+        String countQuery = countSQL.toString();
+        if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine(countQuery);
+        return countQuery;
+    }
+
+    private String createJoiningCountQuery(
+            SQLDialect dialect,
+            SimpleFeatureType querySchema,
+            JoiningQuery query,
+            String idColumnName,
+            AtomicReference<PreparedFilterToSQL> toSQLRef)
+            throws IOException, SQLException, FilterToSQLException {
+        StringBuffer countSQL = new StringBuffer("SELECT COUNT(").append("DISTINCT ");
+        dialect.encodeColumnName(COUNT_TABLE_ALIAS, idColumnName, countSQL);
+        countSQL.append(")").append(" FROM (");
+        String sql = selectSQL(querySchema, query, toSQLRef, true);
+        countSQL.append(sql).append(") ");
+        dialect.encodeTableName(COUNT_TABLE_ALIAS, countSQL);
+        String countQuery = countSQL.toString();
+        if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine(countQuery);
+        return countQuery;
+    }
+
+    private String getIdColumnName(SimpleFeatureType featureType) throws IOException {
+        PrimaryKeyColumn column = getDataStore().getPrimaryKey(featureType).getColumns().get(0);
+        String columnName = column.getName();
+        return columnName;
+    }
+
+    private Set<String> getAllPrimaryKeys(SimpleFeatureType featureType) {
+        PrimaryKey key = null;
+
+        try {
+            key = getDataStore().getPrimaryKey(featureType);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Set<String> pkColumnNames = new HashSet<>();
+        for (PrimaryKeyColumn col : key.getColumns()) {
+            pkColumnNames.add(col.getName());
+        }
+        return pkColumnNames;
     }
 }

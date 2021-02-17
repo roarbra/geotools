@@ -36,8 +36,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.StringUtils;
-import org.geotools.data.Base64;
-import org.geotools.data.ows.URLCheckers;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.ExpressionDOMParser;
@@ -96,6 +94,7 @@ import org.geotools.styling.TextSymbolizer2;
 import org.geotools.styling.UomOgcMapping;
 import org.geotools.styling.UserLayer;
 import org.geotools.styling.UserLayerImpl;
+import org.geotools.util.Base64;
 import org.geotools.util.GrowableInternationalString;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.GeoTools;
@@ -116,6 +115,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * TODO: This really needs to be container ready
@@ -385,12 +385,8 @@ public class SLDParser {
     public Style[] readXML() {
         try {
             dom = newDocumentBuilder(true).parse(source);
-        } catch (javax.xml.parsers.ParserConfigurationException pce) {
+        } catch (ParserConfigurationException | IOException | SAXException pce) {
             throw new RuntimeException(pce);
-        } catch (org.xml.sax.SAXException se) {
-            throw new RuntimeException(se);
-        } catch (java.io.IOException ie) {
-            throw new RuntimeException(ie);
         } finally {
             disposeInputSource();
         }
@@ -481,12 +477,8 @@ public class SLDParser {
             // one per file
             return sld;
 
-        } catch (javax.xml.parsers.ParserConfigurationException pce) {
+        } catch (ParserConfigurationException | IOException | SAXException pce) {
             throw new RuntimeException(pce);
-        } catch (org.xml.sax.SAXException se) {
-            throw new RuntimeException(se);
-        } catch (java.io.IOException ie) {
-            throw new RuntimeException(ie);
         } finally {
             disposeInputSource();
         }
@@ -577,7 +569,7 @@ public class SLDParser {
     }
 
     private FeatureTypeConstraint[] parseLayerFeatureConstraints(Node root) {
-        List<FeatureTypeConstraint> featureTypeConstraints = new ArrayList<FeatureTypeConstraint>();
+        List<FeatureTypeConstraint> featureTypeConstraints = new ArrayList<>();
 
         NodeList children = root.getChildNodes();
         final int length = children.getLength();
@@ -846,8 +838,8 @@ public class SLDParser {
         }
 
         FeatureTypeStyle ft = factory.createFeatureTypeStyle();
-        ArrayList<Rule> rules = new ArrayList<Rule>();
-        ArrayList<String> sti = new ArrayList<String>();
+        ArrayList<Rule> rules = new ArrayList<>();
+        ArrayList<String> sti = new ArrayList<>();
         NodeList children = style.getChildNodes();
         final int length = children.getLength();
         for (int i = 0; i < length; i++) {
@@ -890,7 +882,7 @@ public class SLDParser {
             }
         }
 
-        if (sti.size() > 0) {
+        if (!sti.isEmpty()) {
             ft.semanticTypeIdentifiers().clear();
             sti.forEach(s -> ft.semanticTypeIdentifiers().add(SemanticType.valueOf(s)));
         }
@@ -923,7 +915,7 @@ public class SLDParser {
         }
 
         Rule rule = factory.createRule();
-        List<Symbolizer> symbolizers = new ArrayList<Symbolizer>();
+        List<Symbolizer> symbolizers = new ArrayList<>();
         NodeList children = ruleNode.getChildNodes();
         final int length = children.getLength();
         for (int i = 0; i < length; i++) {
@@ -1004,7 +996,7 @@ public class SLDParser {
         final int length = children.getLength();
         StringBuilder text = new StringBuilder();
 
-        Map<String, String> translations = new HashMap<String, String>();
+        Map<String, String> translations = new HashMap<>();
 
         for (int i = 0; i < length; i++) {
             Node child = children.item(i);
@@ -1032,7 +1024,10 @@ public class SLDParser {
             } else continue;
         }
 
-        if (translations.size() > 0) {
+        if (translations.isEmpty()) {
+            String simpleText = getFirstChildValue(root);
+            return new SimpleInternationalString(simpleText == null ? "" : simpleText);
+        } else {
             GrowableInternationalString intString =
                     new GrowableInternationalString(text.toString()) {
 
@@ -1045,9 +1040,6 @@ public class SLDParser {
                 intString.add("", "_" + lang, translations.get(lang));
             }
             return intString;
-        } else {
-            String simpleText = getFirstChildValue(root);
-            return new SimpleInternationalString(simpleText == null ? "" : simpleText);
         }
     }
 
@@ -1118,8 +1110,8 @@ public class SLDParser {
      */
     protected PolygonSymbolizer parsePolygonSymbolizer(Node root) {
         PolygonSymbolizer symbol = factory.createPolygonSymbolizer();
-        symbol.setFill((Fill) null);
-        symbol.setStroke((org.geotools.styling.Stroke) null);
+        symbol.setFill(null);
+        symbol.setStroke(null);
 
         NamedNodeMap namedNodeMap = root.getAttributes();
         Node uomNode = namedNodeMap.getNamedItem(uomString);
@@ -1171,7 +1163,7 @@ public class SLDParser {
             symbol.setUnitOfMeasure(uomMapping.getUnit());
         }
 
-        List<org.geotools.styling.Font> fonts = new ArrayList<org.geotools.styling.Font>();
+        List<org.geotools.styling.Font> fonts = new ArrayList<>();
         NodeList children = root.getChildNodes();
         final int length = children.getLength();
         for (int i = 0; i < length; i++) {
@@ -1355,7 +1347,7 @@ public class SLDParser {
             String text = textNode.getNodeValue();
             return ff.literal(text.trim());
         }
-        List<Expression> expressionList = new ArrayList<Expression>();
+        List<Expression> expressionList = new ArrayList<>();
         for (int index = 0; index < children.getLength(); index++) {
             Node child = children.item(index);
             if (child instanceof CharacterData) {
@@ -1839,7 +1831,7 @@ public class SLDParser {
         String format = "";
         String uri = "";
         String content = null;
-        Map<String, Object> paramList = new HashMap<String, Object>();
+        Map<String, Object> paramList = new HashMap<>();
 
         NodeList children = root.getChildNodes();
         final int length = children.getLength();
@@ -2227,8 +2219,8 @@ public class SLDParser {
 
         NodeList children = root.getChildNodes();
         final int length = children.getLength();
-        List<Expression> expressions = new ArrayList<Expression>();
-        List<Boolean> cdatas = new ArrayList<Boolean>();
+        List<Expression> expressions = new ArrayList<>();
+        List<Boolean> cdatas = new ArrayList<>();
         for (int i = 0; i < length; i++) {
             Node child = children.item(i);
 
@@ -2290,7 +2282,7 @@ public class SLDParser {
             } else continue;
         }
 
-        if (expressions.size() == 0 && LOGGER.isLoggable(Level.FINEST)) {
+        if (expressions.isEmpty() && LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest("no children in CssParam");
         }
 
@@ -2298,7 +2290,7 @@ public class SLDParser {
             // remove all leading white spaces, which means, find all
             // string literals, remove the white space ones, eventually
             // remove the leading white space form the first non white space one
-            while (expressions.size() > 0) {
+            while (!expressions.isEmpty()) {
                 Expression ex = expressions.get(0);
 
                 // if it's not a string literal we're done
@@ -2328,7 +2320,7 @@ public class SLDParser {
             }
 
             // remove also all trailing white spaces the same way
-            while (expressions.size() > 0) {
+            while (!expressions.isEmpty()) {
                 final int idx = expressions.size() - 1;
                 Expression ex = expressions.get(idx);
 

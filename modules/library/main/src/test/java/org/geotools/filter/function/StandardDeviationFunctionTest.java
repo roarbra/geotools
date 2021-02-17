@@ -16,10 +16,14 @@
  */
 package org.geotools.filter.function;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.logging.Logger;
 import java.util.stream.DoubleStream;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.DefaultFeatureCollection;
+import org.junit.Test;
 import org.opengis.feature.Feature;
 import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.simple.SimpleFeature;
@@ -32,25 +36,14 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
     private static final Logger LOGGER =
             org.geotools.util.logging.Logging.getLogger(StandardDeviationFunctionTest.class);
 
-    public StandardDeviationFunctionTest(String testName) {
-        super(testName);
-    }
-
-    protected void tearDown() throws java.lang.Exception {}
-
-    public static junit.framework.Test suite() {
-        junit.framework.TestSuite suite =
-                new junit.framework.TestSuite(StandardDeviationFunctionTest.class);
-
-        return suite;
-    }
-
+    @Test
     public void testInstance() {
         Function stdDev =
                 ff.function("StandardDeviation", ff.literal(new DefaultFeatureCollection()));
         assertNotNull(stdDev);
     }
 
+    @Test
     public void testGetName() {
         Function equInt =
                 ff.function("StandardDeviation", ff.literal(new DefaultFeatureCollection()));
@@ -58,6 +51,7 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
         assertEquals("StandardDeviation", equInt.getName());
     }
 
+    @Test
     public void testSetNumberOfClasses() throws Exception {
         LOGGER.finer("testSetNumberOfClasses");
 
@@ -71,6 +65,7 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
         assertEquals(12, func.getClasses());
     }
 
+    @Test
     public void testGetValue() throws Exception {
         // doesn't work yet?
         Literal classes = ff.literal(5);
@@ -97,49 +92,51 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
         Function classify = ff.function("classify", exp, ff.literal(classifer));
         assertNotNull("step 2 - classify function", classify);
 
-        SimpleFeatureIterator list = featureCollection.features();
+        try (SimpleFeatureIterator it = featureCollection.features()) {
 
-        // feature 1
-        SimpleFeature f = list.next();
-        Integer slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 1, slot.intValue());
+            // feature 1
+            SimpleFeature f = it.next();
+            Integer slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 1, slot.intValue());
 
-        // feature 2
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 4, slot.intValue());
+            // feature 2
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 4, slot.intValue());
 
-        // feature 3
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 2, slot.intValue());
+            // feature 3
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 2, slot.intValue());
 
-        // feature 4
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 2, slot.intValue());
+            // feature 4
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 2, slot.intValue());
 
-        // feature 5
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 2, slot.intValue());
+            // feature 5
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 2, slot.intValue());
 
-        // feature 6
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 3, slot.intValue());
+            // feature 6
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 3, slot.intValue());
 
-        // feature 7
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 1, slot.intValue());
+            // feature 7
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 1, slot.intValue());
 
-        // feature 8
-        f = list.next();
-        slot = classify.evaluate(f, Integer.class);
-        assertEquals("value " + f.getAttribute("foo"), 1, slot.intValue());
+            // feature 8
+            f = it.next();
+            slot = classify.evaluate(f, Integer.class);
+            assertEquals("value " + f.getAttribute("foo"), 1, slot.intValue());
+        }
     }
 
+    @Test
     public void testConstantValuesNumeric() {
         Function function = ff.function("StandardDeviation", ff.property("v"), ff.literal(12));
         RangedClassifier classifier = (RangedClassifier) function.evaluate(constantCollection);
@@ -149,6 +146,7 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
         assertEquals(123.123, (Double) classifier.getMax(0), 0d);
     }
 
+    @Test
     public void testPercentagesOddClassNum() {
         Literal classes = ff.literal(5);
         PropertyName exp = ff.property("foo");
@@ -161,15 +159,16 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
         double[] percentages = classifier.getPercentages();
         assertNotNull(percentages);
         assertEquals(5, percentages.length);
-        assertEquals(10d, percentages[0]);
-        assertEquals(0d, percentages[1]);
-        assertEquals(70d, percentages[2]);
-        assertEquals(10d, percentages[3]);
-        assertEquals(10d, percentages[4]);
+        assertEquals(10d, percentages[0], 0d);
+        assertEquals(0d, percentages[1], 0d);
+        assertEquals(70d, percentages[2], 0d);
+        assertEquals(10d, percentages[3], 0d);
+        assertEquals(10d, percentages[4], 0d);
 
-        assertEquals(100d, DoubleStream.of(percentages).sum());
+        assertEquals(100d, DoubleStream.of(percentages).sum(), 0d);
     }
 
+    @Test
     public void testPercentagesEvenClassNum() {
         Literal classes = ff.literal(6);
         PropertyName exp = ff.property("foo");
@@ -182,12 +181,12 @@ public class StandardDeviationFunctionTest extends FunctionTestSupport {
         double[] percentages = classifier.getPercentages();
         assertNotNull(percentages);
         assertEquals(6, percentages.length);
-        assertEquals(10d, percentages[0]);
-        assertEquals(0d, percentages[1]);
-        assertEquals(50d, percentages[2]);
-        assertEquals(30d, percentages[3]);
-        assertEquals(0d, percentages[4]);
-        assertEquals(10d, percentages[5]);
-        assertEquals(100d, DoubleStream.of(percentages).sum());
+        assertEquals(10d, percentages[0], 0d);
+        assertEquals(0d, percentages[1], 0d);
+        assertEquals(50d, percentages[2], 0d);
+        assertEquals(30d, percentages[3], 0d);
+        assertEquals(0d, percentages[4], 0d);
+        assertEquals(10d, percentages[5], 0d);
+        assertEquals(100d, DoubleStream.of(percentages).sum(), 0d);
     }
 }

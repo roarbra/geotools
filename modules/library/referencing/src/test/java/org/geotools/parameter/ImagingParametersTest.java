@@ -16,6 +16,7 @@
  */
 package org.geotools.parameter;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +26,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptor;
@@ -99,10 +99,10 @@ public final class ImagingParametersTest {
             } else {
                 values.parameter("constants").setValue(new double[] {i});
             }
-            assertTrue(
-                    Arrays.equals(
-                            values.parameter("constants").doubleValueList(),
-                            (double[]) values.parameters.getObjectParameter("constants")));
+            assertArrayEquals(
+                    values.parameter("constants").doubleValueList(),
+                    (double[]) values.parameters.getObjectParameter("constants"),
+                    0.0);
             assertSame(before, values.parameter("constants"));
         }
         assertNotNull(values.toString());
@@ -112,12 +112,6 @@ public final class ImagingParametersTest {
         final ImagingParameters copy = values.clone();
         assertNotSame("clone", values, copy);
         assertNotSame("clone", values.parameters, copy.parameters);
-        if (false) {
-            // NOTE: As of J2SE 1.5 and JAI 1.1, ParameterBlockJAI
-            //       doesn't implements the 'equals' method.
-            assertEquals("clone", values.parameters, copy.parameters);
-            assertEquals("clone", values, copy);
-        }
     }
 
     /**
@@ -135,7 +129,7 @@ public final class ImagingParametersTest {
          * The parameter descriptor for the subsampling.
          */
         final ParameterDescriptor SPATIAL_SUBSAMPLING_X =
-                new DefaultParameterDescriptor(
+                new DefaultParameterDescriptor<>(
                         Citations.OGC,
                         "xPeriod",
                         Double.class, // Value class (mandatory)
@@ -153,8 +147,7 @@ public final class ImagingParametersTest {
                         registry.getDescriptor(RenderedRegistryMode.MODE_NAME, "Extrema");
 
         // Gets the ImagingParameterDescriptors to replace xPeriod
-        final List<ParameterDescriptor> replacingDescriptors =
-                new ArrayList<ParameterDescriptor>(1);
+        final List<ParameterDescriptor> replacingDescriptors = new ArrayList<>(1);
         replacingDescriptors.add(SPATIAL_SUBSAMPLING_X);
         final ImagingParameterDescriptors ripd =
                 new ImagingParameterDescriptors(operation, replacingDescriptors);

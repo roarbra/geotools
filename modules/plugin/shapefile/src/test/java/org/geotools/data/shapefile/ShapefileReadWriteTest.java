@@ -16,11 +16,10 @@
  */
 package org.geotools.data.shapefile;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -95,9 +94,8 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
                 new Runnable() {
                     public void run() {
                         int cutoff = 0;
-                        FileInputStream fr = null;
-                        try {
-                            fr = new FileInputStream(file);
+
+                        try (FileInputStream fr = new FileInputStream(file)) {
                             try {
                                 fr.read();
                             } catch (IOException e1) {
@@ -124,17 +122,8 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
                                     }
                                 }
                             }
-                        } catch (FileNotFoundException e) {
-                            assertTrue(false);
-                        } finally {
-                            if (fr != null) {
-                                try {
-                                    fr.close();
-                                } catch (IOException e) {
-                                    exception = e;
-                                    return;
-                                }
-                            }
+                        } catch (Exception e) {
+                            fail();
                         }
                     }
                 };
@@ -185,7 +174,7 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
 
         ShapefileDataStore shapefile;
         String typeName;
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put(ShapefileDataStoreFactory.URLP.key, tmp.toURI().toURL());
         params.put(ShapefileDataStoreFactory.MEMORY_MAPPED.key, memorymapped);
         shapefile = (ShapefileDataStore) maker.createDataStore(params);
@@ -222,16 +211,15 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
             throw new Exception("Number of Features unequal : " + one.size() + " != " + two.size());
         }
 
-        SimpleFeatureIterator iterator1 = one.features();
-        SimpleFeatureIterator iterator2 = two.features();
+        try (SimpleFeatureIterator iterator1 = one.features();
+                SimpleFeatureIterator iterator2 = two.features()) {
 
-        while (iterator1.hasNext()) {
-            SimpleFeature f1 = iterator1.next();
-            SimpleFeature f2 = iterator2.next();
-            compare(f1, f2);
+            while (iterator1.hasNext()) {
+                SimpleFeature f1 = iterator1.next();
+                SimpleFeature f2 = iterator2.next();
+                compare(f1, f2);
+            }
         }
-        iterator1.close();
-        iterator2.close();
     }
 
     static void compare(SimpleFeature f1, SimpleFeature f2) throws Exception {
@@ -258,10 +246,5 @@ public class ShapefileReadWriteTest extends TestCaseSupport {
                 }
             }
         }
-    }
-
-    public static final void main(String[] args) throws Exception {
-        // verbose = true;
-        junit.textui.TestRunner.run(suite(ShapefileReadWriteTest.class));
     }
 }

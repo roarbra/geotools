@@ -71,7 +71,7 @@ public class ListFeatureCollectionTest {
 
     @Before
     public void setup() {
-        featureList = new ArrayList<SimpleFeature>();
+        featureList = new ArrayList<>();
         fb = new SimpleFeatureBuilder(TYPE);
     }
 
@@ -118,16 +118,17 @@ public class ListFeatureCollectionTest {
     @Test
     public void iterator() {
         createPointFeaturesAtCorners(WORLD);
-        SimpleFeatureIterator iter = featureCollection.features();
-        assertNotNull(iter);
-        assertTrue(iter.hasNext());
+        try (SimpleFeatureIterator iter = featureCollection.features()) {
+            assertNotNull(iter);
+            assertTrue(iter.hasNext());
 
-        List<SimpleFeature> copy = new ArrayList<SimpleFeature>(featureList);
-        while (iter.hasNext()) {
-            SimpleFeature f = iter.next();
-            assertTrue(copy.remove(f));
+            List<SimpleFeature> copy = new ArrayList<>(featureList);
+            while (iter.hasNext()) {
+                SimpleFeature f = iter.next();
+                assertTrue(copy.remove(f));
+            }
+            assertTrue(copy.isEmpty());
         }
-        assertTrue(copy.isEmpty());
     }
 
     /** Test for ticket GEOT-5684 Bounds cache was wrong after features were removed from list */
@@ -136,7 +137,7 @@ public class ListFeatureCollectionTest {
         // create test points
         createPointFeatures(WORLD, 3);
         // remove last feature in collection
-        List<SimpleFeature> copy = new ArrayList<SimpleFeature>(featureList);
+        List<SimpleFeature> copy = new ArrayList<>(featureList);
         SimpleFeature f = copy.get(2);
         featureCollection.remove(f);
         // get the new bounds (removed feature)

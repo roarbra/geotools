@@ -19,9 +19,9 @@ package org.geotools.swing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import java.awt.Rectangle;
 import org.assertj.swing.edt.FailOnThreadViolationRepaintManager;
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.edt.GuiQuery;
@@ -44,8 +44,6 @@ import org.junit.Test;
  * @version $Id$
  */
 public class JMapPaneHeadlessTest extends JMapPaneTestBase {
-
-    private static final Rectangle PANE = new Rectangle(100, 100);
 
     private static final ReferencedEnvelope WORLD =
             new ReferencedEnvelope(-10, 10, -5, 5, DefaultEngineeringCRS.CARTESIAN_2D);
@@ -87,7 +85,7 @@ public class JMapPaneHeadlessTest extends JMapPaneTestBase {
         GTRenderer renderer = new MockRenderer();
         mapPane.setRenderer(renderer);
 
-        assertTrue(renderer.getMapContent() == mapContent);
+        assertSame(renderer.getMapContent(), mapContent);
     }
 
     @Test
@@ -98,7 +96,7 @@ public class JMapPaneHeadlessTest extends JMapPaneTestBase {
         MapContent mapContent = new MapContent();
         mapPane.setMapContent(mapContent);
 
-        assertTrue(renderer.getMapContent() == mapContent);
+        assertSame(renderer.getMapContent(), mapContent);
     }
 
     @Test
@@ -114,7 +112,7 @@ public class JMapPaneHeadlessTest extends JMapPaneTestBase {
         Object o = event.getData();
         assertNotNull(o);
         assertTrue(o instanceof MapContent);
-        assertTrue(o == mapContent);
+        assertSame(o, mapContent);
     }
 
     @Test

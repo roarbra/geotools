@@ -18,6 +18,7 @@ package org.geotools.data.mysql;
 
 import org.geotools.jdbc.JDBCAggregateTestSetup;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class MySQLAggregateTestSetup extends JDBCAggregateTestSetup {
 
     protected MySQLAggregateTestSetup() {
@@ -32,15 +33,15 @@ public class MySQLAggregateTestSetup extends JDBCAggregateTestSetup {
 
         run(
                 "INSERT INTO aggregate (id,geom,name) VALUES ( 0,"
-                        + "GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
+                        + "ST_GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
                         + "'muddy1')");
         run(
                 "INSERT INTO aggregate (id,geom,name) VALUES ( 1,"
-                        + "GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
+                        + "ST_GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
                         + "'muddy1')");
         run(
                 "INSERT INTO aggregate (id,geom,name) VALUES ( 2,"
-                        + "GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
+                        + "ST_GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
                         + "'muddy2')");
     }
 

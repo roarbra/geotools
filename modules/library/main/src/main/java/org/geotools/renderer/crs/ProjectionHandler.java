@@ -99,7 +99,7 @@ public class ProjectionHandler {
 
     protected double densify = 0.0;
 
-    Map projectionParameters;
+    Map<String, Object> projectionParameters;
 
     /**
      * Initializes a projection handler
@@ -169,7 +169,7 @@ public class ProjectionHandler {
      * Set one of the supported projection parameters: - advancedProjectionDensify (double) if > 0
      * enables densification on preprocessing with the given distance between points.
      */
-    public void setProjectionParameters(Map projectionParameters) {
+    public void setProjectionParameters(Map<String, Object> projectionParameters) {
         if (projectionParameters.containsKey(ADVANCED_PROJECTION_DENSIFY)) {
             densify = (Double) projectionParameters.get(ADVANCED_PROJECTION_DENSIFY);
         }
@@ -217,7 +217,7 @@ public class ProjectionHandler {
             // referencing
             // subsystem directly
             ReferencedEnvelope re = renderingEnvelope;
-            List<ReferencedEnvelope> envelopes = new ArrayList<ReferencedEnvelope>();
+            List<ReferencedEnvelope> envelopes = new ArrayList<>();
             addTransformedEnvelope(re, envelopes);
 
             if (CRS.getAxisOrder(renderingCRS) == CRS.AxisOrder.NORTH_EAST) {
@@ -252,7 +252,7 @@ public class ProjectionHandler {
                 double maxY = renderingEnvelope.getMaxY();
                 ReferencedEnvelope re1 =
                         new ReferencedEnvelope(minX, datelineX - EPS, minY, maxY, renderingCRS);
-                List<ReferencedEnvelope> result = new ArrayList<ReferencedEnvelope>();
+                List<ReferencedEnvelope> result = new ArrayList<>();
                 ReferencedEnvelope tx1 = transformEnvelope(re1, WGS84);
                 if (tx1 != null) {
                     tx1.expandToInclude(180, tx1.getMinY());
@@ -303,7 +303,7 @@ public class ProjectionHandler {
         // We need to split reprojected envelope and normalize it. To be lenient with
         // situations in which the data is just broken (people saying 4326 just because they
         // have no idea at all) we don't actually split, but add elements
-        List<ReferencedEnvelope> envelopes = new ArrayList<ReferencedEnvelope>();
+        List<ReferencedEnvelope> envelopes = new ArrayList<>();
         envelopes.add(re);
         adjustEnvelope(re, envelopes, false);
         mergeEnvelopes(envelopes);
@@ -628,11 +628,11 @@ public class ProjectionHandler {
      */
     public Geometry preProcess(Geometry geometry) throws TransformException, FactoryException {
         // if there is no valid area, no cutting is required either
-        if (validAreaBounds == null) return densify(geometry);
+        if (validAreaBounds == null) return densify(geometry, true);
 
         // if not reprojection is going on, we don't need to cut
         if (noReprojection) {
-            return densify(geometry);
+            return densify(geometry, false);
         }
 
         Geometry mask;
@@ -648,7 +648,7 @@ public class ProjectionHandler {
             // if the geometry is within the valid area for this projection
             // just skip expensive cutting
             if (validAreaBounds.contains((Envelope) geWGS84)) {
-                return densify(geometry);
+                return densify(geometry, true);
             }
 
             // we need to cut, first thing, we intersect the geometry envelope
@@ -667,7 +667,7 @@ public class ProjectionHandler {
                     ReferencedEnvelope translated = new ReferencedEnvelope(validAreaBounds);
                     translated.translate(-360, 0);
                     if (translated.contains((Envelope) geWGS84)) {
-                        return densify(geometry);
+                        return densify(geometry, false);
                     }
                     envIntWgs84 = translated.intersection(geWGS84);
                 } else if (validAreaBounds.contains(
@@ -675,7 +675,7 @@ public class ProjectionHandler {
                     ReferencedEnvelope translated = new ReferencedEnvelope(validAreaBounds);
                     translated.translate(360, 0);
                     if (translated.contains((Envelope) geWGS84)) {
-                        return densify(geometry);
+                        return densify(geometry, false);
                     }
                     envIntWgs84 = translated.intersection(geWGS84);
                 }
@@ -690,7 +690,7 @@ public class ProjectionHandler {
             // if the geometry is within the valid area for this projection
             // just skip expensive cutting
             if (validaAreaTester.contains(JTS.toGeometry(geWGS84))) {
-                return densify(geometry);
+                return densify(geometry, false);
             }
 
             // we need to cut, first thing, we intersect the geometry envelope
@@ -714,7 +714,7 @@ public class ProjectionHandler {
             mask = JTS.transform(maskWgs84, CRS.findMathTransform(WGS84, geometryCRS));
         }
 
-        return densify(intersect(geometry, mask, geometryCRS));
+        return densify(intersect(geometry, mask, geometryCRS), false);
     }
 
     /**
@@ -722,10 +722,15 @@ public class ProjectionHandler {
      *
      * <p>It returns the original geometry if densification is not enabled.
      */
-    protected Geometry densify(Geometry geometry) {
+    protected Geometry densify(Geometry geometry, boolean validate) {
         if (geometry != null && densify > 0.0) {
             try {
-                geometry = Densifier.densify(geometry, densify);
+                // disable validation, it runs an expensive buffer operation that
+                // can bring the VM to an OOM when run on large geometries.
+                Densifier densifier = new Densifier(geometry);
+                densifier.setDistanceTolerance(densify);
+                densifier.setValidate(validate);
+                return densifier.getResultGeometry();
             } catch (Throwable t) {
                 LOGGER.warning("Cannot densify geometry");
             }
@@ -762,7 +767,7 @@ public class ProjectionHandler {
                     }
                 }
 
-                if (elements.size() == 0) {
+                if (elements.isEmpty()) {
                     return null;
                 }
 
@@ -785,6 +790,10 @@ public class ProjectionHandler {
         try {
             result = geometry.intersection(mask);
         } catch (Exception e1) {
+            // JTS versions lower than 1.18.0 included a call to buffer(0) in the reduce call.
+            // We add it here to ensure that inputs are suitably clean.
+            geometry = geometry.buffer(0);
+
             // try a precision reduction approach, starting from mm and scaling up to km
             double precision;
             if (CRS.getProjectedCRS(geometryCRS) != null) {
@@ -848,10 +857,10 @@ public class ProjectionHandler {
 
     /** Can modify/wrap the transform to handle specific projection issues */
     public MathTransform getRenderingTransform(MathTransform mt) throws FactoryException {
-        List<MathTransform> elements = new ArrayList<MathTransform>();
+        List<MathTransform> elements = new ArrayList<>();
         accumulateTransforms(mt, elements);
 
-        List<MathTransform> wrapped = new ArrayList<MathTransform>();
+        List<MathTransform> wrapped = new ArrayList<>();
         List<MathTransform> datumShiftChain = null;
         boolean datumShiftDetected = false;
         for (MathTransform element : elements) {
@@ -867,7 +876,7 @@ public class ProjectionHandler {
                     datumShiftChain = null;
                 }
             } else if (element instanceof GeocentricTransform) {
-                datumShiftChain = new ArrayList<MathTransform>();
+                datumShiftChain = new ArrayList<>();
                 datumShiftChain.add(element);
             } else {
                 wrapped.add(element);

@@ -43,7 +43,6 @@ import org.geotools.coverage.grid.io.footprint.MultiLevelROIProviderFactory;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.test.ImageAssert;
-import org.geotools.parameter.DefaultParameterDescriptor;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.test.TestData;
@@ -55,6 +54,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.filter.Filter;
 import org.opengis.parameter.GeneralParameterValue;
+import org.opengis.parameter.ParameterDescriptor;
 import org.opengis.parameter.ParameterValue;
 
 public class ImageMosaicEgrTest {
@@ -118,8 +118,8 @@ public class ImageMosaicEgrTest {
         // other entries if available
         boolean foundGridGeometry = false;
         if (entries != null) {
-            for (SimpleEntry<DefaultParameterDescriptor, Object> entry : entries) {
-                ParameterValue<?> pv = entry.getKey().createValue();
+            for (SimpleEntry entry : entries) {
+                ParameterValue<?> pv = ((ParameterDescriptor) entry.getKey()).createValue();
                 pv.setValue(entry.getValue());
                 params.add(pv);
                 foundGridGeometry |= entry.getKey().equals(AbstractGridFormat.READ_GRIDGEOMETRY2D);
@@ -136,8 +136,7 @@ public class ImageMosaicEgrTest {
             params.add(geom);
         }
 
-        GeneralParameterValue[] result =
-                (GeneralParameterValue[]) params.toArray(new GeneralParameterValue[params.size()]);
+        GeneralParameterValue[] result = params.toArray(new GeneralParameterValue[params.size()]);
         return result;
     }
 
@@ -183,7 +182,7 @@ public class ImageMosaicEgrTest {
         testAllImages(sample);
     }
 
-    public void testAllImages(File expectedOutput) throws Exception {
+    private void testAllImages(File expectedOutput) throws Exception {
         ImageMosaicReader reader = new ImageMosaicReader(testMosaicUrl, hints);
 
         // test with no EGR
@@ -251,7 +250,7 @@ public class ImageMosaicEgrTest {
         testRedCoversAll(sample);
     }
 
-    public void testRedCoversAll(File expectedOutput) throws Exception {
+    private void testRedCoversAll(File expectedOutput) throws Exception {
         ImageMosaicReader reader = new ImageMosaicReader(testMosaicUrl, hints);
 
         // test with no EGR
@@ -305,7 +304,7 @@ public class ImageMosaicEgrTest {
         testLeftRightOnTop(sample);
     }
 
-    public void testLeftRightOnTop(File expectedOutput) throws Exception {
+    private void testLeftRightOnTop(File expectedOutput) throws Exception {
         ImageMosaicReader reader = new ImageMosaicReader(testMosaicUrl, hints);
 
         // filter out the large granule, the left and right ones will still cover the mid one
@@ -349,7 +348,7 @@ public class ImageMosaicEgrTest {
         File sample =
                 new File(
                         "src/test/resources/org/geotools/gce/imagemosaic/test-data/egr-red-rect.png");
-        testSingle(sample);
+        checkSingle(sample);
     }
 
     @Test
@@ -358,10 +357,10 @@ public class ImageMosaicEgrTest {
         File sample =
                 new File(
                         "src/test/resources/org/geotools/gce/imagemosaic/test-data/egr-red-rect.png");
-        testSingle(sample);
+        checkSingle(sample);
     }
 
-    public void testSingle(File expectedOutput) throws Exception {
+    public void checkSingle(File expectedOutput) throws Exception {
         ImageMosaicReader reader = new ImageMosaicReader(testMosaicUrl, hints);
 
         // read a small grid geometry that will only catch one feature

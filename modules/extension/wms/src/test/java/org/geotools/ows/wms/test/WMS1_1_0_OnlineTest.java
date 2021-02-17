@@ -16,6 +16,12 @@
  */
 package org.geotools.ows.wms.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -27,6 +33,7 @@ import org.geotools.ows.wms.WMS1_1_0;
 import org.geotools.ows.wms.WMSCapabilities;
 import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.request.GetMapRequest;
+import org.junit.Test;
 import org.xml.sax.SAXException;
 
 /**
@@ -44,6 +51,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
         spec = new WMS1_1_0();
     }
 
+    @Test
     public void testGetVersion() {
         assertEquals(spec.getVersion(), "1.1.0");
     }
@@ -57,6 +65,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
         assertEquals(properties.get("SERVICE"), "WMS");
     }
 
+    @Test
     public void testCreateDescribeLayerRequest() throws Exception {
         /* TODO FIX
                 try{
@@ -95,6 +104,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
         */
     }
 
+    @Test
     public void testCreateGetLegendGraphicRequest() throws Exception {
         /* TODO FIX
                 try{
@@ -149,6 +159,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
     //
     //    }
 
+    @Test
     public void testCreateParser() throws Exception {
         WMSCapabilities capabilities = createCapabilities("1.1.0Capabilities.xml");
         try {
@@ -195,7 +206,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
 
             assertEquals(capabilities.getLayerList().size(), 12);
 
-            Layer layer = (Layer) capabilities.getLayerList().get(0);
+            Layer layer = capabilities.getLayerList().get(0);
             assertNull(layer.getParent());
             assertEquals(layer.getName(), "DEMO");
             assertEquals(layer.get_abstract(), "Abstract Test");
@@ -217,14 +228,14 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
             assertEquals(layer.getBoundingBoxes().size(), 1);
             assertNotNull(layer.getBoundingBoxes().get("EPSG:42304"));
 
-            Layer layer2 = (Layer) capabilities.getLayerList().get(1);
+            Layer layer2 = capabilities.getLayerList().get(1);
             assertEquals(layer2.getParent(), layer);
             assertEquals(layer2.getName(), "bathymetry");
             assertEquals(layer2.getTitle(), "Elevation/Bathymetry");
             assertTrue(layer2.getSrs().contains("EPSG:42304"));
             assertFalse(layer2.isQueryable());
 
-            layer2 = (Layer) capabilities.getLayerList().get(2);
+            layer2 = capabilities.getLayerList().get(2);
             assertEquals(layer2.getParent(), layer);
             assertEquals(layer2.getName(), "land_fn");
             assertEquals(layer2.getTitle(), "Foreign Lands");
@@ -235,7 +246,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
             assertFalse(layer2.isQueryable());
             assertNotNull(layer2.getBoundingBoxes().get("EPSG:42304"));
 
-            layer2 = (Layer) capabilities.getLayerList().get(3);
+            layer2 = capabilities.getLayerList().get(3);
             assertEquals(layer2.getParent(), layer);
             assertEquals(layer2.getName(), "park");
             assertEquals(layer2.getTitle(), "Parks");
@@ -247,7 +258,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
             assertTrue(layer2.isQueryable());
             assertNotNull(layer2.getBoundingBoxes().get("EPSG:42304"));
 
-            layer2 = (Layer) capabilities.getLayerList().get(11);
+            layer2 = capabilities.getLayerList().get(11);
             assertEquals(layer2.getParent(), layer);
             assertEquals(layer2.getName(), "grid");
             assertEquals(layer2.getTitle(), "Grid");
@@ -260,17 +271,18 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
             assertNotNull(layer2.getBoundingBoxes().get("EPSG:42304"));
         } catch (Exception e) {
             if (e.getMessage().indexOf("timed out") > 0) {
-                // System.err.println("Unable to test - timed out: " + e);
+                LOGGER.warning("Unable to test - timed out: " + e);
             } else {
                 throw (e);
             }
         }
     }
 
+    @Test
     public void testCreateGetMapRequest() throws Exception {
         try {
             WebMapServer wms = new WebMapServer(server);
-            WMSCapabilities caps = wms.getCapabilities();
+            wms.getCapabilities();
             GetMapRequest request = wms.createGetMapRequest();
             request.setFormat("image/jpeg");
             // System.out.println(request.getFinalURL().toExternalForm());
@@ -279,7 +291,7 @@ public class WMS1_1_0_OnlineTest extends WMS1_0_0_OnlineTest {
             assertTrue(externalForm.indexOf("image%2Fjpeg") >= 0);
         } catch (java.net.ConnectException ce) {
             if (ce.getMessage().indexOf("timed out") > 0) {
-                // System.err.println("Unable to test - timed out: " + ce);
+                LOGGER.warning("Unable to test - timed out: " + ce);
             } else {
                 throw (ce);
             }

@@ -1,5 +1,8 @@
 package org.geotools.data.shapefile;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -73,25 +76,27 @@ public class DbaseNullSupportTest {
             header.addColumn("" + types[i], types[i], sizes[i], decimals[i]);
         }
         header.setNumRecords(values.length);
-        FileOutputStream fos = new FileOutputStream(tmp);
-        WritableByteChannel channel = fos.getChannel();
-        tmp.deleteOnExit();
-        DbaseFileWriter writer = new DbaseFileWriter(header, channel, cs, tz);
-        // write records such that the i-th row has nulls in every column except the i-th column
-        for (int row = 0; row < values.length; row++) {
-            Object[] current = new Object[values.length];
-            Arrays.fill(current, null);
-            current[row] = values[row];
-            writer.write(current);
+        try (FileOutputStream fos = new FileOutputStream(tmp);
+                WritableByteChannel channel = fos.getChannel();
+                DbaseFileWriter writer = new DbaseFileWriter(header, channel, cs, tz)) {
+
+            tmp.deleteOnExit();
+
+            // write records such that the i-th row has nulls in every column except the i-th column
+            for (int row = 0; row < values.length; row++) {
+                Object[] current = new Object[values.length];
+                Arrays.fill(current, null);
+                current[row] = values[row];
+                writer.write(current);
+            }
+            fos.flush();
         }
-        writer.close();
-        fos.flush();
-        fos.close();
         try (FileInputStream in = new FileInputStream(tmp);
                 DbaseFileReader reader = new DbaseFileReader(in.getChannel(), false, cs, tz)) {
-            assertTrue(
+            assertEquals(
                     "Number of records does not match",
-                    values.length == reader.getHeader().getNumRecords());
+                    values.length,
+                    reader.getHeader().getNumRecords());
             for (int row = 0; row < values.length; row++) {
                 Object[] current = reader.readEntry();
                 assertTrue(
@@ -99,19 +104,16 @@ public class DbaseNullSupportTest {
                         current != null && current.length == values.length);
                 for (int column = 0; column < values.length; column++) {
                     if (column == row) {
-                        assertTrue(
-                                "Column was null and should not have been",
-                                current[column] != null);
-                        assertTrue(
+                        assertNotNull("Column was null and should not have been", current[column]);
+                        assertEquals(
                                 "Non-null column value "
                                         + current[column]
                                         + " did not match original value "
                                         + values[column],
-                                current[column].equals(values[column]));
+                                current[column],
+                                values[column]);
                     } else {
-                        assertTrue(
-                                "Column that should have been null was not",
-                                current[column] == null);
+                        assertNull("Column that should have been null was not", current[column]);
                     }
                 }
             }

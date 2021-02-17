@@ -410,7 +410,7 @@ public class RasterLayerResponse {
 
             // STEP 1 collect all the mosaics from each single dimension
             LOGGER.fine("Producing the final mosaic, step 1, loop through granule collectors");
-            final List<MosaicElement> mosaicInputs = new ArrayList<MosaicElement>();
+            final List<MosaicElement> mosaicInputs = new ArrayList<>();
             SubmosaicProducer first = null; // we take this apart to steal some val
             int size = 0;
             for (SubmosaicProducer collector : granuleCollectors) {
@@ -418,7 +418,7 @@ public class RasterLayerResponse {
                     LOGGER.fine("Submosaic producer being called: " + collector.toString());
                 }
                 final List<MosaicElement> preparedMosaic = collector.createMosaic();
-                if (preparedMosaic.size() > 0
+                if (!preparedMosaic.isEmpty()
                         && !preparedMosaic.stream().allMatch(p -> p == null)) {
                     size += preparedMosaic.size();
                     mosaicInputs.addAll(preparedMosaic);
@@ -662,10 +662,13 @@ public class RasterLayerResponse {
             final Query query = queryBuilder.build();
 
             // === collect granules
-            final MosaicProducer visitor =
-                    new MosaicProducer(
-                            submosaicProducerFactory.createProducers(
-                                    this.getRequest(), this.getRasterManager(), this, false));
+            List<SubmosaicProducer> producers =
+                    submosaicProducerFactory.createProducers(
+                            this.getRequest(), this.getRasterManager(), this, false);
+            for (SubmosaicProducer producer : producers) {
+                producer.init(query);
+            }
+            final MosaicProducer visitor = new MosaicProducer(producers);
             rasterManager.getGranuleDescriptors(query, visitor);
 
             // get those granules and create the final mosaic
@@ -706,6 +709,9 @@ public class RasterLayerResponse {
                 List<SubmosaicProducer> collectors =
                         submosaicProducerFactory.createProducers(
                                 this.getRequest(), this.getRasterManager(), this, true);
+                for (SubmosaicProducer producer : collectors) {
+                    producer.init(query);
+                }
                 final MosaicProducer dryRunVisitor = new MosaicProducer(true, collectors);
                 final Utils.BBOXFilterExtractor bboxExtractor = new Utils.BBOXFilterExtractor();
                 query.getFilter().accept(bboxExtractor, null);
@@ -1147,7 +1153,7 @@ public class RasterLayerResponse {
             }
         }
         final GridSampleDimension[] bands = new GridSampleDimension[numBands];
-        Set<String> bandNames = new HashSet<String>();
+        Set<String> bandNames = new HashSet<>();
         // setting bands names.
         for (int i = 0; i < numBands; i++) {
             ColorInterpretation colorInterpretation = null;
@@ -1244,7 +1250,7 @@ public class RasterLayerResponse {
         }
 
         // creating the final coverage by keeping into account the fact that we
-        Map<String, Object> properties = new HashMap<String, Object>();
+        Map<String, Object> properties = new HashMap<>();
         if (granulesPaths != null) {
             properties.put(GridCoverage2DReader.FILE_SOURCE_PROPERTY, granulesPaths);
         }

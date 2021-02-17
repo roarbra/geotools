@@ -18,6 +18,7 @@ package org.geotools.data.mysql;
 
 import org.geotools.jdbc.JDBCNoPrimaryKeyTestSetup;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class MySQLNoPrimaryKeyTestSetup extends JDBCNoPrimaryKeyTestSetup {
 
     public MySQLNoPrimaryKeyTestSetup() {
@@ -29,7 +30,7 @@ public class MySQLNoPrimaryKeyTestSetup extends JDBCNoPrimaryKeyTestSetup {
 
         run(
                 "INSERT INTO lake (id,geom,name) VALUES ( 0,"
-                        + "GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
+                        + "ST_GeomFromText('POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))',4326),"
                         + "'muddy')");
     }
 

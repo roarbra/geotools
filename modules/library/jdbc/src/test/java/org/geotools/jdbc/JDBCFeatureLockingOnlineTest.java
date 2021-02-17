@@ -31,6 +31,7 @@ import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 import org.opengis.filter.PropertyIsEqualTo;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
 
     JDBCFeatureStore store;
@@ -113,7 +114,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
             try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
                     dataStore.getFeatureWriter(tname("ft1"), tx)) {
                 while (writer.hasNext()) {
-                    SimpleFeature feature = (SimpleFeature) writer.next();
+                    SimpleFeature feature = writer.next();
                     Number old = (Number) feature.getAttribute(aname("intProperty"));
 
                     feature.setAttribute(aname("intProperty"), Integer.valueOf(100));

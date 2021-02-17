@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import org.geotools.jdbc.JDBCDelegatingTestSetup;
 import org.geotools.jdbc.JDBCTestSetup;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class DB2DataStoreTestSetup extends JDBCDelegatingTestSetup {
 
     private String srsName = "SRS_26713";
@@ -32,8 +33,7 @@ public class DB2DataStoreTestSetup extends JDBCDelegatingTestSetup {
 
     protected final void setUpData() throws Exception {
         // remove the srs
-        Connection con = getConnection();
-        try {
+        try (Connection con = getConnection()) {
             try {
 
                 removeSRS(con);
@@ -41,8 +41,6 @@ public class DB2DataStoreTestSetup extends JDBCDelegatingTestSetup {
             }
             // create the SRS
             createSRS(con);
-        } finally {
-            if (con != null) con.close();
         }
         super.setUpData();
     }

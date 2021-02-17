@@ -65,8 +65,8 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
 
     @Test
     public void testAll() throws Throwable {
-        for (int i = 0, ii = files.length; i < ii; i++) {
-            test(files[i]);
+        for (String file : files) {
+            test(file);
         }
     }
 
@@ -105,7 +105,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
             throws IOException {
         Map<String, Serializable> params = new HashMap<>();
         params.put(ShapefileDataStoreFactory.URLP.key, url);
-        params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.valueOf(true));
+        params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.TRUE);
         DataStore createDataStore = fac.createDataStore(params);
         return createDataStore;
     }
@@ -225,7 +225,7 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
 
         Map<String, Serializable> params = new HashMap<>();
         params.put(ShapefileDataStoreFactory.URLP.key, file.toURI().toURL());
-        params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.valueOf(true));
+        params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.TRUE);
         ShapefileDataStore ds = (ShapefileDataStore) fac.createDataStore(params);
 
         FilterFactory2 ff =
@@ -252,9 +252,5 @@ public class ShapefileQuadTreeReadWriteTest extends TestCaseSupport {
 
         assertTrue(result == null || result.equals(bounds));
         ds.dispose();
-    }
-
-    public static final void main(String[] args) throws Exception {
-        junit.textui.TestRunner.run(suite(ShapefileQuadTreeReadWriteTest.class));
     }
 }

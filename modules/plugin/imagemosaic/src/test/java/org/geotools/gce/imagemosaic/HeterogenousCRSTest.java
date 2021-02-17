@@ -46,7 +46,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -293,6 +297,85 @@ public class HeterogenousCRSTest {
         final String expectedResultLocation = "hetero_utm_results/full.png";
         assertExpectedMosaic(imReader, expectedResultLocation);
         imReader.dispose();
+    }
+
+    @Test
+    public void testConcurrentHeteroUTMH2FullArea() throws Exception {
+        runConcurrentHeteroUTMH2(r -> null);
+    }
+
+    @Test
+    public void testConcurrentHeteroUTMH2Across() throws Exception {
+        runConcurrentHeteroUTMH2(
+                r -> {
+                    ParameterValue<GridGeometry2D> ggp =
+                            AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+                    GridEnvelope range = r.getOriginalGridRange();
+                    // move read area partially outside
+                    ReferencedEnvelope bounds =
+                            ReferencedEnvelope.reference(r.getOriginalEnvelope());
+                    bounds.translate(bounds.getWidth() / 2, 0);
+                    GridGeometry2D gg = new GridGeometry2D(range, bounds);
+                    ggp.setValue(gg);
+                    return new GeneralParameterValue[] {ggp};
+                });
+    }
+
+    @Test
+    public void testConcurrentHeteroUTMH2NoGranules() throws Exception {
+        runConcurrentHeteroUTMH2(
+                r -> {
+                    ParameterValue<Filter> filter = ImageMosaicFormat.FILTER.createValue();
+                    filter.setValue(Filter.EXCLUDE);
+                    return new GeneralParameterValue[] {filter};
+                });
+    }
+
+    private void runConcurrentHeteroUTMH2(
+            Function<ImageMosaicReader, GeneralParameterValue[]> parameters)
+            throws URISyntaxException, IOException, InterruptedException,
+                    java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+        String testLocation = "hetero_utm";
+        URL storeUrl = TestData.url(this, testLocation);
+
+        File testDataFolder = new File(storeUrl.toURI());
+        File testDirectory = crsMosaicFolder.newFolder(testLocation);
+        FileUtils.copyDirectory(testDataFolder, testDirectory);
+
+        // to similate the deadlock we need a connection pool with just one connection,
+        // a single request will cause the deadlock in this case (but we try with a pool
+        // nevertheless, to be extra sure)
+        File datastoreProperties = new File(testDirectory, "datastore.properties");
+        try (FileWriter out = new FileWriter(datastoreProperties)) {
+            out.write("database=hetero_concurrent\n");
+            out.write(
+                    "SPI=org.geotools.data.h2.H2DataStoreFactory\n"
+                            + "dbtype=h2\n"
+                            + "user=gs\n"
+                            + "passwd=gs\n"
+                            + "Connection\\ timeout=3600\n"
+                            + "max \\connections=1"
+                            + "min \\connections=1");
+            out.flush();
+        }
+
+        final ExecutorService executors = Executors.newFixedThreadPool(4);
+        ImageMosaicReader reader = new ImageMosaicReader(testDirectory, null);
+        try {
+            List<Future> futures = new ArrayList<>();
+            for (int i = 0; i < 20; i++) {
+                Future<GridCoverage2D> future =
+                        executors.submit(() -> reader.read(parameters.apply(reader)));
+                futures.add(future);
+            }
+            for (Future future : futures) {
+                // just to make sure it cannot get stuck forever, but allow execution on
+                // very slow runtimes
+                future.get(120, TimeUnit.SECONDS);
+            }
+        } finally {
+            reader.dispose();
+        }
     }
 
     @Test
@@ -659,6 +742,7 @@ public class HeterogenousCRSTest {
         return getInputFileNames(ri);
     }
 
+    @SuppressWarnings("PMD.CloseResource") // image stream closed along the reader
     private List<String> getInputFileNames(RenderedImage inputImage) {
         List<String> files = new ArrayList<>();
         if (inputImage instanceof PlanarImage) {
@@ -733,7 +817,7 @@ public class HeterogenousCRSTest {
         CoordinateReferenceSystem wgs84 = DefaultGeographicCRS.WGS84;
         assertTrue(CRS.equalsIgnoreMetadata(wgs84, gc.getCoordinateReferenceSystem()));
         RenderedImage ri = gc.getRenderedImage();
-        Map<String, Set<RenderedOp>> operationsGroups = new HashMap<String, Set<RenderedOp>>();
+        Map<String, Set<RenderedOp>> operationsGroups = new HashMap<>();
         groupOperations(ri, operationsGroups);
 
         Set<RenderedOp> imageReads = operationsGroups.get("ImageRead");
@@ -787,7 +871,7 @@ public class HeterogenousCRSTest {
         assertEquals(1, imageReads.size());
         RenderedOp unwarpedImage = imageReads.iterator().next();
         final ParameterBlock block = unwarpedImage.getParameterBlock();
-        Vector<Object> paramValues = block.getParameters();
+        List<Object> paramValues = block.getParameters();
         // The green.tif is the image with native CRS = 32632 so the only one not being reprojected
         assertTrue(
                 ((FileImageInputStreamExtImpl) paramValues.get(0))
@@ -798,7 +882,7 @@ public class HeterogenousCRSTest {
     }
 
     private void removeImagesBeingWarped(RenderedOp image, Set<RenderedOp> imageReads) {
-        Vector sources = image.getSources();
+        List sources = image.getSources();
         Iterator it = sources.iterator();
         while (it.hasNext()) {
             Object source = it.next();
@@ -825,7 +909,7 @@ public class HeterogenousCRSTest {
             }
             set.add(op);
             operationsSet.put(opName, set);
-            Vector sources = op.getSources();
+            List sources = op.getSources();
             Iterator it = sources.iterator();
             while (it.hasNext()) {
                 Object source = it.next();

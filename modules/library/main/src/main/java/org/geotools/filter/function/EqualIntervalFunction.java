@@ -88,21 +88,16 @@ public class EqualIntervalFunction extends ClassificationFunction {
             }
 
             return result;
-        } catch (IllegalFilterException e) { // accepts exploded
+        } catch (IllegalFilterException | IOException e) { // accepts exploded
             LOGGER.log(
                     Level.SEVERE,
                     "EqualIntervalFunction calculate(SimpleFeatureCollection) failed",
                     e);
             return null;
-        } catch (IOException e) { // getResult().getValue() exploded
-            LOGGER.log(
-                    Level.SEVERE,
-                    "EqualIntervalFunction calculate(SimpleFeatureCollection) failed",
-                    e);
-            return null;
-        }
+        } // getResult().getValue() exploded
     }
 
+    @SuppressWarnings("unchecked") // assumes it can use random comparables with numbers
     private RangedClassifier calculateNumerical(
             int classNum, Comparable globalMin, Comparable globalMax) {
         // handle constant value case

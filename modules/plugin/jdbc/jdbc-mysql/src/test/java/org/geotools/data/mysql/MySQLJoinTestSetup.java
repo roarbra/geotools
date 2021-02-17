@@ -19,6 +19,7 @@ package org.geotools.data.mysql;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCJoinTestSetup;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class MySQLJoinTestSetup extends JDBCJoinTestSetup {
 
     public MySQLJoinTestSetup() {
@@ -38,19 +39,19 @@ public class MySQLJoinTestSetup extends JDBCJoinTestSetup {
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (")
                 .append(
-                        "0, 'zero', GeometryFromText('POLYGON ((-0.1 -0.1, -0.1 0.1, 0.1 0.1, 0.1 -0.1, -0.1 -0.1))',4326), 0);");
+                        "0, 'zero', ST_GeomFromText('POLYGON ((-0.1 -0.1, -0.1 0.1, 0.1 0.1, 0.1 -0.1, -0.1 -0.1))',4326), 0);");
         run(sb.toString());
 
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (")
                 .append(
-                        "1, 'one', GeometryFromText('POLYGON ((-1.1 -1.1, -1.1 1.1, 1.1 1.1, 1.1 -1.1, -1.1 -1.1))',4326), 1);");
+                        "1, 'one', ST_GeomFromText('POLYGON ((-1.1 -1.1, -1.1 1.1, 1.1 1.1, 1.1 -1.1, -1.1 -1.1))',4326), 1);");
         run(sb.toString());
 
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (")
                 .append(
-                        "2, 'two', GeometryFromText('POLYGON ((-10 -10, -10 10, 10 10, 10 -10, -10 -10))',4326), 2);");
+                        "2, 'two', ST_GeomFromText('POLYGON ((-10 -10, -10 10, 10 10, 10 -10, -10 -10))',4326), 2);");
         run(sb.toString());
 
         sb = new StringBuffer();

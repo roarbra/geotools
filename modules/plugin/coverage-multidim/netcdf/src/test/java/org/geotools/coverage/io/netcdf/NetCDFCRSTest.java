@@ -96,7 +96,7 @@ public class NetCDFCRSTest {
 
     /** Sets up the custom definitions */
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUpClass() throws Exception {
         String netcdfPropertiesPath =
                 TestData.file(NetCDFCRSTest.class, "netcdf.projections.properties")
                         .getCanonicalPath();
@@ -297,7 +297,7 @@ public class NetCDFCRSTest {
         params.parameter("false_easting").setValue(0.0);
         params.parameter("false_northing").setValue(0.0);
 
-        Map<String, Number> ellipsoidParams = new HashMap<String, Number>();
+        Map<String, Number> ellipsoidParams = new HashMap<>();
         ellipsoidParams.put(NetCDFUtilities.SEMI_MAJOR, 6378137);
         ellipsoidParams.put(NetCDFUtilities.INVERSE_FLATTENING, 298.257223563);
 
@@ -337,7 +337,7 @@ public class NetCDFCRSTest {
         params.parameter("false_northing").setValue(0.0);
 
         // Intentionally left empty
-        Map<String, Number> ellipsoidParams = new HashMap<String, Number>();
+        Map<String, Number> ellipsoidParams = new HashMap<>();
 
         Ellipsoid ellipsoid = ProjectionBuilder.createEllipsoid("Unknown", ellipsoidParams);
         ProjectionBuilder.updateEllipsoidParams(params, ellipsoid);

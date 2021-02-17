@@ -328,8 +328,8 @@ public final class GTopo30Reader extends AbstractGridCoverage2DReader
         //
         // /////////////////////////////////////////////////////////////////////
         if (params != null) {
-            for (int i = 0; i < params.length; i++) {
-                final ParameterValue<?> param = (ParameterValue<?>) params[i];
+            for (GeneralParameterValue generalParameterValue : params) {
+                final ParameterValue<?> param = (ParameterValue<?>) generalParameterValue;
                 final String name = param.getDescriptor().getName().getCode();
                 if (name.equals(AbstractGridFormat.READ_GRIDGEOMETRY2D.getName().toString())) {
                     final GridGeometry2D gg = (GridGeometry2D) param.getValue();
@@ -487,7 +487,7 @@ public final class GTopo30Reader extends AbstractGridCoverage2DReader
         final GridSampleDimension band = getSampleDimension(max, min);
 
         // setting metadata
-        final Map<String, Double> metadata = new HashMap<String, Double>();
+        final Map<String, Double> metadata = new HashMap<>();
         metadata.put("maximum", Double.valueOf(stats.getMax()));
         metadata.put("minimum", Double.valueOf(stats.getMin()));
         metadata.put("mean", Double.valueOf(stats.getAverage()));
@@ -515,14 +515,13 @@ public final class GTopo30Reader extends AbstractGridCoverage2DReader
         }
 
         // return the coverage
-        return (GridCoverage2D)
-                coverageFactory.create(
-                        coverageName,
-                        image,
-                        new GeneralEnvelope(originalEnvelope),
-                        new GridSampleDimension[] {band},
-                        null,
-                        metadata);
+        return coverageFactory.create(
+                coverageName,
+                image,
+                new GeneralEnvelope(originalEnvelope),
+                new GridSampleDimension[] {band},
+                null,
+                metadata);
     }
 
     /**
@@ -574,7 +573,7 @@ public final class GTopo30Reader extends AbstractGridCoverage2DReader
                     parameters.parameter("false_northing").setValue(0.0);
                     final ReferencingFactoryContainer factories =
                             ReferencingFactoryContainer.instance(null);
-                    final Map<String, String> properties =
+                    final Map<String, Object> properties =
                             Collections.singletonMap(
                                     "name", "WGS 84 / Antartic Polar Stereographic");
 
@@ -599,13 +598,10 @@ public final class GTopo30Reader extends AbstractGridCoverage2DReader
                 }
                 return CRS.parseWKT(crsDescription);
             }
-        } catch (IOException e) {
+        } catch (IOException | FactoryException e) {
             // do nothing and return a default CRS but write down a message
             LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
 
-        } catch (FactoryException e) {
-            // do nothing and return a default CRS but write down a message
-            LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
         } finally {
             if (reader != null)
                 try {

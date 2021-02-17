@@ -91,14 +91,14 @@ public class MapContentConcurrencyTest {
 
         Layer layer1 = new MockLayer(WORLD);
 
-        List<Runnable> tasks = new ArrayList<Runnable>(numThreads);
+        List<Runnable> tasks = new ArrayList<>(numThreads);
         int k = 0;
         while (k < numThreads / 2) {
             tasks.add(
                     new AddLayerTask(layer1, startLatch) {
                         @Override
                         public void postRun() {
-                            assertTrue(mapContent.layers().size() == 1);
+                            assertEquals(1, mapContent.layers().size());
                         }
                     });
             k++;

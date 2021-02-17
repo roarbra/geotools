@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.MultiLineString;
 import org.opengis.feature.Feature;
+import org.opengis.feature.type.FeatureType;
 
 public class LRSSegmentProcessTest {
     private DataStore featureSource;
@@ -54,8 +55,7 @@ public class LRSSegmentProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs_bad", "to_lrs", 1.0, 2.0);
+            process.execute(origional, "from_lrs_bad", "to_lrs", 1.0, 2.0);
             Assert.fail("Expected error from bad from_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -69,8 +69,7 @@ public class LRSSegmentProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs", "to_lrs_bad", 1.0, 2.0);
+            process.execute(origional, "from_lrs", "to_lrs_bad", 1.0, 2.0);
             Assert.fail("Expected error from bad to_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -84,7 +83,7 @@ public class LRSSegmentProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, null, "to_lrs", 1.0, 2.0);
+            process.execute(origional, null, "to_lrs", 1.0, 2.0);
             Assert.fail("Expected error from bad from_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -98,7 +97,7 @@ public class LRSSegmentProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, "from_lrs", null, 1.0, 2.0);
+            process.execute(origional, "from_lrs", null, 1.0, 2.0);
             Assert.fail("Expected error from bad to_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -112,8 +111,7 @@ public class LRSSegmentProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs", "to_lrs_bad", null, 2.0);
+            process.execute(origional, "from_lrs", "to_lrs_bad", null, 2.0);
             Assert.fail("Expected error from bad measure value");
         } catch (ProcessException e) {
             // Successful
@@ -127,8 +125,7 @@ public class LRSSegmentProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result =
-                    process.execute(origional, "from_lrs", "to_lrs_bad", 1.0, null);
+            process.execute(origional, "from_lrs", "to_lrs_bad", 1.0, null);
             Assert.fail("Expected error from bad measure value");
         } catch (ProcessException e) {
             // Successful
@@ -138,9 +135,10 @@ public class LRSSegmentProcessTest {
     @Test
     public void testNoFeaturesGiven() throws Exception {
         LRSSegmentProcess process = new LRSSegmentProcess();
-        FeatureCollection origional = new DefaultFeatureCollection();
+        DefaultFeatureCollection origional = new DefaultFeatureCollection();
 
-        FeatureCollection result = process.execute(origional, "from_lrs", "to_lrs", 1.0, 2.0);
+        FeatureCollection<? extends FeatureType, ? extends Feature> result =
+                process.execute(origional, "from_lrs", "to_lrs", 1.0, 2.0);
         Assert.assertEquals(0, result.size());
     }
 

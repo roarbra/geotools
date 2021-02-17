@@ -16,12 +16,12 @@
  */
 package org.geotools.data.sqlserver.jdts;
 
-import static junit.framework.TestCase.fail;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Properties;
 import org.geotools.data.DataStoreFinder;
-import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.data.DataUtilities;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,7 +50,7 @@ public class SQLServerJTDSJNDITest {
 
         // this will fail with the message: "Cannot find JNDI data source:
         // java:comp/env/jdbc/geotools"
-        JDBCDataStore dataStore = (JDBCDataStore) DataStoreFinder.getDataStore(jndiProps);
+        DataStoreFinder.getDataStore(DataUtilities.toConnectionParameters(jndiProps));
         fail("Expected exception was not thrown");
     }
 
@@ -67,7 +67,7 @@ public class SQLServerJTDSJNDITest {
 
         // this will fail with the message: "Cannot find JNDI data source:
         // java:comp/env/jdbc/geotools"
-        JDBCDataStore dataStore = (JDBCDataStore) DataStoreFinder.getDataStore(jndiProps);
+        DataStoreFinder.getDataStore(DataUtilities.toConnectionParameters(jndiProps));
         fail("Expected exception was not thrown");
     }
 }

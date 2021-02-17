@@ -46,9 +46,6 @@ import org.xml.sax.SAXNotSupportedException;
  * @author Aaron Waddell
  */
 public class DocumentFactoryTest {
-    private final String DISALLOW_DOCTYPE_DECLAIRATION =
-            "http://apache.org/xml/features/disallow-doctype-decl";
-
     private final String LOAD_EXTERNAL_DTD =
             "http://apache.org/xml/features/nonvalidating/load-external-dtd";
 
@@ -71,7 +68,7 @@ public class DocumentFactoryTest {
     @Before
     public void before() throws Exception {
         uri = new URI("http://geotools.org");
-        hints = new HashMap<String, Object>();
+        hints = new HashMap<>();
 
         MockitoAnnotations.initMocks(this);
         hints.put(XMLHandlerHints.SAX_PARSER_FACTORY, mockSaxParserFactory);

@@ -89,8 +89,8 @@ public abstract class WaitingListener<T extends EventObject, E extends Enum> {
             // do nothing
         } finally {
             latches[type.ordinal()] = null;
-            return result;
         }
+        return result;
     }
 
     /**
@@ -109,6 +109,7 @@ public abstract class WaitingListener<T extends EventObject, E extends Enum> {
      * @param type event type
      * @return the most recent event or {@code null} if none received
      */
+    @SuppressWarnings("unchecked")
     public T getEvent(E type) {
         return (T) events[type.ordinal()];
     }

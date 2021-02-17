@@ -51,8 +51,6 @@ import org.opengis.util.CodeList;
  *     enough; we should provide an explicit list of metadata interface.
  */
 public final class ISOTest {
-    /** {@code true} for displaying debugging informations. */
-    private static final boolean VERBOSE = false;
 
     /** Root package for interfaces, with trailing dot. */
     private static final String INTERFACE_PACKAGE = "org.opengis.metadata.";
@@ -175,8 +173,7 @@ public final class ISOTest {
     /** Ensures that the {@link #TEST} array do not contains code list. */
     @Test
     public void testNoCodeList() {
-        for (int i = 0; i < TEST.length; i++) {
-            final Class type = TEST[i];
+        for (final Class type : TEST) {
             assertFalse(type.getName(), CodeList.class.isAssignableFrom(type));
         }
     }
@@ -186,9 +183,8 @@ public final class ISOTest {
     public void testDependencies() {
         assertNull(getImplementation(Number.class));
         assertSame(MetaDataImpl.class, getImplementation(MetaData.class));
-        final Set<Class<?>> done = new HashSet<Class<?>>();
-        for (int i = 0; i < TEST.length; i++) {
-            final Class<?> type = TEST[i];
+        final Set<Class<?>> done = new HashSet<>();
+        for (final Class<?> type : TEST) {
             final Class<?> impl = getImplementation(type);
             if (impl == null) {
                 if (isImplemented(type)) {
@@ -197,9 +193,6 @@ public final class ISOTest {
                 continue;
             }
             assertSetters(new PropertyAccessor(impl, type), done);
-        }
-        if (VERBOSE) {
-            // System.out.println(done);
         }
     }
 
@@ -296,8 +289,8 @@ public final class ISOTest {
      * Returns {@code true} if the specified type is not in the list of known unimplemented types.
      */
     private static boolean isImplemented(final Class<?> type) {
-        for (int i = 0; i < UNIMPLEMENTED.length; i++) {
-            if (type.equals(UNIMPLEMENTED[i])) {
+        for (Class<?> aClass : UNIMPLEMENTED) {
+            if (type.equals(aClass)) {
                 return false;
             }
         }

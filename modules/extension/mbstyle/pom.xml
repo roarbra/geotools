@@ -17,7 +17,6 @@
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
   <!-- =========================================================== -->
-  <groupId>org.geotools</groupId>
   <artifactId>gt-mbstyle</artifactId>
   <packaging>jar</packaging>
   <name>MBStyle Extension</name>
@@ -117,6 +116,13 @@
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
+      <scope>test</scope>
+      <classifier>tests</classifier>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-http</artifactId>
       <scope>test</scope>
       <classifier>tests</classifier>
       <version>${project.version}</version>

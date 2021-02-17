@@ -153,7 +153,7 @@ public class TransformHandler extends YsldParseHandler {
             input = "data";
         }
         if (input != null) {
-            processArgs.add(paramExpression(input, Collections.<Expression>emptyList()));
+            processArgs.add(paramExpression(input, Collections.emptyList()));
         }
         if (outputBBOX != null) {
             processArgs.add(outputBBOX);
@@ -169,7 +169,7 @@ public class TransformHandler extends YsldParseHandler {
     }
 
     private Function paramExpression(String name, List<Expression> valueArgs) {
-        List<Expression> paramArgs = new ArrayList<Expression>(valueArgs.size() + 1);
+        List<Expression> paramArgs = new ArrayList<>(valueArgs.size() + 1);
         paramArgs.add(factory.filter.literal(name));
         paramArgs.addAll(valueArgs);
         return factory.filter.function(

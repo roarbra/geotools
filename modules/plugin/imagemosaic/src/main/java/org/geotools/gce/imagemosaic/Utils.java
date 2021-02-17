@@ -37,7 +37,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -48,6 +47,7 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -175,6 +175,13 @@ public class Utils {
     public static final String DATASTORE_PROPERTIES = "datastore.properties";
 
     public static final String PROPERTIES_SEPARATOR = ";";
+
+    public static final Set<String> LOG_EXCLUDES = new HashSet<>();
+
+    static {
+        LOG_EXCLUDES.add("xml");
+        LOG_EXCLUDES.add("properties");
+    }
 
     /** RGB to GRAY coefficients (for Luminance computation) */
     public static final double RGB_TO_GRAY_MATRIX[][] = {{0.114, 0.587, 0.299, 0}};
@@ -379,7 +386,7 @@ public class Utils {
         public Object visit(BBOX filter, Object data) {
             final ReferencedEnvelope bbox = ReferencedEnvelope.reference(filter.getBounds());
             if (this.bbox != null) {
-                this.bbox = (ReferencedEnvelope) this.bbox.intersection(bbox);
+                this.bbox = this.bbox.intersection(bbox);
             } else {
                 this.bbox = bbox;
             }
@@ -478,8 +485,9 @@ public class Utils {
         // create a mosaic index builder and set the relevant elements
         final CatalogBuilderConfiguration configuration = new CatalogBuilderConfiguration();
         // check if the indexer.properties is there
-        configuration.setHints(
-                hints); // retain hints as this may contain an instance of an ImageMosaicReader
+
+        // retain hints as this may contain an instance of an ImageMosaicReader
+        configuration.setHints(hints);
         List<Parameter> parameterList = configuration.getIndexer().getParameters().getParameter();
 
         IndexerUtils.setParam(parameterList, Prop.ABSOLUTE_PATH, Boolean.toString(absolutePath));
@@ -489,21 +497,13 @@ public class Utils {
         IndexerUtils.setParam(parameterList, Prop.INDEXING_DIRECTORIES, location);
 
         // create the builder
-        // final ImageMosaicWalker catalogBuilder = new ImageMosaicWalker(configuration);
         final ImageMosaicEventHandlers eventHandler = new ImageMosaicEventHandlers();
         final ImageMosaicConfigHandler catalogHandler =
                 new ImageMosaicConfigHandler(configuration, eventHandler);
-        final ImageMosaicWalker walker;
-        if (catalogHandler.isUseExistingSchema()) {
-            // walks existing granules in the origin store
-            walker = new ImageMosaicDatastoreWalker(catalogHandler, eventHandler);
-        } else {
-            // collects granules from the file system
-            walker = new ImageMosaicDirectoryWalker(catalogHandler, eventHandler);
-        }
+        final ImageMosaicWalker walker = catalogHandler.createWalker();
 
         // this is going to help us with catching exceptions and logging them
-        final Queue<Throwable> exceptions = new LinkedList<Throwable>();
+        final Queue<Throwable> exceptions = new LinkedList<>();
         try {
 
             final ImageMosaicEventHandlers.ProcessingEventListener listener =
@@ -996,7 +996,7 @@ public class Utils {
             if (!ignoreSome || !ignorePropertiesSet.contains(Prop.COG_PASSWORD)) {
                 cogBean.setPassword(properties.getProperty(Prop.COG_PASSWORD));
             }
-            catalogConfigurationBean.setCogConfiguration(cogBean);
+            catalogConfigurationBean.setUrlSourceSPIProvider(cogBean);
         }
     }
 
@@ -1340,15 +1340,7 @@ public class Utils {
                     LOGGER.warning("Unable to find sample image for path " + sampleImageFile);
                 return null;
             }
-        } catch (FileNotFoundException e) {
-            if (LOGGER.isLoggable(Level.WARNING))
-                LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
-            return null;
-        } catch (IOException e) {
-            if (LOGGER.isLoggable(Level.WARNING))
-                LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
-            return null;
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | IOException e) {
             if (LOGGER.isLoggable(Level.WARNING))
                 LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
             return null;
@@ -1382,14 +1374,15 @@ public class Utils {
     public static Map<String, Serializable> createDataStoreParamsFromPropertiesFile(
             Properties properties, DataStoreFactorySpi spi) throws IOException {
         // get the params
-        final Map<String, Serializable> params = new HashMap<String, Serializable>();
+        final Map<String, Serializable> params = new HashMap<>();
         final Param[] paramsInfo = spi.getParametersInfo();
         for (Param p : paramsInfo) {
             // search for this param and set the value if found
             if (properties.containsKey(p.key)) {
-                params.put(
-                        p.key,
-                        (Serializable) Converters.convert(properties.getProperty(p.key), p.type));
+                @SuppressWarnings("unchecked")
+                Serializable converted =
+                        (Serializable) Converters.convert(properties.getProperty(p.key), p.type);
+                params.put(p.key, converted);
             } else if (p.required && p.sample == null)
                 throw new IOException("Required parameter missing: " + p.toString());
         }
@@ -1400,12 +1393,15 @@ public class Utils {
     public static Map<String, Serializable> filterDataStoreParams(
             Properties properties, DataStoreFactorySpi spi) throws IOException {
         // get the params
-        final Map<String, Serializable> params = new HashMap<String, Serializable>();
+        final Map<String, Serializable> params = new HashMap<>();
         final Param[] paramsInfo = spi.getParametersInfo();
         for (Param p : paramsInfo) {
             // search for this param and set the value if found
             if (properties.containsKey(p.key)) {
-                params.put(p.key, (Serializable) Converters.convert(properties.get(p.key), p.type));
+                @SuppressWarnings("unchecked")
+                Serializable converted =
+                        (Serializable) Converters.convert(properties.get(p.key), p.type);
+                params.put(p.key, converted);
             } else if (p.required && p.sample == null)
                 throw new IOException("Required parameter missing: " + p.toString());
         }
@@ -1777,15 +1773,7 @@ public class Utils {
             try (ObjectInputStream objectStream =
                     new ObjectInputStream(new FileInputStream(file))) {
                 histogram = (Histogram) objectStream.readObject();
-            } catch (FileNotFoundException e) {
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Unable to parse Histogram:" + e.getLocalizedMessage());
-                }
-            } catch (IOException e) {
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Unable to parse Histogram:" + e.getLocalizedMessage());
-                }
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException | IOException e) {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.fine("Unable to parse Histogram:" + e.getLocalizedMessage());
                 }
@@ -1992,17 +1980,17 @@ public class Utils {
                             + targetClass.toString());
         }
         if (targetClass == Byte.class) {
-            return new Range<Byte>(Byte.class, (Byte) firstValue, (Byte) secondValue);
+            return new Range<>(Byte.class, (Byte) firstValue, (Byte) secondValue);
         } else if (targetClass == Short.class) {
-            return new Range<Short>(Short.class, (Short) firstValue, (Short) secondValue);
+            return new Range<>(Short.class, (Short) firstValue, (Short) secondValue);
         } else if (targetClass == Integer.class) {
-            return new Range<Integer>(Integer.class, (Integer) firstValue, (Integer) secondValue);
+            return new Range<>(Integer.class, (Integer) firstValue, (Integer) secondValue);
         } else if (targetClass == Long.class) {
-            return new Range<Long>(Long.class, (Long) firstValue, (Long) secondValue);
+            return new Range<>(Long.class, (Long) firstValue, (Long) secondValue);
         } else if (targetClass == Float.class) {
-            return new Range<Float>(Float.class, (Float) firstValue, (Float) secondValue);
+            return new Range<>(Float.class, (Float) firstValue, (Float) secondValue);
         } else if (targetClass == Double.class) {
-            return new Range<Double>(Double.class, (Double) firstValue, (Double) secondValue);
+            return new Range<>(Double.class, (Double) firstValue, (Double) secondValue);
         } else return null;
     }
 

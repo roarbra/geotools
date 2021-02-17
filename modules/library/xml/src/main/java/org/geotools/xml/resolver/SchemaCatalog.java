@@ -65,7 +65,6 @@ public class SchemaCatalog {
                 URLCheckers.evaluate(resolvedLocation);
                 // verify existence of resource
                 // could be a file, jar resource, or other
-                input = (new URL(resolvedLocation)).openStream();
                 // catalog hit
                 LOGGER.fine("Catalog resolved " + location + " to " + resolvedLocation);
             } catch (IOException e) {
@@ -78,14 +77,6 @@ public class SchemaCatalog {
                                 + " despite matching catalog entry because an error occurred: "
                                 + e.getMessage());
                 resolvedLocation = null;
-            } finally {
-                if (input != null) {
-                    try {
-                        input.close();
-                    } catch (IOException e) {
-                        // we tried
-                    }
-                }
             }
         }
         return resolvedLocation;

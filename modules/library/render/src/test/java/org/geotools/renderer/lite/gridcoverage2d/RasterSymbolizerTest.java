@@ -200,7 +200,6 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         final ContrastEnhancement cntEnh = new ContrastEnhancementImpl();
 
         cntEnh.setMethod(ContrastMethod.HISTOGRAM);
-        ;
         // cntEnh.setType(type);
         // cntEnh.setGammaValue(sldBuilder.literalExpression(0.50));
 
@@ -1266,7 +1265,6 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         final ContrastEnhancement cntEnh = new ContrastEnhancementImpl();
 
         cntEnh.setMethod(ContrastMethod.HISTOGRAM);
-        ;
         // cntEnh.setGammaValue(sldBuilder.literalExpression(0.50));
 
         chTypeGray.setChannelName("1");
@@ -1380,7 +1378,6 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         final ContrastEnhancement cntEnh = new ContrastEnhancementImpl();
 
         cntEnh.setMethod(ContrastMethod.HISTOGRAM);
-        ;
         // cntEnh.setGammaValue(sldBuilder.literalExpression(0.50));
 
         chTypeRed.setChannelName("1");
@@ -1414,7 +1411,7 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         RenderedOp image =
                 JAI.create("ImageRead", new File(TestData.url(this, "test.tif").toURI()));
 
-        Map properties = new HashMap();
+        Map<String, Object> properties = new HashMap<>();
         properties.put(
                 "GC_ROI",
                 new ROIShape(
@@ -1461,7 +1458,7 @@ public class RasterSymbolizerTest extends org.junit.Assert {
                 JAI.create(
                         "ImageRead",
                         new File(TestData.url(this, "small_4bands_UInt16.tif").toURI()));
-        properties = new HashMap();
+        properties = new HashMap<>();
         properties.put(
                 "GC_ROI",
                 new ROIShape(
@@ -1495,7 +1492,6 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         final ContrastEnhancement cntEnh = new ContrastEnhancementImpl();
 
         cntEnh.setMethod(ContrastMethod.HISTOGRAM);
-        ;
 
         chTypeRed.setChannelName("1");
         chTypeBlue.setChannelName("2");
@@ -1829,8 +1825,8 @@ public class RasterSymbolizerTest extends org.junit.Assert {
 
         // visit the RasterSymbolizer
         rsh.visit(rsb_1);
-        final RenderedImage im = ((GridCoverage2D) rsh.getOutput()).getRenderedImage();
-        Assert.assertTrue(im.getSampleModel().getDataType() == 0);
+        final RenderedImage im = rsh.getOutput().getRenderedImage();
+        Assert.assertEquals(0, im.getSampleModel().getDataType());
 
         testRasterSymbolizerHelper(rsh);
 
@@ -2014,9 +2010,7 @@ public class RasterSymbolizerTest extends org.junit.Assert {
 
         // visit the RasterSymbolizer
         rsh.visit(rs);
-        IndexColorModel icm1 =
-                (IndexColorModel)
-                        ((GridCoverage2D) rsh.getOutput()).getRenderedImage().getColorModel();
+        IndexColorModel icm1 = (IndexColorModel) rsh.getOutput().getRenderedImage().getColorModel();
         testRasterSymbolizerHelper(rsh);
 
         ////
@@ -2064,12 +2058,10 @@ public class RasterSymbolizerTest extends org.junit.Assert {
 
         // visit the RasterSymbolizer
         rsh.visit(rs);
-        IndexColorModel icm2 =
-                (IndexColorModel)
-                        ((GridCoverage2D) rsh.getOutput()).getRenderedImage().getColorModel();
+        IndexColorModel icm2 = (IndexColorModel) rsh.getOutput().getRenderedImage().getColorModel();
         testRasterSymbolizerHelper(rsh);
         // check that the two color models are equals!
-        Assert.assertTrue(icm1.equals(icm2));
+        Assert.assertEquals(icm1, icm2);
     }
 
     @org.junit.Test
@@ -2314,9 +2306,9 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         final RasterSymbolizer rs = extractRasterSymbolizer(sld);
         rsh.visit(rs);
 
-        final RenderedImage ri = ((GridCoverage2D) rsh.getOutput()).getRenderedImage();
+        final RenderedImage ri = rsh.getOutput().getRenderedImage();
         Assert.assertTrue(ri.getColorModel() instanceof ComponentColorModel);
-        Assert.assertTrue(ri.getColorModel().getNumComponents() == 3);
+        Assert.assertEquals(3, ri.getColorModel().getNumComponents());
         testRasterSymbolizerHelper(rsh);
     }
 
@@ -2324,12 +2316,10 @@ public class RasterSymbolizerTest extends org.junit.Assert {
             final SubchainStyleVisitorCoverageProcessingAdapter rsh) {
         if (TestData.isInteractiveTest()) {
             ImageIOUtilities.visualize(
-                    ((GridCoverage2D) rsh.getOutput()).getRenderedImage(),
-                    rsh.getName().toString());
+                    rsh.getOutput().getRenderedImage(), rsh.getName().toString());
 
         } else {
-            PlanarImage.wrapRenderedImage(((GridCoverage2D) rsh.getOutput()).getRenderedImage())
-                    .getTiles();
+            PlanarImage.wrapRenderedImage(rsh.getOutput().getRenderedImage()).getTiles();
             rsh.dispose(new Random().nextBoolean() ? true : false);
         }
     }
@@ -2358,7 +2348,7 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         rsh.visit(rs);
 
         // test
-        final RenderedImage ri = ((GridCoverage2D) rsh.getOutput()).getRenderedImage();
+        final RenderedImage ri = rsh.getOutput().getRenderedImage();
         Assert.assertTrue(ri.getColorModel() instanceof IndexColorModel);
         final IndexColorModel icm = (IndexColorModel) ri.getColorModel();
         final int mapSize = icm.getMapSize();
@@ -2370,13 +2360,11 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         rgb[1] = 0xFFFFFF & icm.getRGB(1);
         rgb[2] = 0xFFFFFF & icm.getRGB(2);
 
-        int found = 0;
         for (int i = 0; i < mapSize; i++) {
             switch (rgb[i]) {
                 case 0x008000:
                 case 0x663333:
                 case 0:
-                    found++;
                     break;
                 default:
                     throw new IllegalStateException("Found unexpected colors:" + rgb[i]);
@@ -2416,7 +2404,7 @@ public class RasterSymbolizerTest extends org.junit.Assert {
         final RasterSymbolizer rs = extractRasterSymbolizer(sld);
         rsh.visit(rs);
         // Check if the final image has been rescaled to bytes
-        RenderedImage outputImage = ((GridCoverage2D) rsh.getOutput()).getRenderedImage();
+        RenderedImage outputImage = rsh.getOutput().getRenderedImage();
         int dataType = outputImage.getSampleModel().getDataType();
         assertEquals(DataBuffer.TYPE_BYTE, dataType);
     }
@@ -2480,16 +2468,12 @@ public class RasterSymbolizerTest extends org.junit.Assert {
             assertTrue(options.containsKey("algorithm"));
             assertTrue(options.containsKey("minValue"));
             assertTrue(options.containsKey("maxValue"));
-            assertTrue(
-                    options.get("algorithm")
-                            .equals(
-                                    sldBuilder.literalExpression(
-                                            ContrastEnhancementType
-                                                    .NORMALIZE_STRETCH_TO_MINMAX_NAME)));
-            assertTrue(
-                    options.get("minValue").equals(sldBuilder.literalExpression(min + (20 * i))));
-            assertTrue(
-                    options.get("maxValue").equals(sldBuilder.literalExpression(max + (20 * i))));
+            assertEquals(
+                    options.get("algorithm"),
+                    sldBuilder.literalExpression(
+                            ContrastEnhancementType.NORMALIZE_STRETCH_TO_MINMAX_NAME));
+            assertEquals(options.get("minValue"), sldBuilder.literalExpression(min + (20 * i)));
+            assertEquals(options.get("maxValue"), sldBuilder.literalExpression(max + (20 * i)));
         }
     }
 }

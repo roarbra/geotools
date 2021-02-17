@@ -50,6 +50,7 @@ import org.opengis.filter.spatial.Within;
  *
  * @author Andrea Aime - OpenGeo
  */
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCSpatialFiltersOnlineTest extends JDBCTestSupport {
 
     TestData td;
@@ -220,7 +221,7 @@ public abstract class JDBCSpatialFiltersOnlineTest extends JDBCTestSupport {
         PropertyName p = ff.property(aname("geom"));
         Literal collect = ff.literal(geometry);
 
-        DWithin dwithinGeomCo = ((FilterFactory2) ff).dwithin(p, collect, 5, "meter");
+        DWithin dwithinGeomCo = ff.dwithin(p, collect, 5, "meter");
         Query dq = new Query(tname("road"), dwithinGeomCo);
         SimpleFeatureCollection features =
                 dataStore.getFeatureSource(tname("road")).getFeatures(dq);

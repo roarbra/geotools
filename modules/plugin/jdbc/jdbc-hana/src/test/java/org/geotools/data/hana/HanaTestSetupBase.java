@@ -22,6 +22,7 @@ import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.JDBCTestSetup;
 
 /** @author Stefan Uhrig, SAP SE */
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class HanaTestSetupBase extends JDBCTestSetup {
 
     private static final String DRIVER_CLASS_NAME = "com.sap.db.jdbc.Driver";
@@ -46,7 +47,7 @@ public class HanaTestSetupBase extends JDBCTestSetup {
         String database = fixture.getProperty("database");
         String useSsl = fixture.getProperty("use ssl");
 
-        HashMap<String, String> options = new HashMap<String, String>();
+        HashMap<String, String> options = new HashMap<>();
         if ("true".equals(useSsl)) {
             options.put("encrypt", "true");
         }

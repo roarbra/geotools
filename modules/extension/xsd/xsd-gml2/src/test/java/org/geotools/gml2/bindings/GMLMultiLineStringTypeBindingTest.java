@@ -16,10 +16,15 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import javax.xml.namespace.QName;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiLineString;
@@ -31,7 +36,8 @@ public class GMLMultiLineStringTypeBindingTest extends AbstractGMLBindingTest {
     ElementInstance line2;
     GeometryFactory gf;
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         line1 =
@@ -54,6 +60,7 @@ public class GMLMultiLineStringTypeBindingTest extends AbstractGMLBindingTest {
         container.registerComponentImplementation(GMLMultiLineStringTypeBinding.class);
     }
 
+    @Test
     public void test() throws Exception {
         Node node =
                 createNode(

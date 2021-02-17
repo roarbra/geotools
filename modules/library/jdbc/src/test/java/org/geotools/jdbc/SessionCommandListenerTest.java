@@ -1,6 +1,7 @@
 package org.geotools.jdbc;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockStatement;
@@ -13,7 +14,7 @@ public class SessionCommandListenerTest {
 
     static class RecordingConnection extends MockConnection {
 
-        List<String> commands = new ArrayList<String>();
+        List<String> commands = new ArrayList<>();
 
         public java.sql.Statement createStatement() throws java.sql.SQLException {
             return new MockStatement(this) {

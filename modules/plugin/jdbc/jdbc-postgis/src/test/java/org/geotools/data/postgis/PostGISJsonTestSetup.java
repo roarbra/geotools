@@ -22,6 +22,7 @@ import java.sql.Statement;
 import org.geotools.jdbc.JDBCDelegatingTestSetup;
 import org.geotools.util.Version;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public class PostGISJsonTestSetup extends JDBCDelegatingTestSetup {
 
     protected PostGISJsonTestSetup() {
@@ -33,22 +34,14 @@ public class PostGISJsonTestSetup extends JDBCDelegatingTestSetup {
     @Override
     protected void setUpData() throws Exception {
         dropTestJsonTable();
-        Connection cx = null;
-        Statement st = null;
-        ResultSet rs = null;
 
-        try {
-            cx = getConnection();
-            st = cx.createStatement();
-            rs = st.executeQuery("select Version()");
+        try (Connection cx = getConnection();
+                Statement st = cx.createStatement();
+                ResultSet rs = st.executeQuery("select Version()")) {
             if (rs.next()) {
                 // JSONB has been introduced with version 9.4
                 supportJsonB = new Version(rs.getString(1)).compareTo(new Version("9.4")) >= 0;
             }
-        } finally {
-            rs.close();
-            st.close();
-            cx.close();
         }
         createTestJsonTable();
     }

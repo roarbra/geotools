@@ -16,6 +16,10 @@
  */
 package org.geotools.gml3.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.geotools.geometry.DirectPosition1D;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.gml3.GML;
@@ -30,6 +34,7 @@ import org.opengis.geometry.DirectPosition;
 import org.w3c.dom.Document;
 
 public class DirectPositionTypeBindingTest extends GML3TestSupport {
+    @Test
     public void test1D() throws Exception {
         GML3MockData.element(GML.pos, document, document);
         document.getDocumentElement().appendChild(document.createTextNode("1.0"));
@@ -42,6 +47,7 @@ public class DirectPositionTypeBindingTest extends GML3TestSupport {
         assertEquals(pos.getOrdinate(0), 1.0, 0);
     }
 
+    @Test
     public void test2D() throws Exception {
         GML3MockData.element(GML.pos, document, document);
         document.getDocumentElement().appendChild(document.createTextNode("1.0 2.0"));
@@ -55,6 +61,7 @@ public class DirectPositionTypeBindingTest extends GML3TestSupport {
         assertEquals(pos.getOrdinate(1), 2.0, 0);
     }
 
+    @Test
     public void testEncode2D() throws Exception {
         Point point = GML3MockData.pointLite2D();
         CoordinateSequence seq = point.getCoordinateSequence();
@@ -62,6 +69,7 @@ public class DirectPositionTypeBindingTest extends GML3TestSupport {
         checkPosOrdinates(doc, 2);
     }
 
+    @Test
     public void testEncode3D() throws Exception {
         Point point = GML3MockData.pointLite3D();
         CoordinateSequence seq = point.getCoordinateSequence();

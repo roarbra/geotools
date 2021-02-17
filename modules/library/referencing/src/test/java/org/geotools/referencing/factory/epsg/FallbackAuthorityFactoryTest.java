@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URL;
-import java.util.Iterator;
 import java.util.Set;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
@@ -45,9 +44,6 @@ import org.opengis.referencing.crs.ProjectedCRS;
  * @author Andrea Aime (TOPP)
  */
 public final class FallbackAuthorityFactoryTest {
-    /** Set to {@code true} for printing debugging information. */
-    private static final boolean VERBOSE = false;
-
     /** The extra factory. */
     private FactoryEPSGExtra extra;
 
@@ -78,17 +74,10 @@ public final class FallbackAuthorityFactoryTest {
     public void testFactoryOrdering() {
         Set<CRSAuthorityFactory> factories =
                 ReferencingFactoryFinder.getCRSAuthorityFactories(null);
-        for (CRSAuthorityFactory factory : factories) {
-            // System.out.println("--> " + factory.getClass().getSimpleName());
-        }
         boolean foundWkt = false;
         boolean foundExtra = false;
-        for (Iterator<CRSAuthorityFactory> it = factories.iterator(); it.hasNext(); ) {
-            CRSAuthorityFactory factory = (CRSAuthorityFactory) it.next();
+        for (CRSAuthorityFactory factory : factories) {
             Class<?> type = factory.getClass();
-            if (VERBOSE) {
-                // System.out.println(type);
-            }
             if (type == FactoryEPSGExtra.class) {
                 foundExtra = true;
             } else if (type == FactoryUsingWKT.class) {

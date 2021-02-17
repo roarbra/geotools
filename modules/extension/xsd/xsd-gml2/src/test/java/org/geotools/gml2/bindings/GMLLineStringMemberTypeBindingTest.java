@@ -16,10 +16,15 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import javax.xml.namespace.QName;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -29,7 +34,8 @@ public class GMLLineStringMemberTypeBindingTest extends AbstractGMLBindingTest {
     ElementInstance association;
     ElementInstance geometry;
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         association =
@@ -41,6 +47,7 @@ public class GMLLineStringMemberTypeBindingTest extends AbstractGMLBindingTest {
         geometry = createElement(GML.NAMESPACE, "myGeometry", GML.LineStringType, null);
     }
 
+    @Test
     public void testWithGeometry() throws Exception {
         Node node =
                 createNode(

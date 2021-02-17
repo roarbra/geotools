@@ -42,7 +42,6 @@ import org.opengis.filter.PropertyIsLessThanOrEqualTo;
 import org.opengis.filter.PropertyIsLike;
 import org.opengis.filter.PropertyIsNotEqualTo;
 import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.identity.FeatureId;
 import org.opengis.filter.sort.SortBy;
 import org.opengis.filter.sort.SortOrder;
 import org.opengis.filter.spatial.BBOX;
@@ -119,12 +118,13 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         Or filter = ff.or(property1, property2);
         SimpleFeatureCollection features = featureSource.getFeatures(filter);
         assertEquals(4, features.size());
-        SimpleFeatureIterator iterator = features.features();
-        while (iterator.hasNext()) {
-            SimpleFeature f = iterator.next();
-            assertTrue(
-                    f.getAttribute("vendor_s").equals("D-Link")
-                            || f.getAttribute("vendor_s").equals("Linksys"));
+        try (SimpleFeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature f = iterator.next();
+                assertTrue(
+                        f.getAttribute("vendor_s").equals("D-Link")
+                                || f.getAttribute("vendor_s").equals("Linksys"));
+            }
         }
     }
 
@@ -135,10 +135,11 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         Not filter = ff.not(property1);
         SimpleFeatureCollection features = featureSource.getFeatures(filter);
         assertEquals(7, features.size());
-        SimpleFeatureIterator iterator = features.features();
-        while (iterator.hasNext()) {
-            SimpleFeature f = iterator.next();
-            assertTrue(!f.getAttribute("vendor_s").equals("D-Link"));
+        try (SimpleFeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature f = iterator.next();
+                assertFalse(f.getAttribute("vendor_s").equals("D-Link"));
+            }
         }
     }
 
@@ -147,19 +148,20 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         FilterFactory ff = dataStore.getFilterFactory();
         Id id =
                 ff.id(
-                        new HashSet<FeatureId>(
+                        new HashSet<>(
                                 Arrays.asList(
                                         ff.featureId(this.layerName + ".1"),
                                         ff.featureId(this.layerName + ".7"))));
         SimpleFeatureCollection features = featureSource.getFeatures(id);
         assertEquals(2, features.size());
-        SimpleFeatureIterator iterator = features.features();
-        assertTrue(iterator.hasNext());
-        SimpleFeature f = iterator.next();
-        assertTrue(!f.getAttribute(pkField).equals(1));
-        assertTrue(iterator.hasNext());
-        f = iterator.next();
-        assertTrue(!f.getAttribute(pkField).equals(7));
+        try (SimpleFeatureIterator iterator = features.features()) {
+            assertTrue(iterator.hasNext());
+            SimpleFeature f = iterator.next();
+            assertFalse(f.getAttribute(pkField).equals(1));
+            assertTrue(iterator.hasNext());
+            f = iterator.next();
+            assertFalse(f.getAttribute(pkField).equals(7));
+        }
     }
 
     public void testGetFeaturesWithBetweenFilter() throws Exception {
@@ -169,46 +171,48 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
                 ff.between(ff.property("speed_is"), ff.literal(0), ff.literal(150));
         SimpleFeatureCollection features = featureSource.getFeatures(between);
         assertEquals(9, features.size());
-        SimpleFeatureIterator iterator = features.features();
-        while (iterator.hasNext()) {
-            SimpleFeature f = iterator.next();
-            boolean found = false;
-            if (!(f.getAttribute("speed_is") instanceof String)) {
-                int v = (Integer) f.getAttribute("speed_is");
-                found = (v >= 0 && v <= 150);
-            } else {
-                String speeds = (String) f.getAttribute("speed_is");
-                for (Object s : speeds.split(";")) {
-                    int si = Integer.parseInt(s.toString());
-                    if (si >= 0 && si <= 150) {
-                        found = true;
-                        break;
+        try (SimpleFeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature f = iterator.next();
+                boolean found = false;
+                if (!(f.getAttribute("speed_is") instanceof String)) {
+                    int v = (Integer) f.getAttribute("speed_is");
+                    found = (v >= 0 && v <= 150);
+                } else {
+                    String speeds = (String) f.getAttribute("speed_is");
+                    for (Object s : speeds.split(";")) {
+                        int si = Integer.parseInt(s.toString());
+                        if (si >= 0 && si <= 150) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
+                assertTrue(found);
             }
-            assertTrue(found);
         }
         between = ff.between(ff.property("speed_is"), ff.literal(160), ff.literal(300));
         features = featureSource.getFeatures(between);
         assertEquals(5, features.size());
-        iterator = features.features();
-        while (iterator.hasNext()) {
-            SimpleFeature f = iterator.next();
-            boolean found = false;
-            if (!(f.getAttribute("speed_is") instanceof String)) {
-                int v = (Integer) f.getAttribute("speed_is");
-                found = (v >= 160 && v <= 300);
-            } else {
-                String speeds = (String) f.getAttribute("speed_is");
-                for (Object s : speeds.split(";")) {
-                    int si = Integer.parseInt(s.toString());
-                    if (si >= 160 && si <= 300) {
-                        found = true;
-                        break;
+        try (SimpleFeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature f = iterator.next();
+                boolean found = false;
+                if (!(f.getAttribute("speed_is") instanceof String)) {
+                    int v = (Integer) f.getAttribute("speed_is");
+                    found = (v >= 160 && v <= 300);
+                } else {
+                    String speeds = (String) f.getAttribute("speed_is");
+                    for (Object s : speeds.split(";")) {
+                        int si = Integer.parseInt(s.toString());
+                        if (si >= 160 && si <= 300) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
+                assertTrue(found);
             }
-            assertTrue(found);
         }
     }
 
@@ -224,15 +228,12 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         SimpleFeatureCollection features = featureSource.getFeatures(query);
         assertEquals(8, features.size());
 
-        SimpleFeatureIterator iterator = features.features();
-        try {
+        try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
             SimpleFeature feature = iterator.next();
             assertEquals(2, feature.getAttributeCount());
             String st = (String) feature.getAttribute("standard_ss");
             assertTrue(st.contains("IEEE 802.11b"));
-        } finally {
-            iterator.close();
         }
     }
 
@@ -295,15 +296,11 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         assertEquals(1, features.size());
 
         // check actual iteration
-        SimpleFeatureIterator it = features.features();
-        try {
+        try (SimpleFeatureIterator it = features.features()) {
             assertTrue(it.hasNext());
             SimpleFeature f = it.next();
-            ReferencedEnvelope fe = ReferencedEnvelope.reference(f.getBounds());
             assertEquals(10, Integer.parseInt((String) f.getAttribute("id")));
             assertFalse(it.hasNext());
-        } finally {
-            it.close();
         }
     }
 
@@ -311,28 +308,28 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         init();
         Query q = new Query(featureSource.getSchema().getTypeName());
         q.setSortBy(new SortBy[] {SortBy.NATURAL_ORDER});
-        SimpleFeatureIterator features = featureSource.getFeatures(q).features();
-        String prevId = null;
-        while (features.hasNext()) {
-            String currId = features.next().getID();
-            if (prevId != null) assertTrue(prevId.compareTo(currId) <= 0);
-            prevId = currId;
+        try (SimpleFeatureIterator features = featureSource.getFeatures(q).features()) {
+            String prevId = null;
+            while (features.hasNext()) {
+                String currId = features.next().getID();
+                if (prevId != null) assertTrue(prevId.compareTo(currId) <= 0);
+                prevId = currId;
+            }
         }
-        features.close();
     }
 
     public void testNaturalSortingDesc() throws Exception {
         init();
         Query q = new Query(featureSource.getSchema().getTypeName());
         q.setSortBy(new SortBy[] {SortBy.REVERSE_ORDER});
-        SimpleFeatureIterator features = featureSource.getFeatures(q).features();
-        String prevId = null;
-        while (features.hasNext()) {
-            String currId = features.next().getID();
-            if (prevId != null) assertTrue(prevId.compareTo(currId) >= 0);
-            prevId = currId;
+        try (SimpleFeatureIterator features = featureSource.getFeatures(q).features()) {
+            String prevId = null;
+            while (features.hasNext()) {
+                String currId = features.next().getID();
+                if (prevId != null) assertTrue(prevId.compareTo(currId) >= 0);
+                prevId = currId;
+            }
         }
-        features.close();
     }
 
     public void testGetFeaturesWithIsGreaterThanFilter() throws Exception {
@@ -396,10 +393,12 @@ public class SolrFeatureSourceTest extends SolrTestSupport {
         assertEquals(ids.length, features.size());
 
         Set<Integer> s = new HashSet<>(Arrays.asList(ids));
-        for (SimpleFeatureIterator it = features.features(); it.hasNext(); ) {
-            SimpleFeature f = it.next();
-            s.remove(Integer.parseInt(f.getAttribute("id").toString()));
+        try (SimpleFeatureIterator it = features.features()) {
+            while (it.hasNext()) {
+                SimpleFeature f = it.next();
+                s.remove(Integer.parseInt(f.getAttribute("id").toString()));
+            }
+            assertTrue(s.isEmpty());
         }
-        assertTrue(s.isEmpty());
     }
 }

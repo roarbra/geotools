@@ -24,7 +24,6 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Map.Entry;
 import org.geotools.mbstyle.MBStyle;
 import org.geotools.mbstyle.MapboxTestUtils;
 import org.json.simple.JSONObject;
@@ -45,11 +44,6 @@ public class StyleSourcesTest {
     @Test
     public void testIt() {
         Map<String, MBSource> sourceMap = testStyle.getSources();
-
-        for (Entry<String, MBSource> e : sourceMap.entrySet()) {
-            // System.out.println(e.getKey() + "(" + e.getValue().getClass().getSimpleName() + ")");
-        }
-
         assertEquals(10, sourceMap.size());
     }
 
@@ -133,7 +127,7 @@ public class StyleSourcesTest {
         assertTrue(sourceMap.get("vector-tiles") instanceof VectorMBSource);
         VectorMBSource vector = (VectorMBSource) sourceMap.get("vector-tiles");
         assertEquals("vector", vector.getType());
-        assertEquals(null, vector.getUrl());
+        assertNull(vector.getUrl());
         assertEquals(10, vector.getMinZoom().intValue());
         assertEquals(14, vector.getMaxZoom().intValue());
         assertEquals(

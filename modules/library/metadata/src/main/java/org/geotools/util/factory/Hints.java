@@ -23,7 +23,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -72,8 +71,7 @@ import org.xml.sax.EntityResolver;
  */
 public class Hints extends RenderingHints {
     /** A set of system-wide hints to use by default. */
-    private static volatile Map<RenderingHints.Key, Object> GLOBAL =
-            new ConcurrentHashMap<RenderingHints.Key, Object>();
+    private static volatile Map<RenderingHints.Key, Object> GLOBAL = new ConcurrentHashMap<>();
 
     /** {@code true} if {@link #scanSystemProperties} needs to be invoked. */
     private static AtomicBoolean needScan = new AtomicBoolean(true);
@@ -994,6 +992,16 @@ public class Hints extends RenderingHints {
     /** A flag to enabled/disable EWKT geometry encoding in ECQL */
     public static final Key ENCODE_EWKT = new Key(Boolean.class);
 
+    /** Which Http client factory should be used */
+    public static final ClassKey HTTP_CLIENT_FACTORY =
+            new ClassKey("org.geotools.http.HTTPClientFactory");
+
+    /** Which Http client should be created. */
+    public static final ClassKey HTTP_CLIENT = new ClassKey("org.geotools.http.HTTPClient");
+
+    /** Should we log each http request FALSE/TRUE/charset */
+    public static final Key HTTP_LOGGING = new Key(String.class);
+
     /**
      * Controls date time formatting output for GML 2.
      *
@@ -1127,12 +1135,11 @@ public class Hints extends RenderingHints {
          */
         @SuppressWarnings("unchecked")
         Map<RenderingHints.Key, Object> filtered = (Map<RenderingHints.Key, Object>) hints;
-        for (final Iterator<?> it = hints.keySet().iterator(); it.hasNext(); ) {
-            final Object key = it.next();
+        for (final Object key : hints.keySet()) {
             if (!(key instanceof RenderingHints.Key)) {
                 if (filtered == hints) {
                     // Copies the map only if needed.
-                    filtered = new HashMap<RenderingHints.Key, Object>(filtered);
+                    filtered = new HashMap<>(filtered);
                 }
                 filtered.remove(key);
             }
@@ -1177,8 +1184,7 @@ public class Hints extends RenderingHints {
      */
     private static boolean ensureSystemDefaultLoaded() {
         if (needScan.get()) {
-            Map<RenderingHints.Key, Object> newGlobal =
-                    new ConcurrentHashMap<RenderingHints.Key, Object>(GLOBAL);
+            Map<RenderingHints.Key, Object> newGlobal = new ConcurrentHashMap<>(GLOBAL);
             boolean modified = GeoTools.scanForSystemHints(newGlobal);
             GLOBAL = newGlobal;
             needScan.set(false);
@@ -1222,7 +1228,7 @@ public class Hints extends RenderingHints {
      * every other entry that might have keys of different nature
      */
     private static Map<java.awt.RenderingHints.Key, Object> toMap(RenderingHints hints) {
-        Map<RenderingHints.Key, Object> result = new HashMap<RenderingHints.Key, Object>();
+        Map<RenderingHints.Key, Object> result = new HashMap<>();
         for (Map.Entry<Object, Object> entry : hints.entrySet()) {
             if (entry.getKey() instanceof RenderingHints.Key) {
                 result.put((java.awt.RenderingHints.Key) entry.getKey(), entry.getValue());
@@ -1310,7 +1316,7 @@ public class Hints extends RenderingHints {
         final boolean changed;
         changed = ensureSystemDefaultLoaded();
         if (!GLOBAL.isEmpty()) {
-            extra = new HashMap<Object, Object>(GLOBAL);
+            extra = new HashMap<>(GLOBAL);
         }
         if (changed) {
             GeoTools.fireConfigurationChanged();
@@ -1345,12 +1351,9 @@ public class Hints extends RenderingHints {
                         try {
                             type = Class.forName("javax.media.jai.JAI");
                             break;
-                        } catch (ClassNotFoundException e) {
+                        } catch (ClassNotFoundException | NoClassDefFoundError e) {
                             continue;
-                        } catch (NoClassDefFoundError e) {
-                            // May occurs because of indirect JAI dependencies.
-                            continue;
-                        }
+                        } // May occurs because of indirect JAI dependencies.
                     }
                 default:
                     {
@@ -1370,8 +1373,7 @@ public class Hints extends RenderingHints {
      */
     private static String nameOf(final Class<?> type, final RenderingHints.Key key) {
         final Field[] fields = type.getFields();
-        for (int i = 0; i < fields.length; i++) {
-            final Field f = fields[i];
+        for (final Field f : fields) {
             if (Modifier.isStatic(f.getModifiers())) {
                 final Object v;
                 try {
@@ -1557,8 +1559,8 @@ public class Hints extends RenderingHints {
              */
             if (value instanceof Class<?>[]) {
                 final Class<?>[] types = (Class<?>[]) value;
-                for (int i = 0; i < types.length; i++) {
-                    if (!isCompatibleValue(types[i])) {
+                for (Class<?> type : types) {
+                    if (!isCompatibleValue(type)) {
                         return false;
                     }
                 }
@@ -1791,7 +1793,7 @@ public class Hints extends RenderingHints {
          */
         public OptionKey(final String... alternatives) {
             super(String.class);
-            final Set<String> options = new TreeSet<String>(Arrays.asList(alternatives));
+            final Set<String> options = new TreeSet<>(Arrays.asList(alternatives));
             this.wildcard = options.remove("*");
             this.options = Collections.unmodifiableSet(options);
         }
@@ -1853,8 +1855,7 @@ public class Hints extends RenderingHints {
      * @author Sampo Savolainen
      */
     public static final class ConfigurationMetadataKey extends Key {
-        private static Map<String, ConfigurationMetadataKey> map =
-                new HashMap<String, Hints.ConfigurationMetadataKey>();
+        private static Map<String, ConfigurationMetadataKey> map = new HashMap<>();
 
         /** The constructor is private to avoid multiple instances sharing the same key. */
         private ConfigurationMetadataKey(String key) {

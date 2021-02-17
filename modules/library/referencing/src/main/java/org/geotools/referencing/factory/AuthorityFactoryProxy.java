@@ -21,7 +21,9 @@ package org.geotools.referencing.factory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import org.geotools.metadata.i18n.ErrorKeys;
 import org.geotools.metadata.i18n.Errors;
@@ -104,39 +106,40 @@ abstract class AuthorityFactoryProxy {
      * The types that factories can be create. The most specific types must appear first in this
      * list.
      */
-    private static final Class /*<? extends IdentifiedObject>*/[] TYPES = {
-        CoordinateOperation.class,
-        OperationMethod.class,
-        ParameterDescriptor.class,
-        ProjectedCRS.class,
-        GeographicCRS.class,
-        GeocentricCRS.class,
-        ImageCRS.class,
-        DerivedCRS.class,
-        VerticalCRS.class,
-        TemporalCRS.class,
-        EngineeringCRS.class,
-        CompoundCRS.class,
-        CoordinateReferenceSystem.class,
-        CoordinateSystemAxis.class,
-        CartesianCS.class,
-        EllipsoidalCS.class,
-        SphericalCS.class,
-        CylindricalCS.class,
-        PolarCS.class,
-        VerticalCS.class,
-        TimeCS.class,
-        CoordinateSystem.class,
-        PrimeMeridian.class,
-        Ellipsoid.class,
-        GeodeticDatum.class,
-        ImageDatum.class,
-        VerticalDatum.class,
-        TemporalDatum.class,
-        EngineeringDatum.class,
-        Datum.class,
-        IdentifiedObject.class
-    };
+    private static final List<Class<? extends IdentifiedObject>> TYPES =
+            new ArrayList<>(
+                    Arrays.asList(
+                            CoordinateOperation.class,
+                            OperationMethod.class,
+                            ParameterDescriptor.class,
+                            ProjectedCRS.class,
+                            GeographicCRS.class,
+                            GeocentricCRS.class,
+                            ImageCRS.class,
+                            DerivedCRS.class,
+                            VerticalCRS.class,
+                            TemporalCRS.class,
+                            EngineeringCRS.class,
+                            CompoundCRS.class,
+                            CoordinateReferenceSystem.class,
+                            CoordinateSystemAxis.class,
+                            CartesianCS.class,
+                            EllipsoidalCS.class,
+                            SphericalCS.class,
+                            CylindricalCS.class,
+                            PolarCS.class,
+                            VerticalCS.class,
+                            TimeCS.class,
+                            CoordinateSystem.class,
+                            PrimeMeridian.class,
+                            Ellipsoid.class,
+                            GeodeticDatum.class,
+                            ImageDatum.class,
+                            VerticalDatum.class,
+                            TemporalDatum.class,
+                            EngineeringDatum.class,
+                            Datum.class,
+                            IdentifiedObject.class));
 
     /** Creates a new proxy. */
     AuthorityFactoryProxy() {}
@@ -149,7 +152,7 @@ abstract class AuthorityFactoryProxy {
      * @param type The type of objects to be created by the proxy.
      */
     public static AuthorityFactoryProxy getInstance(
-            final AuthorityFactory factory, Class /*<? extends IdentifiedObject>*/ type) {
+            final AuthorityFactory factory, Class<? extends IdentifiedObject> type) {
         AbstractAuthorityFactory.ensureNonNull("type", type);
         AbstractAuthorityFactory.ensureNonNull("factory", factory);
         type = getType(type);
@@ -181,10 +184,9 @@ abstract class AuthorityFactoryProxy {
      * @return The most specific GeoAPI interface implemented by {@code type}.
      * @throws IllegalArgumentException if the type doesn't implement a valid interface.
      */
-    public static Class /*<? extends IdentifiedObject>*/ getType(
-            final Class /*<? extends IdentifiedObject>*/ type) throws IllegalArgumentException {
-        for (int i = 0; i < TYPES.length; i++) {
-            final Class /*<? extends IdentifiedObject>*/ candidate = TYPES[i];
+    public static Class<? extends IdentifiedObject> getType(
+            final Class<? extends IdentifiedObject> type) throws IllegalArgumentException {
+        for (final Class<? extends IdentifiedObject> candidate : TYPES) {
             if (candidate.isAssignableFrom(type)) {
                 return candidate;
             }
@@ -194,7 +196,7 @@ abstract class AuthorityFactoryProxy {
     }
 
     /** Returns the type of the objects to be created by this proxy instance. */
-    public abstract Class /*<? extends IdentifiedObject>*/ getType();
+    public abstract Class<? extends IdentifiedObject> getType();
 
     /** Returns the authority factory used by the {@link #create create} method. */
     public abstract AuthorityFactory getAuthorityFactory();
@@ -203,8 +205,9 @@ abstract class AuthorityFactoryProxy {
      * Returns the set of authority codes.
      *
      * @throws FactoryException if access to the underlying database failed.
+     * @return
      */
-    public final Set /*<String>*/ getAuthorityCodes() throws FactoryException {
+    public final Set<String> getAuthorityCodes() throws FactoryException {
         return getAuthorityFactory().getAuthorityCodes(getType());
     }
 
@@ -253,7 +256,7 @@ abstract class AuthorityFactoryProxy {
         private final AuthorityFactory factory;
 
         /** The type of the objects to be created. */
-        private final Class /*<? extends IdentifiedObject>*/ type;
+        private final Class<? extends IdentifiedObject> type;
 
         /** The {@code createFoo} method to invoke. */
         private final Method method;
@@ -261,13 +264,12 @@ abstract class AuthorityFactoryProxy {
         /**
          * Creates a new proxy which will delegates the object creation to the specified instance.
          */
-        Default(final AuthorityFactory factory, final Class /*<? extends IdentifiedObject>*/ type)
+        Default(final AuthorityFactory factory, final Class<? extends IdentifiedObject> type)
                 throws IllegalArgumentException {
             this.factory = factory;
             this.type = type;
             final Method[] candidates = factory.getClass().getMethods();
-            for (int i = 0; i < candidates.length; i++) {
-                final Method c = candidates[i];
+            for (final Method c : candidates) {
                 if (c.getName().startsWith("create")
                         && type.equals(c.getReturnType())
                         && Arrays.equals(PARAMETERS, c.getParameterTypes())) {
@@ -279,7 +281,7 @@ abstract class AuthorityFactoryProxy {
         }
 
         /** {@inheritDoc} */
-        public Class /*<? extends IdentifiedObject>*/ getType() {
+        public Class<? extends IdentifiedObject> getType() {
             return type;
         }
 
@@ -324,7 +326,7 @@ abstract class AuthorityFactoryProxy {
             this.factory = factory;
         }
 
-        public Class getType() {
+        public Class<? extends IdentifiedObject> getType() {
             return CoordinateReferenceSystem.class;
         }
 
@@ -349,7 +351,7 @@ abstract class AuthorityFactoryProxy {
         }
 
         @Override
-        public Class getType() {
+        public Class<? extends IdentifiedObject> getType() {
             return GeographicCRS.class;
         }
 
@@ -371,7 +373,7 @@ abstract class AuthorityFactoryProxy {
         }
 
         @Override
-        public Class getType() {
+        public Class<? extends IdentifiedObject> getType() {
             return ProjectedCRS.class;
         }
 

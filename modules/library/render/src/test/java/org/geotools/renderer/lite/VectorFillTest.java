@@ -94,7 +94,7 @@ public class VectorFillTest {
         StreamingRenderer renderer = new StreamingRenderer();
         renderer.setMapContent(mc);
         renderer.setJava2DHints(new RenderingHints(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON));
-        Map<String, Object> rendererParams = new HashMap<String, Object>();
+        Map<Object, Object> rendererParams = new HashMap<>();
         rendererParams.put(StreamingRenderer.VECTOR_RENDERING_KEY, Boolean.TRUE);
         renderer.setRendererHints(rendererParams);
 
@@ -204,7 +204,7 @@ public class VectorFillTest {
                 "wktcomposite", "wkt://MULTILINESTRING((-0.5 -0.5, 0.5 0.5), (0 -0.5, 0 0.5))");
     }
 
-    public void testParametricMark(String fileName, final String markName) throws Exception {
+    protected void testParametricMark(String fileName, final String markName) throws Exception {
         Style slashStyle = RendererBaseTest.loadStyle(this, "fillSlash.sld");
         final DuplicatingStyleVisitor markReplacer =
                 new DuplicatingStyleVisitor() {

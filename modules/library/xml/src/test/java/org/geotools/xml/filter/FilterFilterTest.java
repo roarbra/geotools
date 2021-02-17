@@ -338,15 +338,13 @@ public class FilterFilterTest {
         adapter.parse(requestSource);
 
         assertEquals(1, contentHandler.filters.size());
-        Filter f = (Filter) contentHandler.filters.get(0);
+        Filter f = contentHandler.filters.get(0);
         assertTrue(f instanceof BinaryLogicOperator);
         assertThat(f, instanceOf(Or.class));
 
         int i = 0;
-        for (Iterator<org.opengis.filter.Filter> filters =
-                        ((BinaryLogicOperator) f).getChildren().iterator();
-                filters.hasNext();
-                i++) {
+        Iterator<Filter> filters = ((BinaryLogicOperator) f).getChildren().iterator();
+        while (filters.hasNext()) {
             BinaryComparisonOperator subFilter = (BinaryComparisonOperator) filters.next();
             StringBuffer attName = new StringBuffer();
             for (int repCount = 0; repCount <= i; repCount++) {
@@ -355,13 +353,14 @@ public class FilterFilterTest {
             String parsedName = ((PropertyName) subFilter.getExpression1()).getPropertyName();
             assertEquals("at index " + i, attName.toString(), parsedName);
             assertEquals("literal-" + i, ((Literal) subFilter.getExpression2()).getValue());
+            i++;
         }
         assertEquals(filterCount, i);
     }
 
     static class MyHandler extends XMLFilterImpl implements FilterHandler {
 
-        public List<org.opengis.filter.Filter> filters = new ArrayList<org.opengis.filter.Filter>();
+        public List<org.opengis.filter.Filter> filters = new ArrayList<>();
 
         public void filter(org.opengis.filter.Filter filter) {
             filters.add(filter);

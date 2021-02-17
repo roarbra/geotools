@@ -16,10 +16,16 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import javax.xml.namespace.QName;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -38,7 +44,8 @@ public class GMLGeometryCollectionTypeBindingTest extends AbstractGMLBindingTest
     ElementInstance poly1;
     GeometryFactory gf;
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         point1 = createElement(GML.NAMESPACE, "myPoint", GML.PointMemberType, null);
@@ -59,6 +66,7 @@ public class GMLGeometryCollectionTypeBindingTest extends AbstractGMLBindingTest
         container.registerComponentImplementation(GMLGeometryCollectionTypeBinding.class);
     }
 
+    @Test
     public void testHomogeneous() throws Exception {
         Node node =
                 createNode(
@@ -87,6 +95,7 @@ public class GMLGeometryCollectionTypeBindingTest extends AbstractGMLBindingTest
         assertEquals(((Point) gc.getGeometryN(1)).getY(), 1d, 0d);
     }
 
+    @Test
     public void testHeterogeneous() throws Exception {
         Node node =
                 createNode(

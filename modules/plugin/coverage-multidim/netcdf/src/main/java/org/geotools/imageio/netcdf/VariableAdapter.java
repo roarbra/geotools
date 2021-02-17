@@ -139,7 +139,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
 
     static {
         QUICK_SCAN = Boolean.getBoolean(QUICK_SCAN_KEY);
-        UNIT_CHARS_REPLACEMENTS = new HashSet<UnitCharReplacement>();
+        UNIT_CHARS_REPLACEMENTS = new HashSet<>();
         UNIT_CHARS_REPLACEMENTS.add(new UnitCharReplacement("-", "^-"));
         UNIT_CHARS_REPLACEMENTS.add(new UnitCharReplacement(".", "*"));
         UNIT_CHARS_REPLACEMENTS.add(new UnitCharReplacement("1/s", "s^-1"));
@@ -215,7 +215,9 @@ public class VariableAdapter extends CoverageSourceDescriptor {
                 throw new IllegalArgumentException(
                         "Unable to wrap non temporal CoordinateVariable:" + adaptee.toString());
             }
-            this.adaptee = (CoordinateVariable<Date>) adaptee;
+            @SuppressWarnings("unchecked")
+            CoordinateVariable<Date> cast = (CoordinateVariable) adaptee;
+            this.adaptee = cast;
         }
 
         final CoordinateVariable<Date> adaptee;
@@ -241,8 +243,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
             if (overall) {
 
                 // Getting overall Extent
-                final SortedSet<DateRange> extent =
-                        new TreeSet<DateRange>(new DateRangeComparator());
+                final SortedSet<DateRange> extent = new TreeSet<>(new DateRangeComparator());
                 for (Date dd : adaptee.read()) {
                     extent.add(new DateRange(dd, dd));
                 }
@@ -268,7 +269,9 @@ public class VariableAdapter extends CoverageSourceDescriptor {
                 throw new IllegalArgumentException(
                         "Unable to wrap a non Number CoordinateVariable:" + cv.toString());
             }
-            this.adaptee = (CoordinateVariable<? extends Number>) cv;
+            @SuppressWarnings("unchecked")
+            CoordinateVariable<? extends Number> cast = (CoordinateVariable) cv;
+            this.adaptee = cast;
         }
 
         public SortedSet<NumberRange<Double>> getVerticalExtent() {
@@ -295,7 +298,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
             if (overall) {
                 // Getting overall Extent
                 final SortedSet<NumberRange<Double>> extent =
-                        new TreeSet<NumberRange<Double>>(new NumberRangeComparator());
+                        new TreeSet<>(new NumberRangeComparator());
                 for (Number vv : adaptee.read()) {
                     final double doubleValue = vv.doubleValue();
                     extent.add(NumberRange.create(doubleValue, doubleValue));
@@ -316,11 +319,11 @@ public class VariableAdapter extends CoverageSourceDescriptor {
     public class UnidataAdditionalDomain extends AdditionalDomain {
 
         /** The detailed domain extent */
-        private final Set<Object> domainExtent = new TreeSet<Object>();
+        private final Set<Object> domainExtent = new TreeSet<>();
 
         /** The merged domain extent */
         private final Set<Object> globalDomainExtent =
-                new TreeSet<Object>(
+                new TreeSet<>(
                         new Comparator<Object>() {
                             private NumberRangeComparator numberRangeComparator =
                                     new NumberRangeComparator();
@@ -387,7 +390,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
 
                 // global domain
                 globalDomainExtent.add(
-                        new NumberRange<Double>(
+                        new NumberRange<>(
                                 Double.class,
                                 ((Number) adaptee.getMinimum()).doubleValue(),
                                 ((Number) adaptee.getMaximum()).doubleValue()));
@@ -431,7 +434,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
      * Following COARDS or CF Convention, custom dimensions are always at the beginning (lower
      * indexes)
      */
-    Set<String> ignoredDimensions = new HashSet<String>();
+    Set<String> ignoredDimensions = new HashSet<>();
 
     private ucar.nc2.dataset.CoordinateSystem coordinateSystem;
 
@@ -492,7 +495,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
     /** @throws IOException */
     private void initSpatialElements() throws Exception {
 
-        final List<DimensionDescriptor> dimensions = new ArrayList<DimensionDescriptor>();
+        final List<DimensionDescriptor> dimensions = new ArrayList<>();
         initCRS(dimensions);
 
         // SPATIAL DIMENSIONS
@@ -634,8 +637,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
             // Find the descriptor related to the current dimension
             if (descriptor.getName().toUpperCase().equalsIgnoreCase(currentDimName)) {
                 final String updatedAttribute = attributeDescriptor.getLocalName();
-                if (!updatedAttribute.equals(
-                        ((DefaultDimensionDescriptor) descriptor).getStartAttribute())) {
+                if (!updatedAttribute.equals(descriptor.getStartAttribute())) {
                     // Remap attributes in case the schema's attribute doesn't match the current
                     // attribute
                     ((DefaultDimensionDescriptor) descriptor).setStartAttribute(updatedAttribute);
@@ -662,7 +664,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
         coordinateSystem = new CoordinateSystemAdapter(coordinateSystem);
 
         // init nDimensionIndex
-        List<Integer> nDimensionIndexList = new ArrayList<Integer>(2);
+        List<Integer> nDimensionIndexList = new ArrayList<>(2);
         nDimensionIndexList.add(-1);
         nDimensionIndexList.add(-1);
 
@@ -775,7 +777,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
         try {
             domain = new UnidataAdditionalDomain(cv);
             if (getAdditionalDomains() == null) {
-                setAdditionalDomains(new ArrayList<AdditionalDomain>());
+                setAdditionalDomains(new ArrayList<>());
             }
             getAdditionalDomains().add(domain);
         } catch (IOException e) {
@@ -855,12 +857,12 @@ public class VariableAdapter extends CoverageSourceDescriptor {
                 new BandedSampleModel(
                         bufferType, width, height, multipleBands == null ? 1 : numBands);
         final Number noData = NetCDFUtilities.getNodata(variableDS);
-        List<Category> catArray = new ArrayList<Category>();
+        List<Category> catArray = new ArrayList<>();
         Category noDataCategory = null;
         Category dataCategory = null;
         Category[] categories = null;
         if (noData != null) {
-            NumberRange noDataRange =
+            NumberRange<Double> noDataRange =
                     NumberRange.create(noData.doubleValue(), true, noData.doubleValue(), true);
             noDataCategory =
                     new Category(
@@ -882,7 +884,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
         if (description == null) {
             description = variableDS.getShortName();
         }
-        final Set<SampleDimension> sampleDims = new HashSet<SampleDimension>();
+        final Set<SampleDimension> sampleDims = new HashSet<>();
 
         // Parsing the unit of measure of this variable
         Unit unit = null;
@@ -966,10 +968,10 @@ public class VariableAdapter extends CoverageSourceDescriptor {
                                         "Axis values contains NaN; finding first valid values");
                             }
                             for (int j = 0; j < vals.size(); j++) {
-                                double v = ((Number) vals.get(j)).doubleValue();
+                                double v = vals.get(j).doubleValue();
                                 if (!Double.isNaN(v)) {
                                     for (int k = vals.size(); k > j; k--) {
-                                        double vv = ((Number) vals.get(k)).doubleValue();
+                                        double vv = vals.get(k).doubleValue();
                                         if (!Double.isNaN(vv)) {
                                             origin[0] = v;
                                             scaleX = (vv - v) / vals.size();
@@ -1015,10 +1017,10 @@ public class VariableAdapter extends CoverageSourceDescriptor {
                                         "Axis values contains NaN; finding first valid values");
                             }
                             for (int j = 0; j < values.size(); j++) {
-                                double v = ((Number) values.get(j)).doubleValue();
+                                double v = values.get(j).doubleValue();
                                 if (!Double.isNaN(v)) {
                                     for (int k = values.size(); k > j; k--) {
-                                        double vv = ((Number) values.get(k)).doubleValue();
+                                        double vv = values.get(k).doubleValue();
                                         if (!Double.isNaN(vv)) {
                                             origin[1] = v;
                                             scaleY = -(vv - v) / values.size();
@@ -1138,7 +1140,7 @@ public class VariableAdapter extends CoverageSourceDescriptor {
     }
 
     public Map<String, Integer> mapIndex(int[] splittedIndex) {
-        Map<String, Integer> resultIndex = new HashMap<String, Integer>();
+        Map<String, Integer> resultIndex = new HashMap<>();
         for (int n = 0; n < splittedIndex.length; n++) {
             if (nDimensionIndex[n] != -1) {
                 resultIndex.put(

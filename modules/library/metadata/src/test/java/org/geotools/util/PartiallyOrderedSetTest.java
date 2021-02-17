@@ -30,9 +30,7 @@ public class PartiallyOrderedSetTest {
     @Test
     public void testIterationOverEmptySet() {
         PartiallyOrderedSet<String> poset = new PartiallyOrderedSet<>();
-        for (String s : poset) {
-            fail();
-        }
+        if (!poset.isEmpty()) fail();
     }
 
     @Test
@@ -222,7 +220,7 @@ public class PartiallyOrderedSetTest {
     }
 
     public <E> List<E> toList(PartiallyOrderedSet<E> poset) {
-        List<E> result = new ArrayList<E>();
+        List<E> result = new ArrayList<>();
         for (E e : poset) {
             result.add(e);
         }

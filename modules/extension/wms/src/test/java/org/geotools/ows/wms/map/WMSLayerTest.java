@@ -23,14 +23,14 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.util.ParameterParser;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.ows.MockHttpClient;
-import org.geotools.ows.MockHttpResponse;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPResponse;
+import org.geotools.http.MockHttpClient;
+import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.StyleImpl;
 import org.geotools.ows.wms.WMSUtils;
@@ -48,9 +48,9 @@ public class WMSLayerTest {
     Map<String, String> parseParams(String query) {
         ParameterParser pp = new ParameterParser();
         List params = pp.parse(query, '&');
-        Map<String, String> result = new HashMap<String, String>();
-        for (Iterator it = params.iterator(); it.hasNext(); ) {
-            NameValuePair pair = (NameValuePair) it.next();
+        Map<String, String> result = new HashMap<>();
+        for (Object param : params) {
+            NameValuePair pair = (NameValuePair) param;
             result.put(pair.getName().toUpperCase(), pair.getValue());
         }
         return result;
@@ -66,7 +66,7 @@ public class WMSLayerTest {
     /** @throws java.lang.Exception */
     @Before
     public void setUp() throws Exception {
-        MockHttpClient client =
+        HTTPClient client =
                 new MockHttpClient() {
 
                     public HTTPResponse get(URL url) throws IOException {

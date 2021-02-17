@@ -74,11 +74,10 @@ public class Geopkgtype_featuresBinding extends LayertypeBinding {
         XSQNameBinding nameBinding = new XSQNameBinding(namespaceContext);
 
         GeoPackageProcessRequest.FeaturesLayer layer = new GeoPackageProcessRequest.FeaturesLayer();
-        layer.setFeatureType(
-                (QName) nameBinding.parse(null, (String) node.getChildValue("featuretype")));
+        layer.setFeatureType((QName) nameBinding.parse(null, node.getChildValue("featuretype")));
         String pns = (String) node.getChildValue("propertynames");
         if (pns != null) {
-            Set<QName> qnames = new HashSet<QName>();
+            Set<QName> qnames = new HashSet<>();
             for (String pn : Arrays.asList(pns.split(","))) {
                 qnames.add((QName) nameBinding.parse(null, pn.trim()));
             }
@@ -94,6 +93,7 @@ public class Geopkgtype_featuresBinding extends LayertypeBinding {
         if (overviews instanceof Overview) {
             layer.setOverviews(Arrays.asList((Overview) overviews));
         } else if (overviews instanceof Map) {
+            @SuppressWarnings("unchecked")
             List<Overview> overview = (List<Overview>) ((Map<?, ?>) overviews).get("overview");
             layer.setOverviews(overview);
         }

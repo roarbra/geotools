@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,11 +17,11 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.ows.MockHttpClient;
-import org.geotools.ows.MockHttpResponse;
+import org.geotools.http.HTTPResponse;
+import org.geotools.http.MockHttpClient;
+import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.WebMapServer;
@@ -40,9 +39,9 @@ public class WMSCoverageReaderTest {
     Map<String, String> parseParams(String query) {
         ParameterParser pp = new ParameterParser();
         List params = pp.parse(query, '&');
-        Map<String, String> result = new HashMap<String, String>();
-        for (Iterator it = params.iterator(); it.hasNext(); ) {
-            NameValuePair pair = (NameValuePair) it.next();
+        Map<String, String> result = new HashMap<>();
+        for (Object param : params) {
+            NameValuePair pair = (NameValuePair) param;
             result.put(pair.getName().toUpperCase(), pair.getValue());
         }
         return result;

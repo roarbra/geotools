@@ -24,13 +24,10 @@ import static org.geotools.geopkg.GeoPackage.SPATIAL_REF_SYS;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -137,16 +134,13 @@ public class GeoPkgDialect extends PreparedStatementSQLDialect {
         Statement st = cx.createStatement();
 
         try {
-            ResultSet rs =
+            try (ResultSet rs =
                     st.executeQuery(
                             String.format(
                                     "SELECT * FROM gpkg_contents WHERE"
                                             + " table_name = '%s' AND data_type = '%s'",
-                                    tableName, DataType.Feature.value()));
-            try {
+                                    tableName, DataType.Feature.value()))) {
                 return rs.next();
-            } finally {
-                rs.close();
             }
         } finally {
             dataStore.closeSafe(st);
@@ -418,7 +412,10 @@ public class GeoPkgDialect extends PreparedStatementSQLDialect {
         GeometryDescriptor gd = featureType.getGeometryDescriptor();
         if (gd != null) {
             fe.setGeometryColumn(gd.getLocalName());
-            fe.setGeometryType(Geometries.getForBinding((Class) gd.getType().getBinding()));
+            @SuppressWarnings("unchecked")
+            Class<? extends Geometry> binding =
+                    (Class<? extends Geometry>) gd.getType().getBinding();
+            fe.setGeometryType(Geometries.getForBinding(binding));
         }
 
         CoordinateReferenceSystem crs = featureType.getCoordinateReferenceSystem();
@@ -451,8 +448,10 @@ public class GeoPkgDialect extends PreparedStatementSQLDialect {
                         FeatureEntry fe1 = new FeatureEntry();
                         fe1.init(fe);
                         fe1.setGeometryColumn(gd1.getLocalName());
-                        fe1.setGeometryType(
-                                Geometries.getForBinding((Class) gd1.getType().getBinding()));
+                        @SuppressWarnings("unchecked")
+                        Class<? extends Geometry> binding =
+                                (Class<? extends Geometry>) gd1.getType().getBinding();
+                        fe1.setGeometryType(Geometries.getForBinding(binding));
                         geopkg.addGeometryColumnsEntry(fe1, cx);
                     }
                 }
@@ -665,15 +664,15 @@ public class GeoPkgDialect extends PreparedStatementSQLDialect {
 
         switch (sqlType) {
             case Types.DATE:
-                ps.setString(column, ((Date) value).toString());
+                ps.setString(column, value.toString());
                 break;
             case Types.TIME:
-                ps.setString(column, ((Time) value).toString());
+                ps.setString(column, value.toString());
                 break;
             case Types.TIMESTAMP:
                 // 2020-02-19 23:00:00.0  --> 2020-02-19 23:00:00.0Z
                 // We need the "Z" or sql lite will interpret the value as local time
-                ps.setString(column, ((Timestamp) value).toString() + "Z");
+                ps.setString(column, value.toString() + "Z");
                 break;
             default:
                 super.setValue(value, binding, ps, column, cx);
@@ -876,7 +875,7 @@ public class GeoPkgDialect extends PreparedStatementSQLDialect {
     @Override
     protected <T> T convert(Object value, Class<T> binding) {
         if (Integer.class.equals(binding) && value instanceof Boolean) {
-            return (T) Integer.valueOf(Boolean.TRUE.equals(value) ? 1 : 0);
+            return binding.cast(Integer.valueOf(Boolean.TRUE.equals(value) ? 1 : 0));
         }
         return super.convert(value, binding);
     }
@@ -912,7 +911,7 @@ public class GeoPkgDialect extends PreparedStatementSQLDialect {
         if (maybeResultTypes.isPresent()) {
             List<Class> resultTypes = maybeResultTypes.get();
             if (resultTypes.size() == 1) {
-                Class targetType = resultTypes.get(0);
+                Class<?> targetType = resultTypes.get(0);
                 if (java.util.Date.class.isAssignableFrom(targetType)) {
                     return v -> {
                         Object converted = Converters.convert(v, targetType);

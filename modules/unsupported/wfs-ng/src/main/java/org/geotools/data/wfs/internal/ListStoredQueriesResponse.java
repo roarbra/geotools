@@ -31,7 +31,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.opengis.wfs20.ListStoredQueriesResponseType;
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.DataSourceException;
-import org.geotools.data.ows.HTTPResponse;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.DOMParser;
@@ -50,11 +50,8 @@ public class ListStoredQueriesResponse extends WFSResponse {
             final byte[] rawResponse;
             {
                 ByteArrayOutputStream buff = new ByteArrayOutputStream();
-                InputStream inputStream = response.getResponseStream();
-                try {
+                try (InputStream inputStream = response.getResponseStream()) {
                     IOUtils.copy(inputStream, buff);
-                } finally {
-                    inputStream.close();
                 }
                 rawResponse = buff.toByteArray();
             }

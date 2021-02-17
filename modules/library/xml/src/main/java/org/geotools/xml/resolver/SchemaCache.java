@@ -259,7 +259,7 @@ public class SchemaCache {
             }
             // read all the blocks into a list
             InputStream input = null;
-            List<byte[]> blocks = new LinkedList<byte[]>();
+            List<byte[]> blocks = new LinkedList<>();
             try {
                 input = connection.getInputStream();
                 while (true) {

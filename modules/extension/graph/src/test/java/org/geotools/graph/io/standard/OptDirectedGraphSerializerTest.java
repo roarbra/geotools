@@ -17,8 +17,6 @@
 package org.geotools.graph.io.standard;
 
 import java.io.File;
-import java.util.Map;
-import junit.framework.TestCase;
 import org.geotools.graph.GraphTestUtil;
 import org.geotools.graph.build.opt.OptDirectedGraphBuilder;
 import org.geotools.graph.build.opt.OptGraphBuilder;
@@ -26,18 +24,17 @@ import org.geotools.graph.structure.DirectedNode;
 import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.GraphVisitor;
 import org.geotools.graph.structure.Graphable;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class OptDirectedGraphSerializerTest extends TestCase {
+public class OptDirectedGraphSerializerTest {
     private OptDirectedGraphBuilder m_builder;
     private OptDirectedGraphBuilder m_rebuilder;
     private SerializedReaderWriter m_serializer;
 
-    public OptDirectedGraphSerializerTest(String name) {
-        super(name);
-    }
-
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
 
         m_builder = createBuilder();
         m_rebuilder = createBuilder();
@@ -50,13 +47,10 @@ public class OptDirectedGraphSerializerTest extends TestCase {
      * <br>
      * Expected: 1. before and after graph should have same structure.
      */
+    @Test
     public void test_0() {
         final int nnodes = 100;
-        Object[] obj = GraphTestUtil.buildNoBifurcations(builder(), nnodes);
-
-        final Map node2id = (Map) obj[2];
-        final Map edge2id = (Map) obj[3];
-
+        GraphTestUtil.buildNoBifurcations(builder(), nnodes);
         try {
             File victim = File.createTempFile("graph", null);
             victim.deleteOnExit();
@@ -68,8 +62,8 @@ public class OptDirectedGraphSerializerTest extends TestCase {
             Graph after = serializer().read();
 
             // ensure same number of nodes and edges
-            assertTrue(before.getNodes().size() == after.getNodes().size());
-            assertTrue(before.getEdges().size() == after.getEdges().size());
+            Assert.assertEquals(before.getNodes().size(), after.getNodes().size());
+            Assert.assertEquals(before.getEdges().size(), after.getEdges().size());
 
             // ensure two nodes of degree 1, and nnodes-2 nodes of degree 2
             GraphVisitor visitor =
@@ -81,7 +75,7 @@ public class OptDirectedGraphSerializerTest extends TestCase {
                             return (Graph.FAIL_QUERY);
                         }
                     };
-            assertTrue(after.queryNodes(visitor).size() == 2);
+            Assert.assertEquals(2, after.queryNodes(visitor).size());
 
             visitor =
                     new GraphVisitor() {
@@ -93,11 +87,11 @@ public class OptDirectedGraphSerializerTest extends TestCase {
                         }
                     };
 
-            assertTrue(after.getNodesOfDegree(2).size() == nnodes - 2);
+            Assert.assertEquals(after.getNodesOfDegree(2).size(), nnodes - 2);
 
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            assertTrue(false);
+            Assert.fail();
         }
     }
 
@@ -106,6 +100,7 @@ public class OptDirectedGraphSerializerTest extends TestCase {
      * <br>
      * Expected: 1. Same structure before and after.
      */
+    @Test
     public void test_1() {
         final int k = 5;
         GraphTestUtil.buildPerfectBinaryTree(builder(), k);
@@ -121,8 +116,8 @@ public class OptDirectedGraphSerializerTest extends TestCase {
             Graph after = serializer().read();
 
             // ensure same number of nodes and edges
-            assertTrue(before.getNodes().size() == after.getNodes().size());
-            assertTrue(before.getEdges().size() == after.getEdges().size());
+            Assert.assertEquals(before.getNodes().size(), after.getNodes().size());
+            Assert.assertEquals(before.getEdges().size(), after.getEdges().size());
 
             GraphVisitor visitor =
                     new GraphVisitor() {
@@ -133,7 +128,7 @@ public class OptDirectedGraphSerializerTest extends TestCase {
                             return (Graph.FAIL_QUERY);
                         }
                     };
-            assertTrue(after.queryNodes(visitor).size() == 1); // root
+            Assert.assertEquals(1, after.queryNodes(visitor).size()); // root
 
             visitor =
                     new GraphVisitor() {
@@ -144,7 +139,8 @@ public class OptDirectedGraphSerializerTest extends TestCase {
                             return (Graph.FAIL_QUERY);
                         }
                     };
-            assertTrue(after.queryNodes(visitor).size() == Math.pow(2, k) - 2); // internal
+            Assert.assertEquals(
+                    after.queryNodes(visitor).size(), (int) Math.pow(2, k) - 2); // internal
 
             visitor =
                     new GraphVisitor() {
@@ -155,10 +151,10 @@ public class OptDirectedGraphSerializerTest extends TestCase {
                             return (Graph.FAIL_QUERY);
                         }
                     };
-            assertTrue(after.queryNodes(visitor).size() == Math.pow(2, k)); // leaves
+            Assert.assertEquals(after.queryNodes(visitor).size(), (int) Math.pow(2, k)); // leaves
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            assertTrue(false);
+            Assert.fail();
         }
     }
 

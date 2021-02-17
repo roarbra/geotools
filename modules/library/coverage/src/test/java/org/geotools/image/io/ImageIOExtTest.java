@@ -75,19 +75,13 @@ public class ImageIOExtTest {
         ImageIOExt.setFilesystemThreshold(100 * 100 * 3l);
 
         RenderedImage imageSmall = getTestRenderedImage(50, 50, 3);
-        final ImageOutputStream iosSmall = ImageIOExt.createImageOutputStream(imageSmall, os);
-        try {
+        try (ImageOutputStream iosSmall = ImageIOExt.createImageOutputStream(imageSmall, os)) {
             assertEquals(MemoryCacheImageOutputStream.class, iosSmall.getClass());
-        } finally {
-            iosSmall.close();
         }
 
         RenderedImage imageLarge = getTestRenderedImage(101, 101, 3);
-        final ImageOutputStream iosLarge = ImageIOExt.createImageOutputStream(imageLarge, os);
-        try {
+        try (ImageOutputStream iosLarge = ImageIOExt.createImageOutputStream(imageLarge, os)) {
             assertEquals(FileCacheImageOutputStream.class, iosLarge.getClass());
-        } finally {
-            iosLarge.close();
         }
     }
 
@@ -95,10 +89,10 @@ public class ImageIOExtTest {
         OutputStream os = new ByteArrayOutputStream();
         RenderedImage image = getTestRenderedImage(50, 50, 1);
 
-        ImageOutputStream iosExt = ImageIOExt.createImageOutputStream(image, os);
-        ImageOutputStream iosStd = ImageIO.createImageOutputStream(os);
-
-        assertEquals(iosExt.getClass(), iosStd.getClass());
+        try (ImageOutputStream iosExt = ImageIOExt.createImageOutputStream(image, os);
+                ImageOutputStream iosStd = ImageIO.createImageOutputStream(os)) {
+            assertEquals(iosExt.getClass(), iosStd.getClass());
+        }
     }
 
     RenderedImage getTestRenderedImage(int width, int height, int bands) {

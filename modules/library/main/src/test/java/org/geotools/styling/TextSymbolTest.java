@@ -18,11 +18,7 @@
  */
 package org.geotools.styling;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
 import org.geotools.data.collection.ListFeatureCollection;
-import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -31,8 +27,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Test for text symbols.
@@ -40,13 +34,10 @@ import org.opengis.filter.expression.PropertyName;
  * @author jamesm
  * @task REVISIT: redo the Map stuff - I commented it out since DefaultMap is deprecated - cholmes.
  */
-public class TextSymbolTest extends TestCase {
-    private static final FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
-
+public class TextSymbolTest {
     String dataFolder;
 
-    public TextSymbolTest(java.lang.String testName) {
-        super(testName);
+    public TextSymbolTest() {
         dataFolder = System.getProperty("dataFolder");
 
         if (dataFolder == null) {
@@ -56,16 +47,7 @@ public class TextSymbolTest extends TestCase {
         }
     }
 
-    public static void main(java.lang.String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    public static Test suite() {
-        TestSuite suite = new TestSuite(TextSymbolTest.class);
-
-        return suite;
-    }
-
+    @org.junit.Test
     public void testRender() throws Exception {
         // System.out.println("\n\nTextSymbolTest\n");
 
@@ -114,8 +96,6 @@ public class TextSymbolTest extends TestCase {
         // org.geotools.map.Map map = new DefaultMap();
         // The following is complex, and should be built from
         // an SLD document and not by hand
-
-        PropertyName symbExpr = filterFactory.property("symbol");
         Mark textMark = new MarkImpl("square");
 
         GraphicImpl graphic = new GraphicImpl();

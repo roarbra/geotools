@@ -53,8 +53,8 @@ public class HanaTestUtil {
 
     public static StringBuilder encodeIdentifiers(StringBuilder sb, String... ids) {
         boolean first = true;
-        for (int i = 0; i < ids.length; ++i) {
-            if (ids[i] == null) {
+        for (String id : ids) {
+            if (id == null) {
                 continue;
             }
             if (first) {
@@ -62,7 +62,7 @@ public class HanaTestUtil {
             } else {
                 sb.append('.');
             }
-            sb.append(HanaUtil.encodeIdentifier(ids[i]));
+            sb.append(HanaUtil.encodeIdentifier(id));
         }
         return sb;
     }
@@ -94,22 +94,17 @@ public class HanaTestUtil {
     private Connection conn;
 
     public boolean srsExists(int srid) throws SQLException {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps =
-                    conn.prepareStatement(
-                            "SELECT COUNT(*) FROM PUBLIC.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID = ?");
+        try (PreparedStatement ps =
+                conn.prepareStatement(
+                        "SELECT COUNT(*) FROM PUBLIC.ST_SPATIAL_REFERENCE_SYSTEMS WHERE SRS_ID = ?")) {
             ps.setInt(1, srid);
-            rs = ps.executeQuery();
-            if (!rs.next()) {
-                throw new AssertionError();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new AssertionError();
+                }
+                int count = rs.getInt(1);
+                return (count == 1);
             }
-            int count = rs.getInt(1);
-            return (count == 1);
-        } finally {
-            safeClose(rs);
-            safeClose(ps);
         }
     }
 
@@ -125,20 +120,17 @@ public class HanaTestUtil {
         if (schemaName == null) {
             return true;
         }
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conn.prepareStatement("SELECT COUNT(*) FROM PUBLIC.SCHEMAS WHERE SCHEMA_NAME = ?");
+        try (PreparedStatement ps =
+                conn.prepareStatement(
+                        "SELECT COUNT(*) FROM PUBLIC.SCHEMAS WHERE SCHEMA_NAME = ?")) {
             ps.setString(1, schemaName);
-            rs = ps.executeQuery();
-            if (!rs.next()) {
-                throw new AssertionError();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new AssertionError();
+                }
+                int count = rs.getInt(1);
+                return (count == 1);
             }
-            int count = rs.getInt(1);
-            return (count == 1);
-        } finally {
-            safeClose(rs);
-            safeClose(ps);
         }
     }
 
@@ -158,23 +150,18 @@ public class HanaTestUtil {
 
     public String resolveSchema(String schemaName) throws SQLException {
         if (schemaName == null) {
-            Statement stmt = null;
-            ResultSet rs = null;
-            try {
-                stmt = conn.createStatement();
-                rs = stmt.executeQuery("SELECT CURRENT_SCHEMA FROM DUMMY");
+            try (Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT CURRENT_SCHEMA FROM DUMMY")) {
                 if (!rs.next()) {
                     throw new AssertionError();
                 }
                 schemaName = rs.getString(1);
-            } finally {
-                safeClose(rs);
-                safeClose(stmt);
             }
         }
         return schemaName;
     }
 
+    @SuppressWarnings("PMD.CloseResource") // would be better to have try-with-resources
     public boolean tableExists(String schemaName, String tableName) throws SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -322,12 +309,9 @@ public class HanaTestUtil {
         encodeIdentifiers(sql, schemaName, METADATA_TABLE_NAME);
         sql.append(" WHERE TABLE_NAME = ?");
 
-        PreparedStatement ps = conn.prepareStatement(sql.toString());
-        try {
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             ps.setString(1, tableName);
             ps.executeUpdate();
-        } finally {
-            safeClose(ps);
         }
     }
 
@@ -341,13 +325,14 @@ public class HanaTestUtil {
     public List<String> getSequencesOfTable(String schemaName, String tableName)
             throws SQLException {
         List<String> pks = getPrimaryKeyColumnsOfTable(schemaName, tableName);
-        ArrayList<String> ret = new ArrayList<String>();
+        ArrayList<String> ret = new ArrayList<>();
         for (String pk : pks) {
             ret.add(getSequenceName(tableName, pk));
         }
         return ret;
     }
 
+    @SuppressWarnings("PMD.CloseResource") // try-with-resources would be nicer
     public boolean viewExists(String schemaName, String viewName) throws SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -417,6 +402,7 @@ public class HanaTestUtil {
         dropView(SCHEMA, viewName);
     }
 
+    @SuppressWarnings("PMD.CloseResource") // try-with-resources would be nicer
     public boolean sequenceExists(String schemaName, String sequenceName) throws SQLException {
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -583,34 +569,26 @@ public class HanaTestUtil {
 
     private void addByteArray(StringBuilder sql, byte[] bin) {
         sql.append("x'");
-        for (int i = 0; i < bin.length; ++i) {
-            sql.append(HEX_CHARS[(bin[i] & 0xF0) >>> 4]);
-            sql.append(HEX_CHARS[bin[i] & 0x0F]);
-            ;
+        for (byte b : bin) {
+            sql.append(HEX_CHARS[(b & 0xF0) >>> 4]);
+            sql.append(HEX_CHARS[b & 0x0F]);
         }
         sql.append("'");
     }
 
     private void execute(String sql) throws SQLException {
-        Statement stmt = conn.createStatement();
-        try {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
-        } finally {
-            safeClose(stmt);
         }
     }
 
     private List<String> getPrimaryKeys(String schemaName, String tableName) throws SQLException {
         DatabaseMetaData dbmd = conn.getMetaData();
-        ResultSet rs = null;
-        List<String> pkColumns = new ArrayList<String>();
-        try {
-            rs = dbmd.getPrimaryKeys(null, schemaName, tableName);
+        List<String> pkColumns = new ArrayList<>();
+        try (ResultSet rs = dbmd.getPrimaryKeys(null, schemaName, tableName)) {
             while (rs.next()) {
                 pkColumns.add(rs.getString(4));
             }
-        } finally {
-            safeClose(rs);
         }
         return pkColumns;
     }

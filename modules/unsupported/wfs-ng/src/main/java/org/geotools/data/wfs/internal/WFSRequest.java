@@ -23,13 +23,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.Properties;
 import java.util.logging.Level;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.ows.AbstractRequest;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
+import org.geotools.http.HTTPResponse;
 import org.geotools.util.factory.FactoryNotFoundException;
 import org.geotools.util.logging.Logging;
 
@@ -52,7 +51,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
     public WFSRequest(
             final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
 
-        super(url(operation, config, strategy), (Properties) null);
+        super(url(operation, config, strategy), null);
         this.operation = operation;
         this.config = config;
         this.strategy = strategy;
@@ -176,11 +175,8 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
     @Override
     public void performPostOutput(OutputStream outputStream) throws IOException {
 
-        InputStream in = strategy.getPostContents(this);
-        try {
+        try (InputStream in = strategy.getPostContents(this)) {
             IOUtils.copy(in, outputStream);
-        } finally {
-            in.close();
         }
     }
 

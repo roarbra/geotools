@@ -18,6 +18,7 @@ package org.geotools.referencing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +29,7 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import org.geotools.metadata.iso.citation.CitationImpl;
 import org.geotools.referencing.crs.AbstractCRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.cs.AbstractCS;
@@ -51,6 +53,8 @@ import si.uom.SI;
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
+// code is using equals with extra parameters and semantics compared to the built-in equals
+@SuppressWarnings("PMD.UseAssertEqualsInsteadOfAssertTrue")
 public final class PredefinedObjectsTest {
     /** Tests {@link DefaultCoordinateSystemAxis} constants. */
     @Test
@@ -167,9 +171,8 @@ public final class PredefinedObjectsTest {
                 "PrimeMeridian",
                 DefaultPrimeMeridian.GREENWICH,
                 DefaultGeodeticDatum.WGS84.getPrimeMeridian());
-        assertFalse(
-                "VerticalDatum",
-                DefaultVerticalDatum.GEOIDAL.equals(DefaultVerticalDatum.ELLIPSOIDAL));
+        assertNotEquals(
+                "VerticalDatum", DefaultVerticalDatum.GEOIDAL, DefaultVerticalDatum.ELLIPSOIDAL);
         assertEquals(
                 "Geoidal",
                 VerticalDatumType.GEOIDAL,
@@ -202,7 +205,7 @@ public final class PredefinedObjectsTest {
                 DefaultGeodeticDatum.WGS84.toWKT(0));
 
         // Test properties
-        final Map<String, Object> properties = new HashMap<String, Object>();
+        final Map<String, Object> properties = new HashMap<>();
         properties.put("name", "This is a name");
         properties.put("scope", "This is a scope");
         properties.put("scope_fr", "Valide dans ce domaine");
@@ -233,7 +236,7 @@ public final class PredefinedObjectsTest {
         assertEquals(
                 "WGS84 3D", 3, DefaultGeographicCRS.WGS84_3D.getCoordinateSystem().getDimension());
 
-        // Test WKT
+        // Test WKT for 2D system
         assertEquals(
                 "WGS84",
                 "GEOGCS[\"WGS84(DD)\", "
@@ -242,8 +245,14 @@ public final class PredefinedObjectsTest {
                         + "PRIMEM[\"Greenwich\", 0.0], "
                         + "UNIT[\"degree\", 0.017453292519943295], "
                         + "AXIS[\"Geodetic longitude\", EAST], "
-                        + "AXIS[\"Geodetic latitude\", NORTH]]",
+                        + "AXIS[\"Geodetic latitude\", NORTH], "
+                        + "AUTHORITY[\"EPSG\",\"4326\"]]",
                 DefaultGeographicCRS.WGS84.toWKT(0));
+
+        // check identifier for the 3D one as well
+        assertEquals(
+                "4327",
+                DefaultGeographicCRS.WGS84_3D.getIdentifier(new CitationImpl("EPSG")).getCode());
     }
 
     /** Test serialization of various objects. */

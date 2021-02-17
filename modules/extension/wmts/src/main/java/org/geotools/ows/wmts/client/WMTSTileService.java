@@ -25,10 +25,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.ows.ControlledHttpClientFactory;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.wms.CRSEnvelope;
 import org.geotools.ows.wms.StyleImpl;
 import org.geotools.ows.wmts.model.TileMatrix;
@@ -109,13 +108,7 @@ public class WMTSTileService extends TileService {
             WMTSLayer layer,
             String styleName,
             TileMatrixSet tileMatrixSet) {
-        this(
-                templateURL,
-                type,
-                layer,
-                styleName,
-                tileMatrixSet,
-                ControlledHttpClientFactory.wrap(new SimpleHttpClient()));
+        this(templateURL, type, layer, styleName, tileMatrixSet, HTTPClientFinder.createClient());
     }
 
     /**

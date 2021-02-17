@@ -20,7 +20,9 @@ import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -28,7 +30,6 @@ import static org.junit.Assert.fail;
 
 import java.awt.Color;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import javax.xml.transform.TransformerException;
 import org.geotools.filter.function.EnvFunction;
@@ -111,7 +112,7 @@ public class TranslatorSyntheticTest extends CssBaseTest {
     private <T extends Symbolizer> T assertSingleSymbolizer(Rule rule, Class<T> symbolizerType) {
         assertEquals(1, rule.symbolizers().size());
         assertTrue(symbolizerType.isInstance(rule.symbolizers().get(0)));
-        return (T) rule.symbolizers().get(0);
+        return symbolizerType.cast(rule.symbolizers().get(0));
     }
 
     @Test
@@ -284,7 +285,7 @@ public class TranslatorSyntheticTest extends CssBaseTest {
         assertLiteral("1", stroke.getOpacity());
         assertLiteral("round", stroke.getLineCap());
         assertLiteral("round", stroke.getLineJoin());
-        assertTrue(Arrays.equals(new float[] {10, 5, 1, 5}, stroke.getDashArray()));
+        assertArrayEquals(new float[] {10, 5, 1, 5}, stroke.getDashArray(), 0f);
         assertLiteral("2", stroke.getDashOffset());
         assertNull(stroke.getGraphicFill());
         assertNull(stroke.getGraphicStroke());
@@ -499,6 +500,21 @@ public class TranslatorSyntheticTest extends CssBaseTest {
         assertLiteral("#0000ff", ts.getFill().getColor());
         assertLiteral("normal", font.getWeight());
         assertLiteral("italic", font.getStyle());
+        assertLiteral("20", font.getSize());
+    }
+    /*
+     * Don't seem to be able to set font-size with out setting font-style
+     */
+    @Test
+    public void testGEOS9808() throws Exception {
+        String css = "* { label: 'test'; font-fill: black; font-size: 20;}";
+        Style style = translate(css);
+        Rule rule = assertSingleRule(style);
+        TextSymbolizer ts = assertSingleSymbolizer(rule, TextSymbolizer.class);
+        assertLiteral("test", ts.getLabel());
+        Font font = ts.getFont();
+        assertNotNull(font);
+        assertLiteral("#000000", ts.getFill().getColor());
         assertLiteral("20", font.getSize());
     }
 
@@ -1134,7 +1150,7 @@ public class TranslatorSyntheticTest extends CssBaseTest {
         // printStyle(style);
     }
 
-    private void printStyle(Style style) throws TransformerException {
+    void printStyle(Style style) throws TransformerException {
         SLDTransformer transformer = new SLDTransformer();
         String xml = transformer.transform(style);
         LOGGER.info(xml);
@@ -1653,7 +1669,7 @@ public class TranslatorSyntheticTest extends CssBaseTest {
         Function f = (Function) expression;
         assertEquals("parameter", f.getName());
         final List<Expression> parameters = f.getParameters();
-        assertTrue("At least one parameter, the key", parameters.size() > 0);
+        assertFalse("At least one parameter, the key", parameters.isEmpty());
         assertEquals(expectedKey, parameters.get(0).evaluate(null));
         assertEquals(expectedValueCount, parameters.size() - 1);
         return f;
@@ -1663,7 +1679,7 @@ public class TranslatorSyntheticTest extends CssBaseTest {
     public void testNone() {
         String css = "* { fill: none }";
         try {
-            Style style = translate(css);
+            translate(css);
             fail("Translation should have failed");
         } catch (IllegalArgumentException e) {
             assertThat(

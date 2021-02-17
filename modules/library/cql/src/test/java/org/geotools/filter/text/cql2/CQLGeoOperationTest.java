@@ -201,7 +201,7 @@ public class CQLGeoOperationTest {
         } catch (CQLException e) {
             final String error = e.getSyntaxError();
             Assert.assertNotNull(error);
-            Assert.assertFalse("".equals(error));
+            Assert.assertNotEquals("", error);
         }
     }
 
@@ -269,6 +269,7 @@ public class CQLGeoOperationTest {
 
     /** BBOX test */
     @Test
+    @SuppressWarnings("PMD.UseAssertEqualsInsteadOfAssertTrue") // not the same equals
     public void bbox() throws CQLException, FactoryException {
 
         Filter resultFilter;

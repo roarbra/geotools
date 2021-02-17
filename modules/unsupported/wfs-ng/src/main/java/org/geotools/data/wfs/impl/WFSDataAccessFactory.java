@@ -19,7 +19,6 @@ package org.geotools.data.wfs.impl;
 import java.awt.RenderingHints.Key;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.Authenticator;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -30,15 +29,13 @@ import java.util.List;
 import java.util.Map;
 import org.geotools.data.DataAccess;
 import org.geotools.data.DataAccessFactory;
-import org.geotools.data.DataAccessFactory.Param;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.Parameter;
-import org.geotools.data.ows.ControlledHttpClientFactory;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.ServiceException;
 import org.geotools.util.KVP;
 import org.geotools.util.PreventLocalEntityResolver;
@@ -122,6 +119,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         }
 
         public T lookUp(final Map params) throws IOException {
+            @SuppressWarnings("unchecked")
             T parameter = (T) super.lookUp(params);
             return parameter == null ? defaultValue : parameter;
         }
@@ -140,7 +138,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String title = "WFS GetCapabilities URL";
         String description =
                 "Represents a URL to the getCapabilities document or a server instance.";
-        parametersInfo[0] = URL = new WFSFactoryParam<URL>(key, URL.class, title, description);
+        parametersInfo[0] = URL = new WFSFactoryParam<>(key, URL.class, title, description);
     }
 
     /**
@@ -163,8 +161,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         + "WFS functionality. Set this value to Boolean.TRUE for POST, Boolean.FALSE "
                         + "for GET or NULL for AUTO";
         parametersInfo[1] =
-                PROTOCOL =
-                        new WFSFactoryParam<Boolean>(key, Boolean.class, title, description, null);
+                PROTOCOL = new WFSFactoryParam<>(key, Boolean.class, title, description, null);
     }
 
     /**
@@ -183,8 +180,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String description =
                 "This allows the user to specify a username. This param should not "
                         + "be used without the PASSWORD param.";
-        parametersInfo[2] =
-                USERNAME = new WFSFactoryParam<String>(key, String.class, title, description);
+        parametersInfo[2] = USERNAME = new WFSFactoryParam<>(key, String.class, title, description);
     }
 
     /**
@@ -205,7 +201,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         + " be used without the USERNAME param.";
         parametersInfo[3] =
                 PASSWORD =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key,
                                 String.class,
                                 title,
@@ -229,11 +225,11 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         + "XML-Requests sent to the Server. Defaults to UTF-8";
 
         String defaultValue = "UTF-8";
-        List<String> options = new ArrayList<String>(Charset.availableCharsets().keySet());
+        List<String> options = new ArrayList<>(Charset.availableCharsets().keySet());
         Collections.sort(options);
         parametersInfo[4] =
                 ENCODING =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key,
                                 String.class,
                                 title,
@@ -256,8 +252,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                 "This allows the user to specify a timeout in milliseconds. This param"
                         + " has a default value of 3000ms.";
         parametersInfo[5] =
-                TIMEOUT =
-                        new WFSFactoryParam<Integer>(key, Integer.class, title, description, 3000);
+                TIMEOUT = new WFSFactoryParam<>(key, Integer.class, title, description, 3000);
     }
 
     /**
@@ -273,8 +268,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                 "This allows the user to specify a buffer size in features. This param "
                         + "has a default value of 10 features.";
         parametersInfo[6] =
-                BUFFER_SIZE =
-                        new WFSFactoryParam<Integer>(key, Integer.class, title, description, 10);
+                BUFFER_SIZE = new WFSFactoryParam<>(key, Integer.class, title, description, 10);
     }
 
     /**
@@ -291,8 +285,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         + "supports it. Default is true";
         parametersInfo[7] =
                 TRY_GZIP =
-                        new WFSFactoryParam<Boolean>(
-                                key, Boolean.class, title, description, Boolean.TRUE);
+                        new WFSFactoryParam<>(key, Boolean.class, title, description, Boolean.TRUE);
     }
 
     /**
@@ -309,8 +302,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         + "provided data even if it does not accurately match the schema.  Errors will "
                         + "be logged but the parsing will continue if this is true.  Default is false";
         parametersInfo[8] =
-                LENIENT =
-                        new WFSFactoryParam<Boolean>(key, Boolean.class, title, description, false);
+                LENIENT = new WFSFactoryParam<>(key, Boolean.class, title, description, false);
     }
 
     /**
@@ -326,8 +318,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                 "Positive integer used as a hard limit for the amount of Features to retrieve"
                         + " for each FeatureType. A value of zero or not providing this parameter means no limit.";
         parametersInfo[9] =
-                MAXFEATURES =
-                        new WFSFactoryParam<Integer>(key, Integer.class, title, description, 0);
+                MAXFEATURES = new WFSFactoryParam<>(key, Integer.class, title, description, 0);
     }
 
     /**
@@ -350,7 +341,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
 
         parametersInfo[10] =
                 FILTER_COMPLIANCE =
-                        new WFSFactoryParam<Integer>(
+                        new WFSFactoryParam<>(
                                 key,
                                 Integer.class,
                                 title,
@@ -386,7 +377,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         });
         parametersInfo[11] =
                 WFS_STRATEGY =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key,
                                 String.class,
                                 title,
@@ -405,7 +396,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String description = "Override the original WFS type name namespaces";
         parametersInfo[12] =
                 NAMESPACE =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key, String.class, title, description, null, "advanced");
     }
 
@@ -422,7 +413,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                 "Use always the declared DefaultSRS for requests and reproject locally if necessary";
         parametersInfo[13] =
                 USEDEFAULTSRS =
-                        new WFSFactoryParam<Boolean>(
+                        new WFSFactoryParam<>(
                                 key, Boolean.class, title, description, false, "advanced");
     }
 
@@ -446,7 +437,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         });
         parametersInfo[14] =
                 AXIS_ORDER =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key,
                                 String.class,
                                 title,
@@ -473,7 +464,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
                         });
         parametersInfo[15] =
                 AXIS_ORDER_FILTER =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key,
                                 String.class,
                                 title,
@@ -495,7 +486,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
 
         parametersInfo[16] =
                 OUTPUTFORMAT =
-                        new WFSFactoryParam<String>(
+                        new WFSFactoryParam<>(
                                 key, String.class, title, description, null, "advanced");
     }
 
@@ -508,7 +499,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String description = "Optional OGC GML compliance level required.";
         parametersInfo[17] =
                 GML_COMPLIANCE_LEVEL =
-                        new WFSFactoryParam<Integer>(name, Integer.class, title, description, 0);
+                        new WFSFactoryParam<>(name, Integer.class, title, description, 0);
     }
 
     /** Optional {@code Integer} OCG GML Compatible TypeNames (replace : by _) */
@@ -520,8 +511,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String description = "Use Gml Compatible TypeNames (replace : by _).";
         parametersInfo[18] =
                 GML_COMPATIBLE_TYPENAMES =
-                        new WFSFactoryParam<Boolean>(
-                                name, Boolean.class, title, description, false);
+                        new WFSFactoryParam<>(name, Boolean.class, title, description, false);
     }
 
     /** Optional {@link EntityResolver} used to expand XML entities during parses */
@@ -533,7 +523,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String description = "Sets the entity resolver used to expand XML entities";
         parametersInfo[19] =
                 ENTITY_RESOLVER =
-                        new WFSFactoryParam<EntityResolver>(
+                        new WFSFactoryParam<>(
                                 name,
                                 EntityResolver.class,
                                 title,
@@ -552,7 +542,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         String description = "Sets the usage of connection pooling for http(s) requests";
         parametersInfo[20] =
                 USE_HTTP_CONNECTION_POOLING =
-                        new WFSFactoryParam<Boolean>(name, Boolean.class, title, description, true);
+                        new WFSFactoryParam<>(name, Boolean.class, title, description, true);
     }
 
     /**
@@ -581,11 +571,11 @@ public class WFSDataAccessFactory implements DataAccessFactory {
      * </ul>
      */
     @Override
-    public boolean canProcess(@SuppressWarnings("rawtypes") final Map params) {
+    public boolean canProcess(final Map<String, ?> params) {
         return canProcess(params, GMLComplianceLevel);
     }
 
-    protected boolean canProcess(final Map params, int maximumGmlComplianceLevel) {
+    protected boolean canProcess(final Map<String, ?> params, int maximumGmlComplianceLevel) {
         /*
          * check required params exist and are of the correct type
          */
@@ -594,7 +584,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
             return false;
         }
         try {
-            URL url = (URL) URL.lookUp(params);
+            URL url = URL.lookUp(params);
             if (!"http".equalsIgnoreCase(url.getProtocol())
                     && !"https".equalsIgnoreCase(url.getProtocol())) {
                 if (!Boolean.TRUE.equals(params.get("TESTING"))) {
@@ -620,7 +610,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
 
         // Check compliance level
         try {
-            Integer complianceLevel = (Integer) GML_COMPLIANCE_LEVEL.lookUp(params);
+            Integer complianceLevel = GML_COMPLIANCE_LEVEL.lookUp(params);
             if (complianceLevel != null && complianceLevel > maximumGmlComplianceLevel) {
                 return false;
             }
@@ -633,7 +623,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
 
     @Override
     public DataAccess<? extends FeatureType, ? extends Feature> createDataStore(
-            Map<String, Serializable> params) throws IOException {
+            Map<String, ?> params) throws IOException {
 
         WFSContentDataAccess dataAccess = new WFSContentDataAccess(getWFSClient(params));
 
@@ -679,7 +669,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         return params;
     }
 
-    protected WFSClient getWFSClient(final Map<String, Serializable> params) throws IOException {
+    protected WFSClient getWFSClient(final Map<String, ?> params) throws IOException {
 
         final WFSConfig config = WFSConfig.fromParams(params);
         {
@@ -692,7 +682,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
             }
         }
 
-        final HTTPClient http = ControlledHttpClientFactory.wrap(new SimpleHttpClient());
+        final HTTPClient http = HTTPClientFinder.createClient(); // new
         // MultithreadedHttpClient();
 
         // TODO: let HTTPClient be configured for gzip
@@ -703,7 +693,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
         http.setConnectTimeout(timeoutMillis / 1000);
         http.setReadTimeout(timeoutMillis / 1000);
 
-        final URL capabilitiesURL = (URL) URL.lookUp(params);
+        final URL capabilitiesURL = URL.lookUp(params);
 
         // WFSClient performs version negotiation and selects the correct
         // strategy
@@ -719,7 +709,7 @@ public class WFSDataAccessFactory implements DataAccessFactory {
 
     @Override
     public Map<Key, ?> getImplementationHints() {
-        return Collections.EMPTY_MAP;
+        return Collections.emptyMap();
     }
 
     @Override

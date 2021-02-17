@@ -12,6 +12,7 @@ import org.geotools.data.FeatureStore;
 import org.geotools.data.Join;
 import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureIterator;
@@ -28,6 +29,7 @@ import org.opengis.filter.Id;
 import org.opengis.filter.sort.SortBy;
 import org.opengis.filter.sort.SortOrder;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation") // not yet a JUnit4 test
 public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     protected String dbSchemaName = null;
 
@@ -158,7 +160,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     }
 
     public void testListAll() throws Exception {
-        FeatureSource fsView = dataStore.getFeatureSource("riverReduced");
+        SimpleFeatureSource fsView = dataStore.getFeatureSource("riverReduced");
         assertFalse(fsView instanceof FeatureStore);
 
         assertEquals(1, fsView.getCount(Query.ALL));
@@ -196,7 +198,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
     }
 
     public void testGetFeatureId() throws Exception {
-        FeatureSource fsView = dataStore.getFeatureSource("riverReducedPk");
+        SimpleFeatureSource fsView = dataStore.getFeatureSource("riverReducedPk");
         assertFalse(fsView instanceof FeatureStore);
 
         assertEquals(1, fsView.getCount(Query.ALL));
@@ -317,7 +319,7 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
         Logger logger = Logging.getLogger(JDBCVirtualTableOnlineTest.class);
         Level oldLevel = logger.getLevel();
 
-        logger.setLevel(java.util.logging.Level.SEVERE);
+        logger.setLevel(Level.SEVERE);
         logger.addHandler(handler);
         dataStore.createVirtualTable(vt);
         ContentFeatureSource fs = dataStore.getFeatureSource("invalid_attribute");
@@ -406,6 +408,6 @@ public abstract class JDBCVirtualTableOnlineTest extends JDBCTestSupport {
         query.setStartIndex(1);
         query.setMaxFeatures(2);
         int count = dataStore.getFeatureSource("riverFullPlaceHolder").getCount(query);
-        assertTrue(count == 1);
+        assertEquals(1, count);
     }
 }

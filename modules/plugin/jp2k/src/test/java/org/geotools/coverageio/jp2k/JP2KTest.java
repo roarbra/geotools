@@ -27,7 +27,6 @@ import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
@@ -51,9 +50,6 @@ import org.opengis.referencing.operation.MathTransform;
  *     <p>Testing {@link org.geotools.coverageio.jp2k.JP2KReader}
  */
 public final class JP2KTest extends BaseJP2K {
-
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(JP2KTest.class);
 
     /** Creates a new instance of JP2KTest */
     public JP2KTest() {}
@@ -93,11 +89,10 @@ public final class JP2KTest extends BaseJP2K {
         //
         // //
         final GridCoverage2D gc =
-                (GridCoverage2D)
-                        reader.read(
-                                new GeneralParameterValue[] {
-                                    gg, useJAI, useMT, tileSize, transparentColor
-                                });
+                reader.read(
+                        new GeneralParameterValue[] {
+                            gg, useJAI, useMT, tileSize, transparentColor
+                        });
         assertNotNull(gc);
         forceDataLoading(gc);
 
@@ -135,7 +130,7 @@ public final class JP2KTest extends BaseJP2K {
         final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
         checkReader(reader);
         gg.setValue(new GridGeometry2D(reader.getOriginalGridRange(), oldEnvelope));
-        GridCoverage2D gc = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg, useJAI});
+        GridCoverage2D gc = reader.read(new GeneralParameterValue[] {gg, useJAI});
         assertNotNull(gc);
         forceDataLoading(gc);
 
@@ -148,7 +143,7 @@ public final class JP2KTest extends BaseJP2K {
         useJAI.setValue(true);
         final Envelope wgs84Envelope = CRS.transform(oldEnvelope, DefaultGeographicCRS.WGS84);
         gg.setValue(new GridGeometry2D(reader.getOriginalGridRange(), wgs84Envelope));
-        gc = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg, useJAI});
+        gc = reader.read(new GeneralParameterValue[] {gg, useJAI});
         assertNotNull(gc);
         forceDataLoading(gc);
     }

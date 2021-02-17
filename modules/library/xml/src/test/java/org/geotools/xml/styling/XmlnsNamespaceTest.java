@@ -16,11 +16,13 @@
  */
 package org.geotools.xml.styling;
 
+import static org.junit.Assert.fail;
+
 import java.io.StringReader;
-import junit.framework.TestCase;
 import org.geotools.styling.Style;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.test.TestData;
+import org.junit.Test;
 
 /**
  * Tests XMLNS attributes serialization that might be missed/ignored if the proper namespace is not
@@ -29,8 +31,9 @@ import org.geotools.test.TestData;
  *
  * @author Vitalus
  */
-public class XmlnsNamespaceTest extends TestCase {
+public class XmlnsNamespaceTest {
 
+    @Test
     public void testXmlnsNamespaceOutput() throws Exception {
 
         java.net.URL sldUrl = TestData.getResource(this, "xmlnsNamespaces.sld");
@@ -45,10 +48,9 @@ public class XmlnsNamespaceTest extends TestCase {
 
         try {
             SLDParser parser2 = new SLDParser(new StyleFactoryImpl(), new StringReader(xml));
-            Style style2 = parser2.readXML()[0];
-
+            parser2.readXML();
         } catch (Exception exc) {
-            this.fail("Failed to persist object tree to XML and parse back: " + exc.getMessage());
+            fail("Failed to persist object tree to XML and parse back: " + exc.getMessage());
             throw exc;
         }
     }

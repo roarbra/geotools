@@ -16,11 +16,11 @@
  */
 package org.geotools.ows.wmts;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.assertNull;
-import static junit.framework.TestCase.assertTrue;
 import static org.geotools.ows.wmts.WMTSTestUtils.createCapabilities;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Set;
 import org.geotools.geometry.GeneralEnvelope;
@@ -43,7 +43,7 @@ public class WebMapTileServerTest {
         WMTSCapabilities caps = createCapabilities("nasa.getcapa.xml");
         WebMapTileServer wmts = new WebMapTileServer(caps);
 
-        Layer layer = (Layer) caps.getLayer("AMSRE_Surface_Rain_Rate_Night");
+        Layer layer = caps.getLayer("AMSRE_Surface_Rain_Rate_Night");
         // urn:ogc:def:crs:OGC:1.3:CRS84
 
         // <ows:WGS84BoundingBox crs="urn:ogc:def:crs:OGC:2:84">
@@ -71,7 +71,7 @@ public class WebMapTileServerTest {
         WMTSCapabilities caps = createCapabilities("admin_ch.getcapa.xml");
         WebMapTileServer wmts = new WebMapTileServer(caps);
 
-        Layer layer = (Layer) caps.getLayer("ch.are.alpenkonvention");
+        Layer layer = caps.getLayer("ch.are.alpenkonvention");
         // <ows:SupportedCRS>urn:ogc:def:crs:EPSG:2056</ows:SupportedCRS>
         // <ows:WGS84BoundingBox>
         // <ows:LowerCorner>5.140242 45.398181</ows:LowerCorner>
@@ -111,7 +111,7 @@ public class WebMapTileServerTest {
         tileRequest1.setRequestedHeight(768);
         tileRequest1.setRequestedWidth(1024);
         Set<Tile> receivedTiles = tileRequest1.getTiles();
-        assertTrue(receivedTiles.size() > 0);
+        assertFalse(receivedTiles.isEmpty());
         for (Tile t : receivedTiles) {
 
             String recvdTileCRS =
@@ -133,7 +133,7 @@ public class WebMapTileServerTest {
         tileRequest2.setRequestedHeight(768);
         tileRequest2.setRequestedWidth(1024);
         Set<Tile> receivedTiles2 = tileRequest2.getTiles();
-        assertTrue(receivedTiles2.size() > 0);
+        assertFalse(receivedTiles2.isEmpty());
         for (Tile t : receivedTiles2) {
             String recvdTileCRS =
                     t.getExtent()
@@ -153,7 +153,7 @@ public class WebMapTileServerTest {
         tileRequest3.setRequestedHeight(768);
         tileRequest3.setRequestedWidth(1024);
         Set<Tile> receivedTiles3 = tileRequest3.getTiles();
-        assertTrue(receivedTiles3.size() > 0);
+        assertFalse(receivedTiles3.isEmpty());
         for (Tile t : receivedTiles3) {
             String recvdTileCRS =
                     t.getExtent()
@@ -164,6 +164,32 @@ public class WebMapTileServerTest {
 
             assertEquals("EPSG:3857", recvdTileCRS);
         }
+    }
+
+    /**
+     * Check that servers that don't support KVP work
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testGEOT6741() throws Exception {
+        WebMapTileServer server = createServer("linz.xml");
+
+        GetTileRequest tileRequest = server.createGetTileRequest();
+        WMTSLayer layer = server.getCapabilities().getLayer("layer-50767");
+        tileRequest.setLayer(layer);
+        String url = tileRequest.getFinalURL().toString();
+        assertFalse(url.contains("REQUEST=GetTile"));
+    }
+
+    /** Add ability to parse "broken" URN from WMTS Spec urn:ogc:def:crs:EPSG:6.18:3:3857 */
+    @Test
+    public void testGEOT6742() throws Exception {
+        WebMapTileServer server = createServer("noaa-tileserver.xml");
+        GetTileRequest tileRequest = server.createGetTileRequest();
+        WMTSLayer layer = server.getCapabilities().getLayer("83637_2");
+        tileRequest.setLayer(layer);
+        tileRequest.getFinalURL().toString();
     }
 
     private WebMapTileServer createServer(String resourceName) throws Exception {

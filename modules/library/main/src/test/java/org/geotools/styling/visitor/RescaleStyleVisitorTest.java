@@ -43,7 +43,6 @@ import org.geotools.styling.TextSymbolizer;
 import org.junit.Before;
 import org.junit.Test;
 import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
 import org.opengis.style.SemanticType;
 import si.uom.SI;
 
@@ -100,7 +99,6 @@ public class RescaleStyleVisitorTest {
         style.featureTypeStyles().add(fts2);
 
         style.accept(visitor);
-        Style copy = (Style) visitor.getCopy();
 
         Style notEq = sf.getDefaultStyle();
 
@@ -149,7 +147,7 @@ public class RescaleStyleVisitorTest {
     @Test
     public void testDynamicStroke() throws Exception {
         Stroke original = sb.createStroke(Color.RED, 2);
-        original.setDashArray(Arrays.asList((Expression) ff.literal("5 10")));
+        original.setDashArray(Arrays.asList(ff.literal("5 10")));
 
         original.accept(visitor);
         Stroke clone = (Stroke) visitor.getCopy();
@@ -157,7 +155,7 @@ public class RescaleStyleVisitorTest {
         assertEquals(4.0d, Double.valueOf((String) clone.getWidth().evaluate(null)), 0.001);
         assertNotNull(original.dashArray());
         assertEquals(1, original.dashArray().size());
-        assertEquals("10.0 20.0", ((Expression) clone.dashArray().get(0)).evaluate(null));
+        assertEquals("10.0 20.0", clone.dashArray().get(0).evaluate(null));
     }
 
     @Test

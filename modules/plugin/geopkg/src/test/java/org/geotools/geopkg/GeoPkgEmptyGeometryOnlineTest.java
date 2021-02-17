@@ -23,6 +23,7 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.jdbc.JDBCEmptyGeometryOnlineTest;
 import org.geotools.jdbc.JDBCEmptyGeometryTestSetup;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
 import org.opengis.feature.simple.SimpleFeature;
@@ -35,26 +36,32 @@ public class GeoPkgEmptyGeometryOnlineTest extends JDBCEmptyGeometryOnlineTest {
         return new GeoPkgEmptyGeometryTestSetup(new GeoPkgTestSetup());
     }
 
+    @Test
     public void testEmptyPoint() throws Exception {
         testInsertEmptyGeometry("POINT");
     }
 
+    @Test
     public void testEmptyLine() throws Exception {
         testInsertEmptyGeometry("LINESTRING");
     }
 
+    @Test
     public void testEmptyPolygon() throws Exception {
         testInsertEmptyGeometry("POLYGON");
     }
 
+    @Test
     public void testEmptyMultiPoint() throws Exception {
         testInsertEmptyGeometry("MULTIPOINT");
     }
 
+    @Test
     public void testEmptyMultiLine() throws Exception {
         testInsertEmptyGeometry("MULTILINESTRING");
     }
 
+    @Test
     public void testEmptyMultiPolygon() throws Exception {
         testInsertEmptyGeometry("MULTIPOLYGON");
     }
@@ -63,26 +70,26 @@ public class GeoPkgEmptyGeometryOnlineTest extends JDBCEmptyGeometryOnlineTest {
         WKTReader reader = new WKTReader();
         Geometry emptyGeometry = reader.read(type.toUpperCase() + " EMPTY");
 
-        Transaction tx = new DefaultTransaction();
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                dataStore.getFeatureWriterAppend(tname("empty_" + type.toLowerCase()), tx);
-        SimpleFeature feature = writer.next();
-        feature.setAttribute(aname("id"), Integer.valueOf(100));
-        feature.setAttribute(aname("geom_" + type.toLowerCase()), emptyGeometry);
-        feature.setAttribute(aname("name"), new String("empty " + type));
-        writer.write();
-        writer.close();
-        tx.commit();
-        tx.close();
+        String tableName = tname("empty_" + type.toLowerCase());
+        try (Transaction tx = new DefaultTransaction()) {
+            try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                    dataStore.getFeatureWriterAppend(tableName, tx)) {
+                SimpleFeature feature = writer.next();
+                feature.setAttribute(aname("id"), Integer.valueOf(100));
+                feature.setAttribute(aname("geom_" + type.toLowerCase()), emptyGeometry);
+                feature.setAttribute(aname("name"), new String("empty " + type));
+                writer.write();
+            }
+            tx.commit();
+        }
 
-        SimpleFeatureCollection fc =
-                dataStore.getFeatureSource(tname("empty_" + type.toLowerCase())).getFeatures();
+        SimpleFeatureCollection fc = dataStore.getFeatureSource(tableName).getFeatures();
         assertEquals(1, fc.size());
-        SimpleFeatureIterator fi = fc.features();
-        SimpleFeature nf = fi.next();
-        fi.close();
-        Geometry geometry = (Geometry) nf.getDefaultGeometry();
-        // either null or empty, we don't really care
-        assertTrue(geometry == null || geometry.isEmpty());
+        try (SimpleFeatureIterator fi = fc.features()) {
+            SimpleFeature nf = fi.next();
+            Geometry geometry = (Geometry) nf.getDefaultGeometry();
+            // either null or empty, we don't really care
+            assertTrue(geometry == null || geometry.isEmpty());
+        }
     }
 }

@@ -32,6 +32,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
+import org.geotools.util.logging.Logging;
 import org.geotools.ysld.UomMapper;
 import org.geotools.ysld.Ysld;
 import org.geotools.ysld.parse.ZoomContext;
@@ -43,6 +45,8 @@ import org.yaml.snakeyaml.error.Mark;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 public class YsldValidateTest {
+
+    static final Logger LOGGER = Logging.getLogger(YsldValidateTest.class);
 
     @Test
     public void testMalformed() throws Exception {
@@ -99,8 +103,8 @@ public class YsldValidateTest {
         return Matchers.describedAs(
                 "Problem at Line %0 Column %1",
                 allOf(
-                        Matchers.<Mark>hasProperty("line", is(line - 1)),
-                        Matchers.<Mark>hasProperty("column", is(column - 1))),
+                        Matchers.hasProperty("line", is(line - 1)),
+                        Matchers.hasProperty("column", is(column - 1))),
                 line,
                 column);
     }
@@ -109,7 +113,7 @@ public class YsldValidateTest {
     Matcher<Mark> problemOn(int line) {
         return Matchers.describedAs(
                 "Problem somewhere on Line %0",
-                allOf(Matchers.<Mark>hasProperty("line", is(line - 1))), line);
+                allOf(Matchers.hasProperty("line", is(line - 1))), line);
     }
 
     static final String[] EXPRESSION_KEYS = {
@@ -218,13 +222,6 @@ public class YsldValidateTest {
         assertThat(errors.get(0).getProblemMark(), problemOn(2));
 
         verify(finder, zctxt);
-    }
-
-    List<MarkedYAMLException> dump(List<MarkedYAMLException> errors) {
-        for (MarkedYAMLException e : errors) {
-            // System.out.println(e.toString());
-        }
-        return errors;
     }
 
     @SuppressWarnings("unchecked")
@@ -613,13 +610,11 @@ public class YsldValidateTest {
     }
 
     List<MarkedYAMLException> validate(String ysld) throws IOException {
-        // return dump(Ysld.validate(ysld));
-        return this.validate(ysld, Collections.<ZoomContextFinder>emptyList());
+        return this.validate(ysld, Collections.emptyList());
     }
 
     List<MarkedYAMLException> validate(String ysld, List<ZoomContextFinder> ctxts)
             throws IOException {
-        // return dump(Ysld.validate(ysld));
         return Ysld.validate(ysld, ctxts, new UomMapper());
     }
 
@@ -651,7 +646,7 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
@@ -707,7 +702,7 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
@@ -769,7 +764,7 @@ public class YsldValidateTest {
                 .append("\n") // Empty displacement on line 26
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, contains(hasProperty("problemMark", problemOn(26))));
     }
 
@@ -784,7 +779,7 @@ public class YsldValidateTest {
                         + "  - scale: *s\n"
                         + "    filter: ${x = true}\n";
 
-        List<MarkedYAMLException> errors = validate(yaml, Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(yaml, Collections.emptyList());
         assertThat(errors, empty());
     }
 
@@ -799,7 +794,7 @@ public class YsldValidateTest {
                         + "  - scale: [*s, max]\n"
                         + "    filter: ${x = true}\n";
 
-        List<MarkedYAMLException> errors = validate(yaml, Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(yaml, Collections.emptyList());
         assertThat(errors, empty());
     }
 
@@ -832,7 +827,7 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
@@ -865,7 +860,7 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 

@@ -16,6 +16,11 @@
  */
 package org.geotools.data.store;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import org.geotools.data.DataAccess;
 import org.geotools.data.DataStore;
@@ -28,14 +33,12 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
+import org.junit.After;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 public class DecoratingDataStoreTest extends DataTestCase {
-    public DecoratingDataStoreTest(String name) {
-        super(name);
-    }
 
     public static class MyDecoratingDataStore extends DecoratingDataStore {
         public MyDecoratingDataStore(DataStore delegate) {
@@ -51,8 +54,8 @@ public class DecoratingDataStoreTest extends DataTestCase {
     MemoryDataStore data;
     MyDecoratingDataStore decorator;
 
-    protected void setUp() throws Exception {
-        super.setUp();
+    public void init() throws Exception {
+        super.init();
         data = new MemoryDataStore();
         data.addFeatures(roadFeatures);
 
@@ -69,7 +72,8 @@ public class DecoratingDataStoreTest extends DataTestCase {
         decorator = new MyDecoratingDataStore(data);
     }
 
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         defaultTransaction.close();
         data = null;
         super.tearDown();
@@ -77,8 +81,8 @@ public class DecoratingDataStoreTest extends DataTestCase {
 
     @Test
     public void testUnwrap() {
-        assertTrue(decorator.unwrap(DataStore.class) == data);
-        assertTrue(decorator.unwrap(DataAccess.class) == data);
+        assertSame(decorator.unwrap(DataStore.class), data);
+        assertSame(decorator.unwrap(DataAccess.class), data);
     }
 
     @Test

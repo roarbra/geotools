@@ -32,7 +32,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import junit.framework.TestCase;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -42,19 +41,20 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.label.LabelCacheImpl;
 import org.geotools.styling.Style;
 import org.geotools.test.TestData;
+import org.junit.Before;
+import org.junit.Test;
 
 /** Created by Michaël on 17/12/13. */
-public class PartialsTest extends TestCase {
+public class PartialsTest {
 
-    private static final long TIME = 10000;
     SimpleFeatureSource fs_point;
     SimpleFeatureSource fs_line;
     SimpleFeatureSource fs_area;
     ReferencedEnvelope bounds;
     StreamingRenderer renderer;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
 
         File property_point =
                 new File(TestData.getResource(this, "partialPointLabel.properties").toURI());
@@ -74,7 +74,7 @@ public class PartialsTest extends TestCase {
         bounds = new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
 
         renderer = new StreamingRenderer();
-        Map rendererParams = new HashMap();
+        Map<Object, Object> rendererParams = new HashMap<>();
         LabelCacheImpl labelCache = new LabelCacheImpl();
         rendererParams.put(StreamingRenderer.LABEL_CACHE_KEY, labelCache);
         renderer.setRendererHints(rendererParams);
@@ -94,6 +94,7 @@ public class PartialsTest extends TestCase {
     }
     */
 
+    @Test
     public void testPartialPointLabelNo() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -112,6 +113,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Point Partials:No", TIME, image);
     }
 
+    @Test
     public void testPointLabelFalse() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -130,6 +132,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Point Partials:False", TIME, image);
     }
 
+    @Test
     public void testPartialPointLabelTrue() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -149,6 +152,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Point Partials:True", TIME, image);
     }
 
+    @Test
     public void testPartialLineLabelNo() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -168,6 +172,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Line Partials:No", TIME, image);
     }
 
+    @Test
     public void testPartialLineLabelFalse() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -187,6 +192,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Line Partials:False", TIME, image);
     }
 
+    @Test
     public void testPartialLineLabelTrue() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -202,6 +208,7 @@ public class PartialsTest extends TestCase {
         RendererBaseTest.assertPixel(image, 150, 1, Color.BLACK, 30);
     }
 
+    @Test
     public void testPartialAreaLabelNo() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -221,6 +228,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Area Partials:No", TIME, image);
     }
 
+    @Test
     public void testPartialAreaLabelFalse() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -240,6 +248,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Area Partials:False", TIME, image);
     }
 
+    @Test
     public void testPartialAreaLabelTrue() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);

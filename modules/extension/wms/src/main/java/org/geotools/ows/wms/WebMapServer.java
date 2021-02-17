@@ -33,12 +33,12 @@ import org.geotools.data.ServiceInfo;
 import org.geotools.data.ows.AbstractOpenWebService;
 import org.geotools.data.ows.GetCapabilitiesRequest;
 import org.geotools.data.ows.GetCapabilitiesResponse;
-import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.OperationType;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.ows.Specification;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.request.DescribeLayerRequest;
 import org.geotools.ows.wms.request.GetFeatureInfoRequest;
@@ -57,7 +57,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.xml.XMLHandlerHints;
 import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
@@ -96,7 +95,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
         private Icon icon;
 
         WMSInfo() {
-            keywords = new HashSet<String>();
+            keywords = new HashSet<>();
             if (capabilities.getService() != null) {
                 String array[] = capabilities.getService().getKeywordList();
                 if (array != null) {
@@ -166,8 +165,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
             try {
                 URL source = getCapabilities().getRequest().getGetCapabilities().getGet();
                 return source.toURI();
-            } catch (NullPointerException huh) {
-            } catch (URISyntaxException e) {
+            } catch (NullPointerException | URISyntaxException huh) {
             }
             try {
                 return serverURL.toURI();
@@ -227,9 +225,6 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
                                     bbox.getMinY(),
                                     bbox.getMaxY(),
                                     crs);
-                } catch (NoSuchAuthorityCodeException e) {
-                    crs = DefaultGeographicCRS.WGS84;
-                    env = layer.getEnvelope(crs);
                 } catch (FactoryException e) {
                     crs = DefaultGeographicCRS.WGS84;
                     env = layer.getEnvelope(crs);
@@ -245,7 +240,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
 
             String source = getInfo().getSource().toString();
 
-            keywords = new TreeSet<String>();
+            keywords = new TreeSet<>();
 
             if (layer.getKeywords() != null) {
                 List<String> more = Arrays.asList(layer.getKeywords());
@@ -352,7 +347,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
     public WebMapServer(WMSCapabilities capabilities) throws IOException, ServiceException {
         super(
                 capabilities.getRequest().getGetCapabilities().getGet(),
-                new SimpleHttpClient(),
+                HTTPClientFinder.createClient(),
                 capabilities);
     }
 
@@ -365,7 +360,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
      * @throws ServiceException if the server responds with an error
      */
     public WebMapServer(final URL serverURL) throws IOException, ServiceException {
-        super(serverURL);
+        this(serverURL, HTTPClientFinder.createClient());
     }
 
     /**
@@ -410,8 +405,8 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
         super(serverURL, getHttpClient(timeout), null);
     }
 
-    public static SimpleHttpClient getHttpClient(int timeout) {
-        SimpleHttpClient client = new SimpleHttpClient();
+    public static HTTPClient getHttpClient(int timeout) {
+        HTTPClient client = HTTPClientFinder.createClient();
         client.setReadTimeout(timeout);
         return client;
     }
@@ -431,7 +426,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
     }
 
     protected ResourceInfo createInfo(Layer layer) {
-        return new LayerInfo((Layer) layer);
+        return new LayerInfo(layer);
     }
 
     public GetCapabilitiesResponse issueRequest(GetCapabilitiesRequest request)
@@ -475,7 +470,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
      * @return a WMSCapabilities object, representing the Capabilities of the server
      */
     public WMSCapabilities getCapabilities() {
-        return (WMSCapabilities) capabilities;
+        return capabilities;
     }
 
     private WMSSpecification getSpecification() {
@@ -497,7 +492,7 @@ public class WebMapServer extends AbstractOpenWebService<WMSCapabilities, Layer>
     public GetMapRequest createGetMapRequest() {
         URL onlineResource = findURL(getCapabilities().getRequest().getGetMap());
 
-        return (GetMapRequest) getSpecification().createGetMapRequest(onlineResource);
+        return getSpecification().createGetMapRequest(onlineResource);
     }
 
     /**
