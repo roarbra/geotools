@@ -28,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.sun.media.jai.operator.ImageReadDescriptor;
 import it.geosolutions.imageio.stream.input.FileImageInputStreamExtImpl;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.ParameterBlock;
@@ -47,6 +47,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -293,6 +298,85 @@ public class HeterogenousCRSTest {
         final String expectedResultLocation = "hetero_utm_results/full.png";
         assertExpectedMosaic(imReader, expectedResultLocation);
         imReader.dispose();
+    }
+
+    @Test
+    public void testConcurrentHeteroUTMH2FullArea() throws Exception {
+        runConcurrentHeteroUTMH2(r -> null);
+    }
+
+    @Test
+    public void testConcurrentHeteroUTMH2Across() throws Exception {
+        runConcurrentHeteroUTMH2(
+                r -> {
+                    ParameterValue<GridGeometry2D> ggp =
+                            AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+                    GridEnvelope range = r.getOriginalGridRange();
+                    // move read area partially outside
+                    ReferencedEnvelope bounds =
+                            ReferencedEnvelope.reference(r.getOriginalEnvelope());
+                    bounds.translate(bounds.getWidth() / 2, 0);
+                    GridGeometry2D gg = new GridGeometry2D(range, bounds);
+                    ggp.setValue(gg);
+                    return new GeneralParameterValue[] {ggp};
+                });
+    }
+
+    @Test
+    public void testConcurrentHeteroUTMH2NoGranules() throws Exception {
+        runConcurrentHeteroUTMH2(
+                r -> {
+                    ParameterValue<Filter> filter = ImageMosaicFormat.FILTER.createValue();
+                    filter.setValue(Filter.EXCLUDE);
+                    return new GeneralParameterValue[] {filter};
+                });
+    }
+
+    private void runConcurrentHeteroUTMH2(
+            Function<ImageMosaicReader, GeneralParameterValue[]> parameters)
+            throws URISyntaxException, IOException, InterruptedException,
+                    java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+        String testLocation = "hetero_utm";
+        URL storeUrl = TestData.url(this, testLocation);
+
+        File testDataFolder = new File(storeUrl.toURI());
+        File testDirectory = crsMosaicFolder.newFolder(testLocation);
+        FileUtils.copyDirectory(testDataFolder, testDirectory);
+
+        // to similate the deadlock we need a connection pool with just one connection,
+        // a single request will cause the deadlock in this case (but we try with a pool
+        // nevertheless, to be extra sure)
+        File datastoreProperties = new File(testDirectory, "datastore.properties");
+        try (FileWriter out = new FileWriter(datastoreProperties)) {
+            out.write("database=hetero_concurrent\n");
+            out.write(
+                    "SPI=org.geotools.data.h2.H2DataStoreFactory\n"
+                            + "dbtype=h2\n"
+                            + "user=gs\n"
+                            + "passwd=gs\n"
+                            + "Connection\\ timeout=3600\n"
+                            + "max \\connections=1"
+                            + "min \\connections=1");
+            out.flush();
+        }
+
+        final ExecutorService executors = Executors.newFixedThreadPool(4);
+        ImageMosaicReader reader = new ImageMosaicReader(testDirectory, null);
+        try {
+            List<Future> futures = new ArrayList<>();
+            for (int i = 0; i < 20; i++) {
+                Future<GridCoverage2D> future =
+                        executors.submit(() -> reader.read(parameters.apply(reader)));
+                futures.add(future);
+            }
+            for (Future future : futures) {
+                // just to make sure it cannot get stuck forever, but allow execution on
+                // very slow runtimes
+                future.get(120, TimeUnit.SECONDS);
+            }
+        } finally {
+            reader.dispose();
+        }
     }
 
     @Test
