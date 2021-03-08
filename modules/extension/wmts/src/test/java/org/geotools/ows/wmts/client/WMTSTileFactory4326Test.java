@@ -120,8 +120,8 @@ public class WMTSTileFactory4326Test {
                 }
                 WMTSZoomLevel zoomLevel = service.getZoomLevel(tp.zoomlevel + offset);
 
-                Tile mtile = factory.findTileAtCoordinate(tp.lon, tp.lat, zoomLevel, service);
-                Tile ltile = factory.constrainToUpperLeftTile(mtile, zoomLevel, service);
+                Tile mtile = service.findTileAtCoordinate(tp.lon, tp.lat, zoomLevel);
+                Tile ltile = service.constrainToUpperLeftTile(mtile, zoomLevel);
 
                 /*System.out.println(
                 tp.lat
@@ -165,7 +165,7 @@ public class WMTSTileFactory4326Test {
             WMTSZoomLevel zoomLevel = service.getZoomLevel(5);
             WMTSTile tile = new WMTSTile(20, 15, zoomLevel, service);
 
-            Tile neighbour = factory.findRightNeighbour(tile, service);
+            Tile neighbour = service.findRightNeighbour(tile);
             Assert.assertNotNull(neighbour);
             // assertTrue(neighbour.getContextState().equals(ContextState.OKAY));
             WMTSTile expectedNeighbour = new WMTSTile(21, 15, zoomLevel, service);
@@ -182,7 +182,7 @@ public class WMTSTileFactory4326Test {
             WMTSTile tile =
                     new WMTSTile(10, 5, new WMTSZoomLevel(5, (WMTSTileService) service), service);
 
-            Tile neighbour = factory.findLowerNeighbour(tile, service);
+            Tile neighbour = service.findLowerNeighbour(tile);
 
             WMTSTile expectedNeighbour =
                     new WMTSTile(10, 6, new WMTSZoomLevel(5, (WMTSTileService) service), service);
