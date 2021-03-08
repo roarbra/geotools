@@ -16,11 +16,13 @@
  */
 package org.geotools.tile.impl.osm;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.tile.ServiceTest;
 import org.geotools.tile.Tile;
@@ -86,6 +88,20 @@ public class OSMServiceTest extends ServiceTest {
     }
 
     @Test
+    public void tilesFetchedFromCacheAtRecurring() throws Exception {
+        TileService service = createService();
+        Stream<Tile> firstTiles = createTestStream(service);
+        Assert.assertTrue(
+                "Tiles in second pass should come from cache. Being the same objects.",
+                firstTiles.allMatch(
+                        first -> createTestStream(service).anyMatch(second -> second == first)));
+    }
+
+    private Stream<Tile> createTestStream(TileService service) {
+        return service.streamTiles(getExtent(DE_EXTENT_NAME), 5957345, true);
+    }
+
+    @Test
     public void testGetName() {
         TileService service = createService();
         Assert.assertEquals("OSM", service.getName());
@@ -129,9 +145,10 @@ public class OSMServiceTest extends ServiceTest {
     }
 
     private Collection<Tile> findTilesInExtent(ReferencedEnvelope extent, int scale) {
-
         TileService service = createService();
-        Collection<Tile> tileList = service.findTilesInExtent(extent, scale, true, 28);
+        Collection<Tile> tileList = new ArrayList<Tile>();
+        service.findTilesInExtent(extent, scale, true).forEachRemaining(tileList::add);
+        ;
 
         return tileList;
     }

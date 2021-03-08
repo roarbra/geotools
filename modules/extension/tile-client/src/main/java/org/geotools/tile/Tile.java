@@ -111,11 +111,12 @@ public abstract class Tile implements ImageLoader {
     private BufferedImage tileImage = null;
 
     /** A delegate to proved direct loading or load from a disk (cache). */
-    private ImageLoader imageLoader = this;
+    private ImageLoader imageLoader;
 
     /** The initiating service */
-    protected TileService service = null;
+    protected final TileService service;
 
+    @Deprecated
     public void setImageLoader(ImageLoader imageLoader) {
         if (imageLoader == null) {
             throw new IllegalArgumentException("ImageLoader cannot be null");
@@ -126,6 +127,7 @@ public abstract class Tile implements ImageLoader {
     /** for locking on the SWT image to prevent creating it multiple times */
     // private Object SWTLock = new Object();
 
+    @Deprecated
     public Tile(TileIdentifier tileId, ReferencedEnvelope env, int tileSize) {
 
         if (env == null) {
@@ -138,11 +140,21 @@ public abstract class Tile implements ImageLoader {
             throw new IllegalArgumentException("TileIdentifier cannot be null");
         }
         this.tileIdentifier = tileId;
+        this.service = null;
     }
 
     public Tile(TileIdentifier tileId, ReferencedEnvelope env, int tileSize, TileService service) {
-        this(tileId, env, tileSize);
-        imageLoader = service;
+        if (env == null) {
+            throw new IllegalArgumentException("Envelope cannot be null");
+        }
+        this.env = env;
+
+        this.tileSize = tileSize;
+        if (tileId == null) {
+            throw new IllegalArgumentException("TileIdentifier cannot be null");
+        }
+        this.tileIdentifier = tileId;
+        this.imageLoader = service;
         this.service = service;
     }
 
@@ -161,14 +173,33 @@ public abstract class Tile implements ImageLoader {
         // getRenderExecutor().dispose();
     }
 
-    public BufferedImage getBufferedImage() {
+    public Tile prepareTileImage() {
 
-        // TODO REVIEW this getter has side effects!
+        if (!isImageLoadedOK()) {
+            try {
+                tileImage = service.loadImageTileImage(this);
+                setRenderState(RenderState.RENDERED);
+
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Failed to load image: " + this.getUrl(), e);
+                setRenderState(RenderState.INVALID);
+            }
+        }
+        return this;
+    }
+
+    public BufferedImage getBufferedImage() {
 
         if (isImageLoadedOK()) {
             return this.tileImage;
         }
 
+        return createErrorImage("Failed: " + getId());
+        /*
+        if (this.imageLoader == null) {
+            throw new IllegalStateException(
+                    "ImageLoader must be set, or TileService provided prior to a getBufferedImage call.");
+        }
         try {
             this.tileImage = this.imageLoader.loadImageTileImage(this);
             setRenderState(RenderState.RENDERED);
@@ -179,13 +210,17 @@ public abstract class Tile implements ImageLoader {
             setRenderState(RenderState.INVALID);
             return createErrorImage("Failed: " + getId());
         }
+        */
     }
 
     /**
-     * Implementation of ImageLoader. Has been moved to {@link
+     * Implementation of ImageLoader.
+     *
+     * @deprecated Has been moved to {@link
      * @see org.geotools.tile.TileService#loadImageTileImage(Tile)}
      */
     @Override
+    @Deprecated
     public BufferedImage loadImageTileImage(Tile tile) throws IOException {
         if (service == null) {
             throw new IllegalStateException("service cannot be null.");
@@ -204,7 +239,7 @@ public abstract class Tile implements ImageLoader {
      *
      * @return the tile image
      */
-    private boolean isImageLoadedOK() {
+    boolean isImageLoadedOK() {
         return this.renderState == RenderState.RENDERED && this.tileImage != null;
     }
 

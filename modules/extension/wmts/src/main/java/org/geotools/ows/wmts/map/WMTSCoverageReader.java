@@ -313,7 +313,7 @@ public class WMTSCoverageReader extends AbstractGridCoverage2DReader {
                 } else {
                     global.expandToInclude(extent);
                 }
-                BufferedImage bi = tile.getBufferedImage();
+                BufferedImage bi = getTileImage(tile);
                 if (at == null) {
                     at =
                             RendererUtilities.worldToScreenTransform(
@@ -418,7 +418,7 @@ public class WMTSCoverageReader extends AbstractGridCoverage2DReader {
     }
 
     protected BufferedImage getTileImage(Tile tile) {
-        return tile.getBufferedImage();
+        return tile.prepareTileImage().getBufferedImage();
     }
 
     @Override

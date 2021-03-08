@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.tile.ServiceTest;
 import org.geotools.tile.Tile;
@@ -133,7 +134,8 @@ public class BingServiceTest extends ServiceTest {
     private Collection<Tile> findTilesInExtent(ReferencedEnvelope extent, int scale) {
 
         TileService service = createService();
-        Collection<Tile> tiles = service.findTilesInExtent(extent, scale, true, 28);
+        Collection<Tile> tiles =
+                service.streamTiles(extent, scale, true).limit(28).collect(Collectors.toList());
 
         return tiles;
     }

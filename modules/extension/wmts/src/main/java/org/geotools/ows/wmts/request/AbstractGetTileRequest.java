@@ -51,7 +51,6 @@ import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.tile.Tile;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
@@ -84,8 +83,6 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
     protected WMTSLayer layer = null;
 
     protected String styleName = "";
-
-    private String srs;
 
     static final Logger LOGGER = Logging.getLogger(AbstractGetTileRequest.class);
 
@@ -290,7 +287,7 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
         int z = first.getTileIdentifier().getZ();
 
         TileMatrixSetLink tmsl = layer.getTileMatrixLinks().get(matrixSet.getIdentifier());
-        TileMatrixLimits limit = WMTSTileFactory.getLimits(tmsl, matrixSet, z);
+        TileMatrixLimits limit = WMTSTileService.getLimits(tmsl, matrixSet, z);
 
         // remove tiles outside layer's limits
         List<Tile> tilesOutsideLimits = new ArrayList<>();
@@ -358,18 +355,7 @@ public abstract class AbstractGetTileRequest extends AbstractWMTSRequest impleme
             LOGGER.fine("request CRS " + (requestCRS == null ? "NULL" : requestCRS.getName()));
         }
         if (requestCRS == null) {
-            try {
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("request CRS decoding" + srs);
-                }
-                requestCRS = CRS.decode(srs);
-
-            } catch (FactoryException e) {
-                if (LOGGER.isLoggable(Level.FINER)) {
-                    LOGGER.log(Level.FINER, e.getMessage(), e);
-                }
-                throw new RuntimeException(e);
-            }
+            throw new IllegalStateException("CRS isn't specified for this request.");
         }
 
         // See if the layer supports the requested SRS. Matching against the SRS rather than the

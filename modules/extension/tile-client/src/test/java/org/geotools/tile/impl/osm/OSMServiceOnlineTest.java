@@ -42,7 +42,8 @@ public class OSMServiceOnlineTest extends OnlineTestCase {
     public void testImageLoadTileOnline() throws Exception {
         final TileService service = new OSMService("OSM", "http://tile.openstreetmap.org/");
         final Tile tile = new OSMTile(2166, 1189, new WebMercatorZoomLevel(12), service);
-        final BufferedImage image = tile.getBufferedImage();
+
+        final BufferedImage image = tile.prepareTileImage().getBufferedImage();
         Assert.assertNotNull("getBufferedImage should return image even if fail.", image);
         Assert.assertEquals(
                 "getRenderState will be INVALID if image fetch has failed.",

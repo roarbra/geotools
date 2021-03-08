@@ -23,6 +23,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -80,7 +81,10 @@ public class TileLayer extends DirectLayer {
         final ReferencedEnvelope viewportExtent = viewport.getBounds();
         int scale = calculateScale(viewportExtent, viewport.getScreenArea());
 
-        Collection<Tile> tiles = service.findTilesInExtent(viewportExtent, scale, false, 128);
+        Collection<Tile> tiles =
+                service.streamTiles(viewportExtent, scale, false)
+                        .limit(128)
+                        .collect(Collectors.toList());
 
         BufferedImage mosaickedImage = createImage(viewport.getScreenArea());
         Graphics2D g2d = mosaickedImage.createGraphics();
@@ -141,7 +145,7 @@ public class TileLayer extends DirectLayer {
     }
 
     protected BufferedImage getTileImage(Tile tile) {
-        return tile.getBufferedImage();
+        return tile.prepareTileImage().getBufferedImage();
     }
 
     private int calculateScale(ReferencedEnvelope extent, Rectangle screenArea) {
