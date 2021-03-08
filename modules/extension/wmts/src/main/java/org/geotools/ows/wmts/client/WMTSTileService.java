@@ -18,19 +18,28 @@ package org.geotools.ows.wmts.client;
 
 import static org.geotools.tile.impl.ScaleZoomLevelMatcher.getProjectedEnvelope;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.measure.Unit;
+import javax.measure.UnitConverter;
+import javax.measure.quantity.Length;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.HTTPClient;
 import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.HTTPResponse;
+import org.geotools.image.io.ImageIOExt;
 import org.geotools.ows.wms.CRSEnvelope;
 import org.geotools.ows.wms.StyleImpl;
 import org.geotools.ows.wmts.model.TileMatrix;
+import org.geotools.ows.wmts.model.TileMatrixLimits;
 import org.geotools.ows.wmts.model.TileMatrixSet;
 import org.geotools.ows.wmts.model.TileMatrixSetLink;
 import org.geotools.ows.wmts.model.WMTSLayer;
@@ -41,13 +50,19 @@ import org.geotools.tile.Tile;
 import org.geotools.tile.TileFactory;
 import org.geotools.tile.TileService;
 import org.geotools.tile.impl.ScaleZoomLevelMatcher;
+import org.geotools.tile.impl.ZoomLevel;
+import org.geotools.util.ObjectCaches;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Envelope;
 import org.opengis.geometry.BoundingBox;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.cs.AxisDirection;
+import org.opengis.referencing.cs.CoordinateSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
+import si.uom.NonSI;
+import si.uom.SI;
 
 /**
  * A tile service for WMTS servers.
@@ -60,6 +75,10 @@ import org.opengis.referencing.operation.TransformException;
 public class WMTSTileService extends TileService {
 
     protected static final Logger LOGGER = Logging.getLogger(WMTSTileService.class);
+
+    private static final double PixelSizeMeters = 0.28e-3;
+
+    public static final String WMTS_TILE_CACHE_SIZE_PROPERTY_NAME = "wmts.tile.cache.size";
 
     public static final String DIMENSION_TIME = "time";
 
@@ -331,7 +350,7 @@ public class WMTSTileService extends TileService {
         }
 
         int zl = getZoomLevelFromMapScale(zoomLevelMatcher, scaleFactor);
-        WMTSZoomLevel zoomLevel = tileFactory.getZoomLevel(zl, this);
+        WMTSZoomLevel zoomLevel = getZoomLevel(zl);
         long maxNumberOfTilesForZoomLevel = zoomLevel.getMaxTileNumber();
 
         if (LOGGER.isLoggable(Level.FINE)) {
@@ -397,7 +416,6 @@ public class WMTSTileService extends TileService {
                             + ")");
         }
 
-        addTileToCache(firstTile);
         tileList.add(firstTile);
 
         Tile firstTileOfRow = firstTile;
@@ -408,8 +426,7 @@ public class WMTSTileService extends TileService {
 
                 // get the next tile right of this one
                 Tile rightNeighbour =
-                        tileFactory.findRightNeighbour(
-                                movingTile, this); // movingTile.getRightNeighbour();
+                        findRightNeighbour(movingTile); // movingTile.getRightNeighbour();
 
                 if (rightNeighbour == null) { // no more tiles to the right
                     if (LOGGER.isLoggable(Level.FINE)) {
@@ -427,7 +444,6 @@ public class WMTSTileService extends TileService {
                         LOGGER.log(Level.FINE, "Adding right neighbour " + rightNeighbour.getId());
                     }
 
-                    addTileToCache(rightNeighbour);
                     tileList.add(rightNeighbour);
 
                     movingTile = rightNeighbour;
@@ -450,7 +466,7 @@ public class WMTSTileService extends TileService {
             } while (tileList.size() < maxNumberOfTilesForZoomLevel);
 
             // get the next tile under the first one of the row
-            Tile lowerNeighbour = tileFactory.findLowerNeighbour(firstTileOfRow, this);
+            Tile lowerNeighbour = findLowerNeighbour(firstTileOfRow);
 
             if (lowerNeighbour == null) { // no more tiles to the right
                 if (LOGGER.isLoggable(Level.FINE)) {
@@ -469,7 +485,6 @@ public class WMTSTileService extends TileService {
                     LOGGER.log(Level.FINE, "Adding lower neighbour " + lowerNeighbour.getId());
                 }
 
-                addTileToCache(lowerNeighbour);
                 tileList.add(lowerNeighbour);
 
                 firstTileOfRow = movingTile = lowerNeighbour;
@@ -485,18 +500,192 @@ public class WMTSTileService extends TileService {
     }
 
     /**
-     * Add a tile to the cache.
+     * Return a tile with the proper row and column indexes.
      *
-     * <p>At the moment we are delegating the cache to the super class, which handles the cache as a
-     * soft cache. The soft cache has an un-controllable time to live, could last a split seconds or
-     * 100 years. However, WMTS services normally come with caching headers of some sort, e.g., do
-     * not cache, or keep for 1 hour, or 6 months and so on.
-     *
-     * <p>TODO: The code should account for that.
+     * <p>Please notice that the tile indexes are purely computed on the zoom level details, but the
+     * MatrixLimits in a given layer may make the row/col invalid for that layer.
      */
     @Override
-    protected Tile addTileToCache(Tile tile) {
-        return super.addTileToCache(tile);
+    public Tile findTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel) {
+
+        WMTSZoomLevel zl = (WMTSZoomLevel) zoomLevel;
+        TileMatrix tileMatrix = getMatrixSet().getMatrices().get(zl.getZoomLevel());
+
+        double pixelSpan = getPixelSpan(tileMatrix);
+
+        double tileSpanY = (tileMatrix.getTileHeight() * pixelSpan);
+        double tileSpanX = (tileMatrix.getTileWidth() * pixelSpan);
+        double tileMatrixMinX;
+        double tileMatrixMaxY;
+        if (tileMatrix
+                .getCrs()
+                .getCoordinateSystem()
+                .getAxis(0)
+                .getDirection()
+                .equals(AxisDirection.EAST)) {
+            tileMatrixMinX = tileMatrix.getTopLeft().getX();
+            tileMatrixMaxY = tileMatrix.getTopLeft().getY();
+        } else {
+            tileMatrixMaxY = tileMatrix.getTopLeft().getX();
+            tileMatrixMinX = tileMatrix.getTopLeft().getY();
+        }
+        // to compensate for floating point computation inaccuracies
+        double epsilon = 1e-6;
+        long xTile = (int) Math.floor((lon - tileMatrixMinX) / tileSpanX + epsilon);
+        long yTile = (int) Math.floor((tileMatrixMaxY - lat) / tileSpanY + epsilon);
+
+        // sanitize
+        xTile = Math.max(0, xTile);
+        yTile = Math.max(0, yTile);
+
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine(
+                    "findTile: (lon,lat)=("
+                            + lon
+                            + ","
+                            + lat
+                            + ")  (col,row)="
+                            + xTile
+                            + ", "
+                            + yTile
+                            + " zoom:"
+                            + zoomLevel.getZoomLevel());
+        }
+        WMTSTileIdentifier id =
+                new WMTSTileIdentifier((int) xTile, (int) yTile, zoomLevel, getName());
+        return lookupCreateTile(id);
+    }
+
+    private static double getPixelSpan(TileMatrix tileMatrix) {
+        CoordinateSystem coordinateSystem = tileMatrix.getCrs().getCoordinateSystem();
+        @SuppressWarnings("unchecked")
+        Unit<Length> unit = (Unit<Length>) coordinateSystem.getAxis(0).getUnit();
+
+        // now divide by meters per unit!
+        double pixelSpan = tileMatrix.getDenominator() * PixelSizeMeters;
+        if (unit.equals(NonSI.DEGREE_ANGLE)) {
+            /*
+             * use the length of a degree at the equator = 60 nautical miles!
+             * unit = USCustomary.NAUTICAL_MILE; UnitConverter metersperunit =
+             * unit.getConverterTo(SI.METRE); pixelSpan /=
+             * metersperunit.convert(60.0);
+             */
+
+            // constant value from
+            // https://msi.nga.mil/MSISiteContent/StaticFiles/Calculators/degree.html
+            // apparently - 60.10764611706782 NaMiles
+            pixelSpan /= 111319;
+        } else {
+            UnitConverter metersperunit = unit.getConverterTo(SI.METRE);
+            pixelSpan /= metersperunit.convert(1);
+        }
+        return pixelSpan;
+    }
+
+    /** Find the first valid Upper Left tile for the current layer. */
+    public Tile findUpperLeftTile(double lon, double lat, WMTSZoomLevel zoomLevel) {
+        // get the tile in the tilematrix
+        Tile matrixTile = findTileAtCoordinate(lon, lat, zoomLevel);
+        return constrainToUpperLeftTile(matrixTile, zoomLevel);
+    }
+
+    public WMTSTile constrainToUpperLeftTile(Tile matrixTile, WMTSZoomLevel zl) {
+
+        TileMatrixLimits limits = getLimits(getMatrixSetLink(), getMatrixSet(), zl.getZoomLevel());
+
+        long origxTile = matrixTile.getTileIdentifier().getX();
+        long origyTile = matrixTile.getTileIdentifier().getY();
+        long xTile = origxTile;
+        long yTile = origyTile;
+
+        if (xTile >= limits.getMaxcol()) xTile = limits.getMaxcol() - 1;
+        if (yTile >= limits.getMaxrow()) yTile = limits.getMaxrow() - 1;
+
+        if (xTile < limits.getMincol()) xTile = limits.getMincol();
+        if (yTile < limits.getMinrow()) yTile = limits.getMinrow();
+
+        if (origxTile != xTile || origyTile != yTile) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine(
+                        "findUpperLeftTile: constraining tile within limits: ("
+                                + origxTile
+                                + ","
+                                + origyTile
+                                + ") -> ("
+                                + xTile
+                                + ","
+                                + yTile
+                                + ")");
+            }
+        }
+
+        WMTSTileIdentifier id = new WMTSTileIdentifier((int) xTile, (int) yTile, zl, getName());
+        return (WMTSTile) lookupCreateTile(id);
+    }
+
+    public static TileMatrixLimits getLimits(TileMatrixSetLink tmsl, TileMatrixSet tms, int z) {
+
+        List<TileMatrixLimits> limitsList = tmsl.getLimits();
+        TileMatrixLimits limits;
+
+        if (limitsList != null && z < limitsList.size()) {
+            limits = limitsList.get(z);
+        } else {
+            // no limits defined in layer; let's take all the defined tiles
+            TileMatrix tileMatrix = tms.getMatrices().get(z);
+
+            limits = new TileMatrixLimits();
+            limits.setMinCol(0L);
+            limits.setMinRow(0L);
+            limits.setMaxCol(tileMatrix.getMatrixWidth() - 1);
+            limits.setMaxRow(tileMatrix.getMatrixHeight() - 1);
+            limits.setTileMatix(tms.getIdentifier());
+        }
+
+        return limits;
+    }
+
+    @Override
+    public WMTSZoomLevel getZoomLevel(int zoomLevel) {
+        return new WMTSZoomLevel(zoomLevel, this);
+    }
+
+    @Override
+    protected void initTileCache() {
+
+        synchronized (TileService.class) {
+            if (tiles == null) {
+                int cacheSize = 150;
+
+                String size = System.getProperty(WMTS_TILE_CACHE_SIZE_PROPERTY_NAME);
+                if (size != null) {
+                    try {
+                        cacheSize = Integer.parseUnsignedInt(size);
+                    } catch (NumberFormatException ex) {
+                        LOGGER.info(
+                                "Bad "
+                                        + WMTS_TILE_CACHE_SIZE_PROPERTY_NAME
+                                        + " property '"
+                                        + size
+                                        + "'");
+                    }
+                }
+                tiles = ObjectCaches.create("soft", cacheSize);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public BufferedImage loadImageTileImage(Tile tile) throws IOException {
+
+        Map<String, String> headers = (Map<String, String>) getExtrainfo().get(EXTRA_HEADERS);
+        HTTPResponse response = getHttpClient().get(tile.getUrl(), headers);
+        try {
+            return ImageIOExt.readBufferedImage(response.getResponseStream());
+        } finally {
+            response.dispose();
+        }
     }
 
     /** @return the type */
@@ -608,11 +797,6 @@ public class WMTSTileService extends TileService {
     /** @param format the format to set */
     public void setFormat(String format) {
         this.format = format;
-    }
-
-    /** */
-    public WMTSZoomLevel getZoomLevel(int zoom) {
-        return new WMTSZoomLevel(zoom, this);
     }
 
     public Map<String, String> getDimensions() {

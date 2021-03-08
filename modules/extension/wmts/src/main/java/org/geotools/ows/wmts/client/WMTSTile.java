@@ -33,8 +33,6 @@ import org.geotools.tile.Tile;
 import org.geotools.tile.TileIdentifier;
 import org.geotools.tile.TileService;
 import org.geotools.tile.impl.ZoomLevel;
-import org.geotools.util.ObjectCache;
-import org.geotools.util.ObjectCaches;
 import org.geotools.util.logging.Logging;
 
 /**
@@ -47,31 +45,7 @@ class WMTSTile extends Tile {
 
     protected static final Logger LOGGER = Logging.getLogger(WMTSTile.class);
 
-    public static final String WMTS_TILE_CACHE_SIZE_PROPERTY_NAME = "wmts.tile.cache.size";
-
-    /**
-     * Cache for tiles.
-     *
-     * <p>Many WMTS tiles may be reloaded over and over, especially in a tiled getMap request.
-     *
-     * <p>You can set the cache size using the property WMTS_TILE_CACHE_SIZE_PROPERTY_NAME.
-     */
-    private static final ObjectCache<String, BufferedImage> tileImages;
-
-    static {
-        int cacheSize = 150;
-
-        String size = System.getProperty(WMTS_TILE_CACHE_SIZE_PROPERTY_NAME);
-        if (size != null) {
-            try {
-                cacheSize = Integer.parseUnsignedInt(size);
-            } catch (NumberFormatException ex) {
-                LOGGER.info(
-                        "Bad " + WMTS_TILE_CACHE_SIZE_PROPERTY_NAME + " property '" + size + "'");
-            }
-        }
-        tileImages = ObjectCaches.create("soft", cacheSize);
-    }
+    private final WMTSServiceType type;
 
     public WMTSTile(int x, int y, ZoomLevel zoomLevel, TileService service) {
         this(new WMTSTileIdentifier(x, y, zoomLevel, service.getName()), service);
@@ -84,14 +58,15 @@ class WMTSTile extends Tile {
                 WMTSTileFactory.getExtentFromTileName(tileIdentifier, service),
                 ((WMTSTileService) service)
                         .getTileMatrix(tileIdentifier.getZoomLevel().getZoomLevel())
-                        .getTileWidth());
+                        .getTileWidth(),
+                service);
 
-        this.service = (WMTSTileService) service;
+        this.type = ((WMTSTileService) service).getType();
     }
 
     /** @return the type of WMTS KVP or REST */
     public WMTSServiceType getType() {
-        return getService().getType();
+        return type;
     }
 
     private WMTSTileService getService() {
@@ -100,7 +75,6 @@ class WMTSTile extends Tile {
 
     @Override
     public URL getUrl() {
-        String baseUrl = getService().getTemplateURL();
 
         TileIdentifier tileIdentifier = getTileIdentifier();
         WMTSServiceType type = getType();
@@ -109,9 +83,9 @@ class WMTSTile extends Tile {
         } else
             switch (type) {
                 case KVP:
-                    return getKVPurl(baseUrl, tileIdentifier);
+                    return getKVPurl(getService().getTemplateURL(), tileIdentifier);
                 case REST:
-                    return getRESTurl(baseUrl, tileIdentifier);
+                    return getRESTurl(getService().getTemplateURL(), tileIdentifier);
                 default:
                     throw new IllegalArgumentException("Unexpected WMTS Service type " + type);
             }
@@ -202,25 +176,14 @@ class WMTSTile extends Tile {
     }
 
     /** Load and cache locally the WMTS tiles */
+    @Deprecated
     @Override
     public BufferedImage loadImageTileImage(Tile tile) throws IOException {
-        LOGGER.log(Level.FINE, "Loading tile " + getId() + ": " + this.getUrl());
 
-        String tileKey = tile.getUrl().toString();
-
-        if (!(tileImages.peek(tileKey) == null || tileImages.get(tileKey) == null)) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(Level.FINE, "Tile image already loaded for tile " + getId());
-            return tileImages.get(tileKey);
-        } else {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(Level.FINE, "Tile image not yet loaded for tile " + getId());
-            BufferedImage bi = doLoadImageTileImage(tile);
-            tileImages.put(tileKey, bi);
-            return bi;
-        }
+        return service.loadImageTileImage(tile);
     }
 
+    @Deprecated
     public BufferedImage doLoadImageTileImage(Tile tile) throws IOException {
         @SuppressWarnings("unchecked")
         Map<String, String> headers =
