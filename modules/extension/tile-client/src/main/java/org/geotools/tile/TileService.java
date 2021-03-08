@@ -22,10 +22,16 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.http.HTTPClient;
 import org.geotools.http.HTTPClientFinder;
@@ -61,7 +67,7 @@ public abstract class TileService implements ImageLoader {
      *
      * <p>Because we are using SoftReference, we won't run out of Memory, the GC will free space.
      */
-    private final ObjectCache<String, Tile> tiles = ObjectCaches.create("soft", 50); // $NON-NLS-1$
+    protected static ObjectCache<String, Tile> tiles; // $NON-NLS-1$
 
     private String baseURL;
 
@@ -95,6 +101,7 @@ public abstract class TileService implements ImageLoader {
 
         Objects.requireNonNull(client);
         this.client = client;
+        initTileCache();
     }
 
     private void setBaseURL(String baseURL) {
@@ -225,22 +232,15 @@ public abstract class TileService implements ImageLoader {
         return maxZoomLevel;
     }
 
-    public Set<Tile> findTilesInExtent(
-            ReferencedEnvelope _mapExtent,
-            double scaleFactor,
-            boolean recommendedZoomLevel,
-            int maxNumberOfTiles) {
-
-        ReferencedEnvelope mapExtent = createSafeEnvelopeInWGS84(_mapExtent);
-
+    public Iterator<Tile> findTilesInExtent(
+            ReferencedEnvelope mapExtent, double scaleFactor, boolean recommendedZoomLevel) {
+        mapExtent = createSafeEnvelopeInWGS84(mapExtent);
         ReferencedEnvelope extent = normalizeExtent(mapExtent);
 
         // only continue, if we have tiles that cover the requested extent
         if (!extent.intersects((Envelope) getBounds())) {
-            return Collections.emptySet();
+            return Collections.emptyIterator();
         }
-
-        TileFactory tileFactory = getTileFactory();
 
         // TODO CRS
         ScaleZoomLevelMatcher zoomLevelMatcher = null;
@@ -263,18 +263,123 @@ public abstract class TileService implements ImageLoader {
         // TODO understand the minus 1 below
         int zoomLevelA = getZoomLevelToUse(zoomLevelMatcher, scaleFactor, recommendedZoomLevel) - 1;
         if (zoomLevelA <= 0) zoomLevelA = 0; // this is related to the -1 above!
-        ZoomLevel zoomLevel = tileFactory.getZoomLevel(zoomLevelA, this);
+        ZoomLevel zoomLevel = getZoomLevel(zoomLevelA);
+
+        // Let's get the first tile which covers the upper-left corner
+        Tile firstTile = findTileAtCoordinate(extent.getMinX(), extent.getMaxY(), zoomLevel);
+
+        Iterator<Tile> tileIterator = new TileIterator(firstTile, extent);
+
+        return tileIterator;
+    }
+
+    private class TileIterator implements Iterator<Tile> {
+        Tile firstTile;
+        Tile next;
+        Tile firstTileOfRow;
+        ReferencedEnvelope extent;
+
+        TileIterator(Tile first, ReferencedEnvelope extent) {
+            firstTile = first;
+            next = first;
+            firstTileOfRow = first;
+            this.extent = extent;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        @Override
+        public Tile next() {
+            Tile ret = next;
+
+            // get the next tile right of this one
+            Tile rightNeighbour = findRightNeighbour(next);
+
+            // Check if the new tile is still part of the extent and
+            // that we don't have the first tile again
+            if (rightNeighbour != null
+                    && extent.intersects((Envelope) rightNeighbour.getExtent())
+                    && !firstTileOfRow.equals(rightNeighbour)) {
+
+                next = rightNeighbour;
+            } else {
+
+                // get the next tile under the first one of the row
+                Tile lowerNeighbour = findLowerNeighbour(firstTileOfRow);
+
+                // Check if the new tile is still part of the extent
+                if (lowerNeighbour != null
+                        && extent.intersects((Envelope) lowerNeighbour.getExtent())
+                        && !firstTile.equals(lowerNeighbour)) {
+
+                    firstTileOfRow = next = lowerNeighbour;
+                } else {
+                    next = null;
+                }
+            }
+
+            return ret;
+        }
+    }
+
+    public Stream<Tile> streamTiles(
+            ReferencedEnvelope mapExtent, double scaleFactor, boolean recommendedZoomLevel) {
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(
+                        findTilesInExtent(mapExtent, scaleFactor, recommendedZoomLevel),
+                        Spliterator.DISTINCT | Spliterator.NONNULL),
+                false);
+    }
+
+    @Deprecated
+    public Set<Tile> findTilesInExtent(
+            ReferencedEnvelope _mapExtent,
+            double scaleFactor,
+            boolean recommendedZoomLevel,
+            int maxNumberOfTiles) {
+
+        ReferencedEnvelope mapExtent = createSafeEnvelopeInWGS84(_mapExtent);
+
+        ReferencedEnvelope extent = normalizeExtent(mapExtent);
+
+        // only continue, if we have tiles that cover the requested extent
+        if (!extent.intersects((Envelope) getBounds())) {
+            return Collections.emptySet();
+        }
+
+        // TODO CRS
+        ScaleZoomLevelMatcher zoomLevelMatcher = null;
+        try {
+
+            zoomLevelMatcher =
+                    new ScaleZoomLevelMatcher(
+                            getTileCrs(),
+                            getProjectedTileCrs(),
+                            CRS.findMathTransform(getTileCrs(), getProjectedTileCrs()),
+                            CRS.findMathTransform(getProjectedTileCrs(), getTileCrs()),
+                            mapExtent,
+                            mapExtent,
+                            scaleFactor);
+
+        } catch (FactoryException e) {
+            throw new RuntimeException(e);
+        }
+
+        // TODO understand the minus 1 below
+        int zoomLevelA = getZoomLevelToUse(zoomLevelMatcher, scaleFactor, recommendedZoomLevel) - 1;
+        if (zoomLevelA <= 0) zoomLevelA = 0; // this is related to the -1 above!
+        ZoomLevel zoomLevel = getZoomLevel(zoomLevelA);
 
         long maxNumberOfTilesForZoomLevel = zoomLevel.getMaxTileNumber();
 
         Set<Tile> tileList = new HashSet<>(100);
 
         // Let's get the first tile which covers the upper-left corner
-        Tile firstTile =
-                tileFactory.findTileAtCoordinate(
-                        extent.getMinX(), extent.getMaxY(), zoomLevel, this);
+        Tile firstTile = findTileAtCoordinate(extent.getMinX(), extent.getMaxY(), zoomLevel);
 
-        addTileToCache(firstTile);
         tileList.add(firstTile);
 
         Tile firstTileOfRow = firstTile;
@@ -286,14 +391,14 @@ public abstract class TileService implements ImageLoader {
             do {
 
                 // get the next tile right of this one
-                Tile rightNeighbour = tileFactory.findRightNeighbour(movingTile, this);
+                Tile rightNeighbour = findRightNeighbour(movingTile);
 
                 // Check if the new tile is still part of the extent and
                 // that we don't have the first tile again
-                if (extent.intersects((Envelope) rightNeighbour.getExtent())
+                if (rightNeighbour != null
+                        && extent.intersects((Envelope) rightNeighbour.getExtent())
                         && !firstTileOfRow.equals(rightNeighbour)) {
 
-                    addTileToCache(rightNeighbour);
                     tileList.add(rightNeighbour);
 
                     movingTile = rightNeighbour;
@@ -311,13 +416,13 @@ public abstract class TileService implements ImageLoader {
             } while (tileList.size() < maxNumberOfTilesForZoomLevel);
 
             // get the next tile under the first one of the row
-            Tile lowerNeighbour = tileFactory.findLowerNeighbour(firstTileOfRow, this);
+            Tile lowerNeighbour = findLowerNeighbour(firstTileOfRow);
 
             // Check if the new tile is still part of the extent
-            if (extent.intersects((Envelope) lowerNeighbour.getExtent())
+            if (lowerNeighbour != null
+                    && extent.intersects((Envelope) lowerNeighbour.getExtent())
                     && !firstTile.equals(lowerNeighbour)) {
 
-                addTileToCache(lowerNeighbour);
                 tileList.add(lowerNeighbour);
 
                 firstTileOfRow = movingTile = lowerNeighbour;
@@ -340,6 +445,20 @@ public abstract class TileService implements ImageLoader {
         }
     }
 
+    /** Called during initialization to create a cache. */
+    protected void initTileCache() {
+        synchronized (TileService.class) {
+            if (tiles == null) {
+                tiles = ObjectCaches.create("soft", 50);
+            }
+        }
+    }
+
+    /** Lookup tile with given TileIdentifier */
+    protected Optional<Tile> lookupCache(TileIdentifier id) {
+        return Optional.ofNullable(tiles.get(id.getId()));
+    }
+
     /**
      * Add a tile to the cache.
      *
@@ -351,19 +470,21 @@ public abstract class TileService implements ImageLoader {
      */
     protected Tile addTileToCache(Tile tile) {
         String id = tile.getId();
-        boolean isInCache = !(tiles.peek(id) == null || tiles.get(id) == null);
 
-        if (isInCache) {
-            if (LOGGER.isLoggable(Level.FINER)) {
-                LOGGER.fine("Tile already in cache: " + id);
-            }
-            return tiles.get(id);
-        } else {
-            if (LOGGER.isLoggable(Level.FINER)) {
-                LOGGER.fine("Tile added to cache: " + id);
-            }
-            tiles.put(id, tile);
-            return tile;
+        if (LOGGER.isLoggable(Level.FINER)) {
+            LOGGER.fine("Tile added to cache: " + id);
+        }
+        tiles.put(id, tile);
+        return tile;
+    }
+
+    protected Tile lookupCreateTile(TileIdentifier id) {
+        try {
+            tiles.writeLock(id.getId());
+            return lookupCache(id)
+                    .orElseGet(() -> addTileToCache(getTileFactory().create(id, this)));
+        } finally {
+            tiles.writeUnLock(id.getId());
         }
     }
 
@@ -433,7 +554,78 @@ public abstract class TileService implements ImageLoader {
         return envelope;
     }
 
-    @Override
+    /**
+     * Finds the tile for a service at the given position and zoom level.
+     *
+     * @param lon the longitude
+     * @param lat the latitude
+     * @param zoomLevel the zoom level
+     * @param service the service
+     * @return a tile
+     */
+    public abstract Tile findTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel);
+
+    /**
+     * Gets the ZoomLevel (object) for a given zoom level integer.
+     *
+     * @param zoomLevel the zoom level
+     * @param service the service
+     * @return a zoom level
+     */
+    public abstract ZoomLevel getZoomLevel(int zoomLevel);
+
+    /**
+     * Finds the tile for a service at the given position and zoom level, which is immediately to
+     * the right of the passed tile.
+     *
+     * @param tile the reference tile
+     */
+    public Tile findRightNeighbour(Tile tile) {
+        TileIdentifier id = tile.getTileIdentifier().getRightNeighbour();
+        return id == null ? null : lookupCreateTile(id);
+    }
+    /**
+     * Finds the tile for a service at the given position and zoom level, which is immediately below
+     * the the passed tile.
+     *
+     * @param tile the reference tile
+     */
+    public Tile findLowerNeighbour(Tile tile) {
+        TileIdentifier id = tile.getTileIdentifier().getLowerNeighbour();
+        return id == null ? null : lookupCreateTile(id);
+    }
+
+    /**
+     * Some clients, e.g. uDig, may produce numbers like -210° for the longitude, but we need a
+     * number in the range -180 to 180, so instead of -210 we want 150.
+     *
+     * @param value the number to normalize (e.g. -210)
+     * @param maxValue the maximum value (e.g. 180 -> the range is: -180..180)
+     * @return a number between (-maxvalue) and maxvalue
+     */
+    public static double normalizeDegreeValue(double value, int maxValue) {
+        int range = 2 * maxValue;
+
+        if (value > 0) {
+
+            value = (value + maxValue - 1) % range;
+
+            if (value < 0) {
+                value += range;
+            }
+
+            return (value - maxValue + 1);
+        } else {
+            value = (value + maxValue) % range;
+
+            if (value < 0) {
+                value += range;
+            }
+
+            return (value - maxValue);
+        }
+    }
+
     public String toString() {
         return getName();
     }

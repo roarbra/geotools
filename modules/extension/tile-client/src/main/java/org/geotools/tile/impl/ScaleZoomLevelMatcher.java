@@ -23,7 +23,6 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.tile.Tile;
-import org.geotools.tile.TileFactory;
 import org.geotools.tile.TileService;
 import org.locationtech.jts.geom.Coordinate;
 import org.opengis.referencing.FactoryException;
@@ -232,14 +231,12 @@ public class ScaleZoomLevelMatcher {
 
     /** Returns the tile which covers the center of the map extent. */
     private Tile getCenterTile(int zoomLevel, TileService wmtSource) {
-        TileFactory tileFactory = wmtSource.getTileFactory();
-        ZoomLevel zoomLevelInstance = tileFactory.getZoomLevel(zoomLevel, wmtSource);
+        ZoomLevel zoomLevelInstance = wmtSource.getZoomLevel(zoomLevel);
 
         // get the coordinates of the map centre (in TileCrs)
         Coordinate centerPoint = mapExtentTileCrs.centre();
 
-        return tileFactory.findTileAtCoordinate(
-                centerPoint.x, centerPoint.y, zoomLevelInstance, wmtSource);
+        return wmtSource.findTileAtCoordinate(centerPoint.x, centerPoint.y, zoomLevelInstance);
     }
 
     public ReferencedEnvelope projectTileToMapCrs(ReferencedEnvelope boundsInTileCrs)

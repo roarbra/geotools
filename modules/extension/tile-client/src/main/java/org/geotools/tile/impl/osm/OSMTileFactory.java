@@ -19,6 +19,7 @@ package org.geotools.tile.impl.osm;
 
 import org.geotools.tile.Tile;
 import org.geotools.tile.TileFactory;
+import org.geotools.tile.TileIdentifier;
 import org.geotools.tile.TileService;
 import org.geotools.tile.impl.WebMercatorTileFactory;
 import org.geotools.tile.impl.WebMercatorTileService;
@@ -33,6 +34,11 @@ import org.geotools.tile.impl.ZoomLevel;
  */
 public class OSMTileFactory extends WebMercatorTileFactory {
 
+    public Tile create(TileIdentifier id, TileService service) {
+        return new OSMTile(id, service);
+    }
+
+    @Deprecated
     @Override
     public Tile findTileAtCoordinate(
             double lon, double lat, ZoomLevel zoomLevel, TileService service) {
@@ -73,6 +79,7 @@ public class OSMTileFactory extends WebMercatorTileFactory {
      * This method ensures that value is between min and max. If value < min, min is returned. If
      * value > max, max is returned. Otherwise value.
      */
+    @Deprecated
     public static double moveInRange(double value, double min, double max) {
         if (value < min) {
             value = min;
@@ -83,11 +90,13 @@ public class OSMTileFactory extends WebMercatorTileFactory {
         return value;
     }
 
+    @Deprecated
     @Override
     public Tile findRightNeighbour(Tile tile, TileService service) {
         return new OSMTile(tile.getTileIdentifier().getRightNeighbour(), service);
     }
 
+    @Deprecated
     @Override
     public Tile findLowerNeighbour(Tile tile, TileService service) {
         return new OSMTile(tile.getTileIdentifier().getLowerNeighbour(), service);

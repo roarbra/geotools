@@ -34,6 +34,7 @@ import org.geotools.tile.TileService;
  */
 public abstract class WebMercatorTileFactory extends TileFactory {
 
+    @Deprecated
     @Override
     public ZoomLevel getZoomLevel(int zoomLevel, TileService wmtSource) {
 

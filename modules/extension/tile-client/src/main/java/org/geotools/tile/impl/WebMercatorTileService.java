@@ -71,6 +71,10 @@ public abstract class WebMercatorTileService extends TileService {
     }
 
     @Override
+    public ZoomLevel getZoomLevel(int zoomLevel) {
+        return new WebMercatorZoomLevel(zoomLevel);
+    }
+
     public ReferencedEnvelope getBounds() {
         return new ReferencedEnvelope(
                 MIN_LONGITUDE,

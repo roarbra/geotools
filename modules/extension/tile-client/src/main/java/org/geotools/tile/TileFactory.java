@@ -34,6 +34,15 @@ import org.geotools.tile.impl.ZoomLevel;
 public abstract class TileFactory {
 
     /**
+     * Create a new Tile with the given identifier, using the given service.
+     *
+     * @param id
+     * @param service
+     * @return
+     */
+    public abstract Tile create(TileIdentifier id, TileService service);
+
+    /**
      * Finds the tile for a service at the given position and zoom level.
      *
      * @param lon the longitude
@@ -42,6 +51,7 @@ public abstract class TileFactory {
      * @param service the service
      * @return a tile
      */
+    @Deprecated
     public abstract Tile findTileAtCoordinate(
             double lon, double lat, ZoomLevel zoomLevel, TileService service);
 
@@ -52,6 +62,7 @@ public abstract class TileFactory {
      * @param service the service
      * @return a zoom level
      */
+    @Deprecated
     public abstract ZoomLevel getZoomLevel(int zoomLevel, TileService service);
 
     /**
@@ -60,6 +71,7 @@ public abstract class TileFactory {
      *
      * @param tile the reference tile
      */
+    @Deprecated
     public abstract Tile findRightNeighbour(Tile tile, TileService service);
 
     /**
@@ -68,6 +80,7 @@ public abstract class TileFactory {
      *
      * @param tile the reference tile
      */
+    @Deprecated
     public abstract Tile findLowerNeighbour(Tile tile, TileService service);
 
     /**
@@ -78,6 +91,7 @@ public abstract class TileFactory {
      * @param maxValue the maximum value (e.g. 180 -> the range is: -180..180)
      * @return a number between (-maxvalue) and maxvalue
      */
+    @Deprecated
     public static double normalizeDegreeValue(double value, int maxValue) {
         int range = 2 * maxValue;
 

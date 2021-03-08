@@ -29,6 +29,7 @@ import org.geotools.ows.wmts.model.TileMatrixSet;
 import org.geotools.ows.wmts.model.TileMatrixSetLink;
 import org.geotools.tile.Tile;
 import org.geotools.tile.TileFactory;
+import org.geotools.tile.TileIdentifier;
 import org.geotools.tile.TileService;
 import org.geotools.tile.impl.ZoomLevel;
 import org.geotools.util.logging.Logging;
@@ -50,12 +51,17 @@ public class WMTSTileFactory extends TileFactory {
 
     private static final Logger LOGGER = Logging.getLogger(WMTSTileFactory.class);
 
+    public Tile create(TileIdentifier id, TileService service) {
+        return new WMTSTile((WMTSTileIdentifier) id, service);
+    }
+
     /**
      * Return a tile with the proper row and column indexes.
      *
      * <p>Please notice that the tile indexes are purely computed on the zoom level details, but the
      * MatrixLimits in a given layer may make the row/col invalid for that layer.
      */
+    @Deprecated
     @Override
     public Tile findTileAtCoordinate(
             double lon, double lat, ZoomLevel zoomLevel, TileService service) {
@@ -116,6 +122,7 @@ public class WMTSTileFactory extends TileFactory {
         return constrainToUpperLeftTile(matrixTile, zoomLevel, service);
     }
 
+    @Deprecated
     public static TileMatrixLimits getLimits(TileMatrixSetLink tmsl, TileMatrixSet tms, int z) {
 
         List<TileMatrixLimits> limitsList = tmsl.getLimits();
@@ -139,6 +146,7 @@ public class WMTSTileFactory extends TileFactory {
     }
 
     /** If the tile is outside the limits, take a valid one which can be used to start a loop on. */
+    @Deprecated
     public WMTSTile constrainToUpperLeftTile(
             Tile matrixTile, WMTSZoomLevel zl, WMTSTileService service) {
 
@@ -174,17 +182,20 @@ public class WMTSTileFactory extends TileFactory {
         return new WMTSTile((int) xTile, (int) yTile, zl, service);
     }
 
+    @Deprecated
     @Override
     public WMTSZoomLevel getZoomLevel(int zoomLevel, TileService service) {
         return new WMTSZoomLevel(zoomLevel, (WMTSTileService) service);
     }
 
+    @Deprecated
     @Override
     public Tile findRightNeighbour(Tile tile, TileService service) {
         WMTSTileIdentifier id = (WMTSTileIdentifier) tile.getTileIdentifier().getRightNeighbour();
         return id == null ? null : new WMTSTile(id, service);
     }
 
+    @Deprecated
     @Override
     public Tile findLowerNeighbour(Tile tile, TileService service) {
         WMTSTileIdentifier id = (WMTSTileIdentifier) tile.getTileIdentifier().getLowerNeighbour();

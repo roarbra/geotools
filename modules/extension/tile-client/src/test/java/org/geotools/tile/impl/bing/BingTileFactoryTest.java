@@ -32,10 +32,9 @@ public class BingTileFactoryTest extends TileFactoryTest {
     @Test
     public void testGetTileFromCoordinate() {
 
-        Tile tile =
-                factory.findTileAtCoordinate(51, 7, new WebMercatorZoomLevel(5), createService());
-
         TileService service = createService();
+        Tile tile = service.findTileAtCoordinate(51, 7, new WebMercatorZoomLevel(5));
+
         BingTile expectedTile = new BingTile(20, 15, new WebMercatorZoomLevel(5), service);
         Assert.assertEquals(expectedTile, tile);
     }
@@ -46,7 +45,7 @@ public class BingTileFactoryTest extends TileFactoryTest {
         TileService service = createService();
         BingTile tile = new BingTile(20, 15, new WebMercatorZoomLevel(5), service);
 
-        Tile neighbour = factory.findRightNeighbour(tile, service);
+        Tile neighbour = service.findRightNeighbour(tile);
 
         BingTile expectedNeighbour = new BingTile(21, 15, new WebMercatorZoomLevel(5), service);
 
@@ -59,7 +58,7 @@ public class BingTileFactoryTest extends TileFactoryTest {
         TileService service = createService();
         BingTile tile = new BingTile(20, 15, new WebMercatorZoomLevel(5), service);
 
-        Tile neighbour = factory.findLowerNeighbour(tile, service);
+        Tile neighbour = service.findLowerNeighbour(tile);
 
         BingTile expectedNeighbour = new BingTile(20, 16, new WebMercatorZoomLevel(5), service);
 

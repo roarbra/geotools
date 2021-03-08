@@ -34,25 +34,23 @@ public class OSMTileFactoryTest extends TileFactoryTest {
     @Test
     public void testGetTileFromCoordinate() {
 
-        Tile tile =
-                factory.findTileAtCoordinate(51, 7, new WebMercatorZoomLevel(5), createService());
-
         TileService service = createService();
+
+        Tile tile = service.findTileAtCoordinate(51, 7, new WebMercatorZoomLevel(5));
+
         OSMTile expectedTile = new OSMTile(20, 15, new WebMercatorZoomLevel(5), service);
         Assert.assertEquals(expectedTile, tile);
     }
 
     @Test
     public void testGetTileFromTopLeftCoordinate() {
-
+        TileService service = createService();
         Tile tile =
-                factory.findTileAtCoordinate(
+                service.findTileAtCoordinate(
                         WebMercatorTileService.MIN_LONGITUDE,
                         WebMercatorTileService.MAX_LATITUDE,
-                        new WebMercatorZoomLevel(5),
-                        createService());
+                        new WebMercatorZoomLevel(5));
 
-        TileService service = createService();
         OSMTile expectedTile = new OSMTile(0, 0, new WebMercatorZoomLevel(5), service);
         Assert.assertEquals(expectedTile, tile);
     }
@@ -63,7 +61,7 @@ public class OSMTileFactoryTest extends TileFactoryTest {
         TileService service = createService();
         OSMTile tile = new OSMTile(20, 15, new WebMercatorZoomLevel(5), service);
 
-        Tile neighbour = factory.findRightNeighbour(tile, service);
+        Tile neighbour = service.findRightNeighbour(tile);
 
         OSMTile expectedNeighbour = new OSMTile(21, 15, new WebMercatorZoomLevel(5), service);
 
@@ -76,7 +74,7 @@ public class OSMTileFactoryTest extends TileFactoryTest {
         TileService service = createService();
         OSMTile tile = new OSMTile(20, 15, new WebMercatorZoomLevel(5), service);
 
-        Tile neighbour = factory.findLowerNeighbour(tile, service);
+        Tile neighbour = service.findLowerNeighbour(tile);
 
         OSMTile expectedNeighbour = new OSMTile(20, 16, new WebMercatorZoomLevel(5), service);
 

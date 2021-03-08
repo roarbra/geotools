@@ -32,14 +32,14 @@ public class TileFactoryTest {
     @Test
     public void testNormalizeDegreeValue() {
 
-        double value1 = TileFactory.normalizeDegreeValue(-210, 180);
+        double value1 = TileService.normalizeDegreeValue(-210, 180);
         Assert.assertEquals(150, value1, 0.00001);
-        double value2 = TileFactory.normalizeDegreeValue(-91, 90);
+        double value2 = TileService.normalizeDegreeValue(-91, 90);
         Assert.assertEquals(89, value2, 0.00001);
 
-        double value3 = TileFactory.normalizeDegreeValue(210, 180);
+        double value3 = TileService.normalizeDegreeValue(210, 180);
         Assert.assertEquals(-150, value3, 0.00001);
-        double value4 = TileFactory.normalizeDegreeValue(91, 90);
+        double value4 = TileService.normalizeDegreeValue(91, 90);
         Assert.assertEquals(-89, value4, 0.00001);
     }
 
