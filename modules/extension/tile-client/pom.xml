@@ -99,9 +99,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <!-- The version number is specified in the parent POM. -->
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-http</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+            <classifier>tests</classifier>
         </dependency>
     </dependencies>
 
