@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import org.geotools.data.Diff;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.renderer.VendorOptionParser;
@@ -78,6 +79,7 @@ import org.opengis.filter.expression.Expression;
 import org.opengis.filter.expression.Literal;
 import org.opengis.filter.sort.SortBy;
 import org.opengis.filter.sort.SortOrder;
+import org.opengis.style.GraphicLegend;
 import org.opengis.style.GraphicalSymbol;
 
 /**
@@ -656,6 +658,70 @@ public class SLDStyleFactory {
         ms2d.setSize(size);
 
         return ms2d;
+    }
+
+    /**
+     * GraphicLegend consist of GraphicalSymbols that should be processed in much the same manner as
+     * PointSymbolizer
+     *
+     * <p>It can be either Mark or ExternalGraphic
+     *
+     * @param drawMe
+     * @param symbol
+     * @return
+     */
+    public Style2D createGraphicLegend(GraphicLegend legend) {
+        Object drawMe = Diff.NULL;
+        double size = 0;
+
+        // by spec size is optional, and the default value is context dependend,
+        // the natural size of the image for an external graphic is the size of
+        // the raster,
+        // while:
+        // - for a external graphic the default size shall be 16x16
+        // - for a mark such as star or square the default size shall be 6x6
+        try {
+            if (legend.getSize() != null && !Expression.NIL.equals(legend.getSize()))
+                size = evalToDouble(legend.getSize(), drawMe, 0);
+        } catch (NumberFormatException nfe) {
+            // nothing to do
+        }
+
+        float rotation = (float) Math.toRadians(evalToDouble(legend.getRotation(), drawMe, 0));
+
+        // Extract the sequence of external graphics and symbols and process
+        // them in order
+        // to recognize which one will be used for rendering
+        List<GraphicalSymbol> symbols = legend.graphicalSymbols();
+        if (symbols == null || symbols.isEmpty()) {
+            return null;
+        }
+        ExternalGraphic eg;
+        for (GraphicalSymbol symbol : symbols) {
+            if (LOGGER.isLoggable(Level.FINER)) {
+                LOGGER.finer("trying to render symbol " + symbol);
+            }
+            // try loading external graphic and creating a GraphicsStyle2D
+            if (symbol instanceof ExternalGraphic) {
+                if (LOGGER.isLoggable(Level.FINER)) {
+                    LOGGER.finer("rendering External graphic");
+                }
+                eg = (ExternalGraphic) symbol;
+
+                // if the icon size becomes too big we switch to vector
+                // rendering too, since
+                // pre-rasterizing and caching the result will use too much
+                // memory
+
+                GraphicStyle2D g2d = getGraphicStyle(eg, drawMe, size, 1);
+                if (g2d != null) {
+                    g2d.setRotation(rotation);
+                    return g2d;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1311,24 +1377,24 @@ public class SLDStyleFactory {
             location = ff.literal(strLocation);
         }
 
+        String format = null;
+        if (eg.getFormat() != null) {
+            Expression formatExpression = ExpressionExtractor.extractCqlExpressions(eg.getFormat());
+            format = formatExpression.evaluate(feature, String.class);
+        }
+
         // scan the external graphic factories and see which one can be used
         Iterator<ExternalGraphicFactory> it =
                 DynamicSymbolFactoryFinder.getExternalGraphicFactories(new Hints(renderingHints));
         while (it.hasNext()) {
             ExternalGraphicFactory egf = it.next();
             try {
-                String format = null;
-                if (eg.getFormat() != null) {
-                    Expression formatExpression =
-                            ExpressionExtractor.extractCqlExpressions(eg.getFormat());
-                    format = formatExpression.evaluate(feature, String.class);
-                }
                 Icon icon = egf.getIcon((Feature) feature, location, format, toImageSize(size));
                 if (icon != null) {
                     return icon;
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.FINE, "Error occurred evaluating external graphic", e);
+                LOGGER.log(Level.SEVERE, "Error occurred evaluating external graphic", e);
             }
         }
 
