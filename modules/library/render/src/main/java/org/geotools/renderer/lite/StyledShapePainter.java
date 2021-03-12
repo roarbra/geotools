@@ -717,7 +717,9 @@ public class StyledShapePainter {
             labelCache.put(new Rectangle2D.Double(x + dx, y + dy, w, h));
         }
 
-        graphics.setComposite(composite);
+        if (composite != null) {
+            graphics.setComposite(composite);
+        }
 
         Object interpolation = graphics.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         if (interpolation == null) {
