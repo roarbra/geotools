@@ -124,7 +124,7 @@ class TransformFeatureCollection extends AbstractFeatureCollection {
             throw new RuntimeException(e);
         } finally {
             // if result is null, an exception has occurred, close the wrapped iterator
-            if (result == null) {
+            if (result == null && fi != null) {
                 fi.close();
             }
         }
@@ -146,20 +146,14 @@ class TransformFeatureCollection extends AbstractFeatureCollection {
             }
 
             // sigh, fall back to brute force computation
-            SimpleFeatureIterator fi = null;
-            try {
+            try (SimpleFeatureIterator fi = source.getFeatures(query).features()) {
                 size = 0;
-                fi = source.getFeatures(query).features();
                 while (fi.hasNext()) {
                     fi.next();
                     size++;
                 }
 
                 return size;
-            } finally {
-                if (fi != null) {
-                    fi.close();
-                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
