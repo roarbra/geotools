@@ -495,7 +495,18 @@ public class GridGeometry2D extends GeneralGridGeometry {
      *     last pixel.
      */
     public GridGeometry2D(final Rectangle gridRange, final Rectangle2D userRange) {
-        this(new GridEnvelope2D(gridRange), getMathTransform(gridRange, userRange), null);
+        this(new GridEnvelope2D(gridRange), getMathTransform(gridRange, userRange), (CoordinateReferenceSystem)null);
+    }
+    
+    /**
+     * @param gridRange
+     * @param userEnvelope
+     */
+    public GridGeometry2D(final Rectangle gridRange, final Envelope2D userEnvelope) {
+        this(
+                new GridEnvelope2D(gridRange),
+                getMathTransform(gridRange, userEnvelope),
+                userEnvelope.getCoordinateReferenceSystem());
     }
 
     /**
