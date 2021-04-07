@@ -19,10 +19,12 @@
 package org.geotools.gml3.bindings;
 
 import java.util.List;
+import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.geotools.gml2.bindings.GML2EncodingUtils;
 import org.geotools.gml3.XSDIdRegistry;
+import org.geotools.util.logging.Logging;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -32,6 +34,8 @@ import org.w3c.dom.Element;
 
 public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBinding {
 
+    private static Logger LOGGER = Logging.getLogger(GeometryPropertyTypeBindingBase.class);
+    
     private XSDIdRegistry idSet;
 
     private boolean makeEmpty = false;
@@ -60,7 +64,13 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
      * @generated modifiable
      */
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        return node.getChildValue(getGeometryType());
+        final Object childValue = node.getChildValue(getGeometryType());
+        if (childValue == null) {
+            LOGGER.warning(String.format("Element %s doesn't have a child value that matches type: %s",
+                    instance.getName(),
+                    getGeometryType().getName()));
+        }
+        return childValue;
     }
 
     /**

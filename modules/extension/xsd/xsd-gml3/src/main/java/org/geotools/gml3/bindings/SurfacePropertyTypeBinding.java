@@ -20,6 +20,7 @@ import javax.xml.namespace.QName;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.XSDIdRegistry;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 /**
@@ -59,6 +60,6 @@ public class SurfacePropertyTypeBinding extends GeometryPropertyTypeBindingBase 
     }
 
     public Class<? extends Geometry> getGeometryType() {
-        return Polygon.class;
+        return Geometry.class;
     }
 }

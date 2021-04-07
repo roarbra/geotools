@@ -297,7 +297,8 @@ public class XMLSAXHandler extends DefaultHandler {
     public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
             throws SAXException {
         characters.setLength(0);
-
+        logger.fine("START: " + qName);
+        
         checkStatus();
 
         if (!schemaProxy.isEmpty()) {

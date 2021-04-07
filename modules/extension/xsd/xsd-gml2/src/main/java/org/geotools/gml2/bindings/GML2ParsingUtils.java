@@ -339,10 +339,11 @@ public class GML2ParsingUtils {
             if ((attValue != null) && !attType.getBinding().isAssignableFrom(attValue.getClass())) {
                 // type mismatch, to try convert
                 Object converted = Converters.convert(attValue, attType.getBinding());
-
-                if (converted != null) {
-                    attValue = converted;
+                if (converted == null) {
+                    throw new IllegalStateException("Couldn't convert value of " + attType.getName().getLocalPart() 
+                                                        + " to " + attType.getBinding().getName());
                 }
+                attValue = converted;
             }
 
             b.add(attValue);

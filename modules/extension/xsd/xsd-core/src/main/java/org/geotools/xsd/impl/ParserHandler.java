@@ -335,7 +335,7 @@ public class ParserHandler extends DefaultHandler2 {
     public void startElement(String uri, String localName, String qName, Attributes attributes)
             throws SAXException {
         if (logger.isLoggable(Level.FINEST)) {
-            logger.finest("startElement(" + uri + "," + localName + "," + qName);
+            logger.finest("startElement(" + uri + "," + localName + "," + qName + ")");
         }
 
         boolean root = schemas == null;

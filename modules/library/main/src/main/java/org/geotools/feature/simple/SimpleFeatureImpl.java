@@ -191,7 +191,9 @@ public class SimpleFeatureImpl implements SimpleFeature {
             GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
             if (geometryDescriptor != null) {
                 Integer defaultGeomIndex = index.get(geometryDescriptor.getName().getLocalPart());
-                defaultGeometry = getAttribute(defaultGeomIndex.intValue());
+                if (defaultGeomIndex != idx) {
+                    defaultGeometry = getAttribute(defaultGeomIndex.intValue());
+                }
             }
         }
 

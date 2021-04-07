@@ -53,6 +53,9 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
 
     public GeometryAttributeImpl(Object content, GeometryDescriptor descriptor, Identifier id) {
         super(content, descriptor, id);
+        if (content != null && !(content instanceof Geometry)) {
+            throw new IllegalStateException("content of GeometryAttribute should be of kind Geometry.");
+        }
     }
 
     public GeometryType getType() {
@@ -64,19 +67,28 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
     }
 
     public Geometry getValue() {
-        return (Geometry) super.getValue();
+        final Object value = super.getValue();
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof Geometry)) {
+            throw new IllegalStateException("value of GeometryAttribute should be of kind Geometry.");
+        }
+        return (Geometry) value;
     }
 
     public void setValue(Object newValue) throws IllegalArgumentException, IllegalStateException {
         super.setValue(newValue);
+        bounds = null;
     }
 
     public void setValue(Geometry geometry) {
         super.setValue(geometry);
+        bounds = null;
     }
 
     /** Set the bounds for the contained geometry. */
-    public synchronized void setBounds(BoundingBox bbox) {
+    public void setBounds(BoundingBox bbox) {
         bounds = bbox;
     }
 
@@ -84,7 +96,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
      * Returns the non null envelope of this attribute. If the attribute's geometry is <code>null
      * </code> the returned Envelope <code>isNull()</code> is true.
      */
-    public synchronized BoundingBox getBounds() {
+    public BoundingBox getBounds() {
         if (bounds == null) {
             ReferencedEnvelope bbox =
                     new ReferencedEnvelope(getType().getCoordinateReferenceSystem());

@@ -21,9 +21,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.geotools.util.logging.Logging;
 import org.geotools.xml.handlers.DocumentHandler;
 import org.geotools.xml.schema.Schema;
 import org.xml.sax.SAXException;
@@ -70,6 +72,9 @@ public class DocumentFactory {
      */
     public static final String DISABLE_EXTERNAL_ENTITIES =
             "DocumentFactory_DISABLE_EXTERNAL_ENTITIES";
+   
+    
+    private static final Logger logger = Logging.getLogger(DocumentFactory.class);
 
     /**
      * calls getInstance(URI,Level) with Level.WARNING
@@ -95,7 +100,7 @@ public class DocumentFactory {
     public static Object getInstance(URI desiredDocument, Map<String, Object> hints, Level level)
             throws SAXException {
         SAXParser parser = getParser(hints);
-
+        logger.fine("Using SAX parser " + parser.getClass().getName());
         XMLSAXHandler xmlContentHandler = new XMLSAXHandler(desiredDocument, hints);
         XMLSAXHandler.setLogLevel(level);
 
@@ -120,7 +125,7 @@ public class DocumentFactory {
     public static Object getInstance(InputStream is, Map<String, Object> hints, Level level)
             throws SAXException {
         SAXParser parser = getParser(hints);
-
+        
         XMLSAXHandler xmlContentHandler = new XMLSAXHandler(hints);
         XMLSAXHandler.setLogLevel(level);
 

@@ -127,6 +127,7 @@ public class ParseExecutor implements Visitor {
                         result = value;
                     } else if ((value != null) && value instanceof String) {
                         if ("".equals(((String) value).trim())) {
+                            value = null;
                             result = null;
                         } else {
                             result = value;

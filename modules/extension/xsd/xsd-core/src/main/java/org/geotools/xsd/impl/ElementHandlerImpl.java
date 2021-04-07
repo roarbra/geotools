@@ -235,14 +235,14 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
 
             // cache the parsed value
             value = executor.getValue();
-
+            if (value != null && parser.getLogger().isLoggable(Level.FINEST)) {
+                parser.getLogger().finest("Binding for " + element.getName() + " has value [" + value.toString() + "]");
+            }
             if (value == null) {
                 // TODO: instead of continuing, just remove the element from
                 // the parent, or figure out if the element is 'optional' and
                 // remove
-                if (parser.getLogger().isLoggable(Level.FINE)) {
-                    parser.getLogger().fine("Binding for " + element.getName() + " returned null");
-                }
+                parser.getLogger().warning("Binding for " + element.getName() + " returned null");
             }
         }
 
