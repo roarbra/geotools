@@ -236,6 +236,7 @@ public class ImageMosaicJDBCReader extends AbstractGridCoverage2DReader {
      *
      * @see org.opengis.coverage.grid.GridCoverageReader#getFormat()
      */
+    @Override
     public Format getFormat() {
         return new ImageMosaicJDBCFormat();
     }
@@ -259,6 +260,7 @@ public class ImageMosaicJDBCReader extends AbstractGridCoverage2DReader {
      * org.opengis.coverage.grid.GridCoverageReader#read(org.opengis.parameter.GeneralParameterValue
      * [])
      */
+    @Override
     public GridCoverage2D read(GeneralParameterValue[] params) throws IOException {
         logRequestParams(params);
 
@@ -410,12 +412,12 @@ public class ImageMosaicJDBCReader extends AbstractGridCoverage2DReader {
         // pad one more pixel for a better interpolation
         double xminXt = (Math.floor((xminRe - xminLv) / xresLv) - 1) * xresLv + xminLv;
         double yminXt = (Math.floor((yminRe - yminLv) / yresLv) - 1) * yresLv + yminLv;
-        double[] minXY = new double[] {xminXt, yminXt};
+        double[] minXY = {xminXt, yminXt};
 
         // pad one more pixel for a better interpolation
         double xmaxXt = (Math.ceil((xmaxRe - xminLv) / xresLv) + 1) * xresLv + xminLv;
         double ymaxXt = (Math.ceil((ymaxRe - yminLv) / yresLv) + 1) * yresLv + yminLv;
-        double[] maxXY = new double[] {xmaxXt, ymaxXt};
+        double[] maxXY = {xmaxXt, ymaxXt};
 
         GeneralEnvelope expanded = new GeneralEnvelope(minXY, maxXY);
         expanded.setCoordinateReferenceSystem(ret.getCoordinateReferenceSystem());

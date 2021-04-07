@@ -58,14 +58,17 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         }
     }
 
+    @Override
     public GeometryType getType() {
         return (GeometryType) super.getType();
     }
 
+    @Override
     public GeometryDescriptor getDescriptor() {
         return (GeometryDescriptor) super.getDescriptor();
     }
 
+    @Override
     public Geometry getValue() {
         final Object value = super.getValue();
         if (value == null) {
@@ -77,6 +80,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return (Geometry) value;
     }
 
+    @Override
     public void setValue(Object newValue) throws IllegalArgumentException, IllegalStateException {
         super.setValue(newValue);
         bounds = null;
@@ -111,6 +115,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return bounds;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -168,6 +173,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return true;
     }
 
+    @Override
     public int hashCode() {
         int hash = descriptor.hashCode();
 
@@ -178,6 +184,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return hash;
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(getClass().getSimpleName()).append(":");
         sb.append(getDescriptor().getName().getLocalPart());

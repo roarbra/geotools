@@ -100,17 +100,15 @@ public final class JP2KReader extends AbstractGridCoverage2DReader implements Gr
     /** The system-dependent default name-separator character. */
     private static final char SEPARATOR = File.separatorChar;
 
-    private static final short[] GEOJP2_UUID =
-            new short[] {
-                0xb1, 0x4b, 0xf8, 0xbd, 0x08, 0x3d, 0x4b, 0x43, 0xa5, 0xae, 0x8c, 0xd7, 0xd5, 0xa6,
-                0xce, 0x03
-            };
+    private static final short[] GEOJP2_UUID = {
+        0xb1, 0x4b, 0xf8, 0xbd, 0x08, 0x3d, 0x4b, 0x43, 0xa5, 0xae, 0x8c, 0xd7, 0xd5, 0xa6, 0xce,
+        0x03
+    };
 
-    private static final short[] MSIG_WORLDFILEBOX_UUID =
-            new short[] {
-                0x96, 0xa9, 0xf1, 0xf1, 0xdc, 0x98, 0x40, 0x2d, 0xa7, 0xae, 0xd6, 0x8e, 0x34, 0x45,
-                0x18, 0x09
-            };
+    private static final short[] MSIG_WORLDFILEBOX_UUID = {
+        0x96, 0xa9, 0xf1, 0xf1, 0xdc, 0x98, 0x40, 0x2d, 0xa7, 0xae, 0xd6, 0x8e, 0x34, 0x45, 0x18,
+        0x09
+    };
 
     private static final int WORLD_FILE_INTERPRETATION_PIXEL_CORNER = 1;
 
@@ -701,6 +699,7 @@ public final class JP2KReader extends AbstractGridCoverage2DReader implements Gr
     }
 
     /** @see org.opengis.coverage.grid.GridCoverageReader#getFormat() */
+    @Override
     public Format getFormat() {
         return new JP2KFormat();
     }
@@ -709,6 +708,7 @@ public final class JP2KReader extends AbstractGridCoverage2DReader implements Gr
      * @see
      *     org.opengis.coverage.grid.GridCoverageReader#read(org.opengis.parameter.GeneralParameterValue[])
      */
+    @Override
     public GridCoverage2D read(GeneralParameterValue[] params) throws IOException {
 
         if (LOGGER.isLoggable(FINE)) {
@@ -740,7 +740,8 @@ public final class JP2KReader extends AbstractGridCoverage2DReader implements Gr
      *
      * @return the highest resolution values.
      */
-    double[] getHighestRes() {
+    @Override
+    protected double[] getHighestRes() {
         return super.highestRes;
     }
 

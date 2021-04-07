@@ -33,6 +33,8 @@ GeoTools ruleset. See https://pmd.github.io/latest/pmd_userdocs_understanding_ru
   <rule ref="category/java/bestpractices.xml/UseTryWithResources" />
   <rule ref="category/java/bestpractices.xml/ReplaceHashtableWithMap" />
   <rule ref="category/java/bestpractices.xml/ReplaceVectorWithList" />
+  <rule ref="category/java/bestpractices.xml/AvoidPrintStackTrace" />
+  <rule ref="category/java/bestpractices.xml/MissingOverride" />
   <rule ref="category/java/performance.xml/UseArrayListInsteadOfVector" />
 
   <rule ref="category/java/codestyle.xml/DontImportJavaLang"/>
@@ -48,6 +50,7 @@ GeoTools ruleset. See https://pmd.github.io/latest/pmd_userdocs_understanding_ru
   <rule ref="category/java/codestyle.xml/UselessQualifiedThis"/>
   <rule ref="category/java/codestyle.xml/UnnecessaryCast" />
   <rule ref="category/java/codestyle.xml/IdenticalCatchBranches" />
+  <rule ref="category/java/codestyle.xml/UseShortArrayInitializer" />
   <!-- rule ref="category/java/design.xml/CollapsibleIfStatements" / -->
   <!-- rule ref="category/java/design.xml/SimplifiedTernary" / -->
   <!-- rule ref="category/java/design.xml/UselessOverridingMethod" / -->

@@ -109,6 +109,7 @@ abstract class JDBCAccessBase implements JDBCAccess {
      *
      * @see org.geotools.gce.imagemosaic.jdbc.JDBCAccess#initialize()
      */
+    @Override
     public void initialize() throws IOException {
 
         try (Connection con = dataSource.getConnection()) {
@@ -493,6 +494,7 @@ abstract class JDBCAccessBase implements JDBCAccess {
      *      org.geotools.gce.imagemosaic.jdbc.ImageLevelInfo,
      *      java.util.concurrent.LinkedBlockingQueue)
      */
+    @Override
     public void startTileDecoders(
             Rectangle pixelDimension,
             GeneralEnvelope requestEnvelope,
@@ -639,6 +641,7 @@ abstract class JDBCAccessBase implements JDBCAccess {
      *
      * @see org.geotools.gce.imagemosaic.jdbc.JDBCAccess#getLevelInfo(int)
      */
+    @Override
     public ImageLevelInfo getLevelInfo(int level) {
         return levelInfos.get(level);
     }
@@ -648,6 +651,7 @@ abstract class JDBCAccessBase implements JDBCAccess {
      *
      * @see org.geotools.gce.imagemosaic.jdbc.JDBCAccess#getNumOverviews()
      */
+    @Override
     public int getNumOverviews() {
         return levelInfos.size() - 1;
     }
@@ -659,14 +663,13 @@ abstract class JDBCAccessBase implements JDBCAccess {
     protected Polygon polyFromEnvelope(GeneralEnvelope env) {
         GeometryFactory factory = new GeometryFactory();
 
-        Coordinate[] coords =
-                new Coordinate[] {
-                    new Coordinate(env.getMinimum(0), env.getMinimum(1)),
-                    new Coordinate(env.getMinimum(0), env.getMaximum(1)),
-                    new Coordinate(env.getMaximum(0), env.getMaximum(1)),
-                    new Coordinate(env.getMaximum(0), env.getMinimum(1)),
-                    new Coordinate(env.getMinimum(0), env.getMinimum(1))
-                };
+        Coordinate[] coords = {
+            new Coordinate(env.getMinimum(0), env.getMinimum(1)),
+            new Coordinate(env.getMinimum(0), env.getMaximum(1)),
+            new Coordinate(env.getMaximum(0), env.getMaximum(1)),
+            new Coordinate(env.getMaximum(0), env.getMinimum(1)),
+            new Coordinate(env.getMinimum(0), env.getMinimum(1))
+        };
 
         return factory.createPolygon(factory.createLinearRing(coords), new LinearRing[0]);
     }

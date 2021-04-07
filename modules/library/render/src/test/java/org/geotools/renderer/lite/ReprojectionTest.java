@@ -76,7 +76,7 @@ public class ReprojectionTest {
 
     private SimpleFeature createLine(double x1, double y1, double x2, double y2)
             throws IllegalAttributeException {
-        Coordinate[] coords = new Coordinate[] {new Coordinate(x1, y1), new Coordinate(x2, y2)};
+        Coordinate[] coords = {new Coordinate(x1, y1), new Coordinate(x2, y2)};
         return SimpleFeatureBuilder.build(
                 pointFeautureType, new Object[] {gf.createLineString(coords)}, null);
     }
@@ -109,8 +109,10 @@ public class ReprojectionTest {
         sr.setMapContent(MapContent);
         sr.addRenderListener(
                 new RenderListener() {
+                    @Override
                     public void featureRenderer(SimpleFeature feature) {}
 
+                    @Override
                     public void errorOccurred(Exception e) {
                         java.util.logging.Logger.getGlobal()
                                 .log(java.util.logging.Level.INFO, "", e);

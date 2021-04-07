@@ -222,14 +222,17 @@ public class RasterZonalStatistics implements RasterProcess {
             }
         }
 
+        @Override
         public void close() {
             zones.close();
         }
 
+        @Override
         public boolean hasNext() {
             return !features.isEmpty() || zones.hasNext();
         }
 
+        @Override
         public SimpleFeature next() throws NoSuchElementException {
             // build the next set of features if necessary
             if (features.isEmpty()) {
@@ -386,15 +389,14 @@ public class RasterZonalStatistics implements RasterProcess {
                 ROI roi = new ROIGeometry(simplifiedGeometry, false);
 
                 // run the stats via JAI
-                Statistic[] reqStatsArr =
-                        new Statistic[] {
-                            Statistic.MAX,
-                            Statistic.MIN,
-                            Statistic.RANGE,
-                            Statistic.MEAN,
-                            Statistic.SDEV,
-                            Statistic.SUM
-                        };
+                Statistic[] reqStatsArr = {
+                    Statistic.MAX,
+                    Statistic.MIN,
+                    Statistic.RANGE,
+                    Statistic.MEAN,
+                    Statistic.SDEV,
+                    Statistic.SUM
+                };
                 final ZonalStatsOpImage zsOp =
                         new ZonalStatsOpImage(
                                 cropped.getRenderedImage(),

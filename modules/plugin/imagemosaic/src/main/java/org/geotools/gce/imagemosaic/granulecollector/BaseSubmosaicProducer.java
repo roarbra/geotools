@@ -308,7 +308,7 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
             }
             // doing this here gives the guarantee that I get the correct index for the transparency
             // band
-            int[] alphaIndex = new int[] {granule.getColorModel().getNumComponents() - 1};
+            int[] alphaIndex = {granule.getColorModel().getNumComponents() - 1};
             assert alphaIndex[0] < granule.getSampleModel().getNumBands();
 
             //
@@ -478,14 +478,17 @@ public class BaseSubmosaicProducer implements SubmosaicProducer {
         return multiThreadedLoading;
     }
 
+    @Override
     public boolean doInputTransparency() {
         return doInputTransparency;
     }
 
+    @Override
     public double[][] getSourceThreshold() {
         return sourceThreshold;
     }
 
+    @Override
     public boolean hasAlpha() {
         return hasAlpha;
     }

@@ -111,6 +111,7 @@ public class WarpTransform2DProvider extends MathTransformProvider {
      * @return The created math transform.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
+    @Override
     @SuppressWarnings("unchecked")
     protected MathTransform createMathTransform(final ParameterValueGroup values)
             throws ParameterNotFoundException {
@@ -196,16 +197,15 @@ public class WarpTransform2DProvider extends MathTransformProvider {
                     InstantiationException, IllegalAccessException, IllegalArgumentException,
                     InvocationTargetException {
         Class<?> warpClass = Class.forName(warpName);
-        Class[] params =
-                new Class[] {
-                    float[].class,
-                    float[].class,
-                    float.class,
-                    float.class,
-                    float.class,
-                    float.class,
-                    float.class
-                };
+        Class[] params = {
+            float[].class,
+            float[].class,
+            float.class,
+            float.class,
+            float.class,
+            float.class,
+            float.class
+        };
         Constructor<?> constrctor = warpClass.getConstructor(params);
         return constrctor.newInstance(
                 xCoeffs, yCoeffs, preScaleX, preScaleY, postScaleX, postScaleY);

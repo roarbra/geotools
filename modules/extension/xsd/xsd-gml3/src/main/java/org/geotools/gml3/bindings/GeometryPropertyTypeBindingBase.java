@@ -48,6 +48,7 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
         this.encodingUtils = encodingUtils;
     }
 
+    @Override
     public Class getType() {
         return getGeometryType();
     }
@@ -63,6 +64,7 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         final Object childValue = node.getChildValue(getGeometryType());
         if (childValue == null) {
@@ -83,11 +85,13 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
         return value;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
 
         return encodingUtils.GeometryPropertyType_GetProperty((Geometry) object, name, makeEmpty);
     }
 
+    @Override
     public List<Object[]> getProperties(Object object, XSDElementDeclaration element)
             throws Exception {
         return encodingUtils.GeometryPropertyType_GetProperties((Geometry) object);

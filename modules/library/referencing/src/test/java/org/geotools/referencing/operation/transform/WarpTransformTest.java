@@ -111,14 +111,14 @@ public final class WarpTransformTest {
             //
             // Try using transform(float[], ...)
             //
-            final float[] farray = new float[] {source.x, source.y};
+            final float[] farray = {source.x, source.y};
             transform.transform(farray, 0, farray, 0, 1);
             assertEquals(message, expected.x, farray[0], EPS * expected.x);
             assertEquals(message, expected.y, farray[1], EPS * expected.y);
             //
             // Try using transform(double[], ...)
             //
-            final double[] darray = new double[] {source.x, source.y};
+            final double[] darray = {source.x, source.y};
             transform.transform(darray, 0, darray, 0, 1);
             assertEquals(message, expected.x, darray[0], EPS * expected.x);
             assertEquals(message, expected.y, darray[1], EPS * expected.y);
@@ -146,10 +146,12 @@ public final class WarpTransformTest {
             final WarpPolynomial warp =
                     executeTest(
                             new Formula() {
+                                @Override
                                 public String message() {
                                     return "WarpAffine[" + scaleX + ',' + scaleY + ']';
                                 }
 
+                                @Override
                                 public void transform(final Point point) {
                                     point.x *= scaleX;
                                     point.y *= scaleY;
@@ -174,10 +176,12 @@ public final class WarpTransformTest {
             final WarpPolynomial warp =
                     executeTest(
                             new Formula() {
+                                @Override
                                 public String message() {
                                     return "WarpQuadratic[" + scaleX + ',' + scaleY + ']';
                                 }
 
+                                @Override
                                 public void transform(final Point point) {
                                     point.x *= scaleX * point.x;
                                     point.y *= scaleY;

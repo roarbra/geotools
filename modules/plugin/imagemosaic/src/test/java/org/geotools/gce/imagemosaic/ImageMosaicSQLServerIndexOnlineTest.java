@@ -48,7 +48,6 @@ import org.geotools.coverage.grid.io.DimensionDescriptor;
 import org.geotools.coverage.util.FeatureUtilities;
 import org.geotools.data.Query;
 import org.geotools.filter.SortByImpl;
-import org.geotools.gce.imagemosaic.catalog.GranuleCatalogVisitor;
 import org.geotools.gce.imagemosaic.catalog.sqlserver.SQLServerDatastoreWrapper;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.test.OnlineTestCase;
@@ -350,29 +349,20 @@ public class ImageMosaicSQLServerIndexOnlineTest extends OnlineTestCase {
                 query.setMaxFeatures(1);
 
                 // sorting
-                final SortBy[] clauses =
-                        new SortBy[] {
-                            new SortByImpl(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property("ingestion"),
-                                    SortOrder.DESCENDING),
-                            new SortByImpl(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property("elevation"),
-                                    SortOrder.ASCENDING),
-                        };
+                final SortBy[] clauses = {
+                    new SortByImpl(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property("ingestion"),
+                            SortOrder.DESCENDING),
+                    new SortByImpl(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property("elevation"),
+                            SortOrder.ASCENDING),
+                };
                 query.setSortBy(clauses);
             }
 
             // checking that we get a single feature and that feature is correct
             final Collection<GranuleDescriptor> features = new ArrayList<>();
-            rasterManager.getGranuleDescriptors(
-                    query,
-                    new GranuleCatalogVisitor() {
-
-                        @Override
-                        public void visit(GranuleDescriptor granule, SimpleFeature o) {
-                            features.add(granule);
-                        }
-                    });
+            rasterManager.getGranuleDescriptors(query, (granule, o) -> features.add(granule));
             assertEquals(features.size(), 1);
             GranuleDescriptor granule = features.iterator().next();
             SimpleFeature sf = granule.getOriginator();
@@ -387,28 +377,19 @@ public class ImageMosaicSQLServerIndexOnlineTest extends OnlineTestCase {
             assertEquals(((Integer) elevation).intValue(), 0);
 
             // Reverting order (the previous timestamp shouldn't match anymore)
-            final SortBy[] clauses =
-                    new SortBy[] {
-                        new SortByImpl(
-                                FeatureUtilities.DEFAULT_FILTER_FACTORY.property("ingestion"),
-                                SortOrder.ASCENDING),
-                        new SortByImpl(
-                                FeatureUtilities.DEFAULT_FILTER_FACTORY.property("elevation"),
-                                SortOrder.DESCENDING),
-                    };
+            final SortBy[] clauses = {
+                new SortByImpl(
+                        FeatureUtilities.DEFAULT_FILTER_FACTORY.property("ingestion"),
+                        SortOrder.ASCENDING),
+                new SortByImpl(
+                        FeatureUtilities.DEFAULT_FILTER_FACTORY.property("elevation"),
+                        SortOrder.DESCENDING),
+            };
             query.setSortBy(clauses);
 
             // checking that we get a single feature and that feature is correct
             features.clear();
-            rasterManager.getGranuleDescriptors(
-                    query,
-                    new GranuleCatalogVisitor() {
-
-                        @Override
-                        public void visit(GranuleDescriptor granule, SimpleFeature o) {
-                            features.add(granule);
-                        }
-                    });
+            rasterManager.getGranuleDescriptors(query, (granule1, o) -> features.add(granule1));
             assertEquals(features.size(), 1);
             granule = features.iterator().next();
             sf = granule.getOriginator();

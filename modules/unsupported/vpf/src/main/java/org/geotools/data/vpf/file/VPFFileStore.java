@@ -66,6 +66,7 @@ public class VPFFileStore extends ContentDataStore {
     /* (non-Javadoc)
      * @see org.geotools.data.ContentDataStore#getNames()
      */
+    @Override
     public List<Name> getNames() {
         // String[] result = new String[files.size()];
         ArrayList<Name> result = new ArrayList<>();
@@ -158,9 +159,9 @@ public class VPFFileStore extends ContentDataStore {
                 SimpleFeatureType schema = iter.next();
                 file = (VPFFile) schema.getUserData().get(VPFFile.class);
                 file.close();
-            } catch (Exception exc) {
+            } catch (Exception e) {
                 // No idea why this might happen
-                exc.printStackTrace();
+                LOGGER.log(Level.SEVERE, "", e);
             }
         }
         files.clear();

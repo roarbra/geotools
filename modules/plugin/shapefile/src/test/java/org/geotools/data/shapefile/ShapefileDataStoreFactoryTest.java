@@ -51,6 +51,7 @@ public class ShapefileDataStoreFactoryTest extends TestCaseSupport {
     private ShapefileDataStore store = null;
     private ShapefileDataStoreFactory factory = new ShapefileDataStoreFactory();
 
+    @Override
     @After
     public void tearDown() throws Exception {
         if (store != null) {
@@ -94,10 +95,9 @@ public class ShapefileDataStoreFactoryTest extends TestCaseSupport {
 
         QueryCapabilities caps = featureSource.getQueryCapabilities();
 
-        SortBy[] sortBy =
-                new SortBy[] {
-                    SortBy.NATURAL_ORDER,
-                };
+        SortBy[] sortBy = {
+            SortBy.NATURAL_ORDER,
+        };
         assertTrue("Natural", caps.supportsSorting(sortBy));
 
         SimpleFeatureType schema = featureSource.getSchema();

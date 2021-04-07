@@ -158,7 +158,7 @@ public class GrowableInternationalString extends AbstractInternationalString
         }
         int position = prefix.length();
         final int length = key.length();
-        final String[] parts = new String[] {"", "", ""};
+        final String[] parts = {"", "", ""};
         for (int i = 0; /*break condition inside*/ ; i++) {
             if (position == length) {
                 final Locale locale =
@@ -253,6 +253,7 @@ public class GrowableInternationalString extends AbstractInternationalString
      * @param locale The locale to look for, or {@code null}.
      * @return The string in the specified locale, or in a default locale.
      */
+    @Override
     public synchronized String toString(Locale locale) {
         String text;
         while (locale != null) {

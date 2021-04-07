@@ -24,6 +24,8 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import org.apache.commons.lang3.ArrayUtils;
 import org.geotools.data.FileDataStore;
@@ -39,6 +41,7 @@ import org.geotools.styling.SLD;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swing.JMapFrame;
 import org.geotools.test.TestData;
+import org.geotools.util.logging.Logging;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -46,6 +49,8 @@ import org.opengis.util.ProgressListener;
 
 /** @author ian */
 public class ContourProcessTest {
+
+    static final Logger LOGGER = Logging.getLogger(ContourProcessTest.class);
 
     private FeatureCollection features;
 
@@ -63,16 +68,15 @@ public class ContourProcessTest {
     public void testSimplePointsInterval() {
         ReferencedEnvelope bounds =
                 new ReferencedEnvelope(0, 30, 0, 30, DefaultGeographicCRS.WGS84);
-        Coordinate[] data =
-                new Coordinate[] {
-                    new Coordinate(10, 10, 100),
-                    new Coordinate(10, 20, 20),
-                    new Coordinate(20, 10, 0),
-                    new Coordinate(20, 20, 80)
-                };
+        Coordinate[] data = {
+            new Coordinate(10, 10, 100),
+            new Coordinate(10, 20, 20),
+            new Coordinate(20, 10, 0),
+            new Coordinate(20, 20, 80)
+        };
         SimpleFeatureCollection fc = ProcessTestUtilities.createPoints(data, bounds);
         ContourProcess cp = new ContourProcess();
-        double[] levels = new double[] {};
+        double[] levels = {};
         double interval = 10;
         Boolean simplify = Boolean.TRUE;
         Boolean smooth = Boolean.TRUE;
@@ -92,16 +96,15 @@ public class ContourProcessTest {
     public void testSimplePointsLevel() {
         ReferencedEnvelope bounds =
                 new ReferencedEnvelope(0, 30, 0, 30, DefaultGeographicCRS.WGS84);
-        Coordinate[] data =
-                new Coordinate[] {
-                    new Coordinate(10, 10, 100),
-                    new Coordinate(10, 20, 20),
-                    new Coordinate(20, 10, 0),
-                    new Coordinate(20, 20, 80)
-                };
+        Coordinate[] data = {
+            new Coordinate(10, 10, 100),
+            new Coordinate(10, 20, 20),
+            new Coordinate(20, 10, 0),
+            new Coordinate(20, 20, 80)
+        };
         SimpleFeatureCollection fc = ProcessTestUtilities.createPoints(data, bounds);
         ContourProcess cp = new ContourProcess();
-        double[] levels = new double[] {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+        double[] levels = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
         double interval = 10;
         Boolean simplify = Boolean.TRUE;
         Boolean smooth = Boolean.TRUE;
@@ -172,13 +175,14 @@ public class ContourProcessTest {
 
         Thread t =
                 new Thread() {
+                    @Override
                     public void run() {
                         synchronized (lock) {
                             while (frame.isVisible())
                                 try {
                                     lock.wait();
                                 } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                                    LOGGER.log(Level.WARNING, "", e);
                                 }
                         }
                     }

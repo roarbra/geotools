@@ -85,6 +85,7 @@ public class AncillaryFileManager implements FileSetManager {
      */
     enum AuxiliaryFileType {
         INDEXER_XML {
+            @Override
             File lookup(String baseName, File parentDirectory, File destinationDirectory) {
                 // CASE 1: side file (for backward compatibility)
                 // Compose the path to an optional XML auxiliary file in the same directory of the
@@ -125,6 +126,7 @@ public class AncillaryFileManager implements FileSetManager {
         },
 
         INDEXER_DATASTORE {
+            @Override
             File lookup(String baseName, File parentDirectory, File destinationDirectory) {
 
                 // CASE 1: side file (for backward compatibility)
@@ -665,8 +667,7 @@ public class AncillaryFileManager implements FileSetManager {
                     }
 
                     // property names
-                    final String propertyNames[] =
-                            new String[] {mapped != null ? mapped : COVERAGE_NAME};
+                    final String propertyNames[] = {mapped != null ? mapped : COVERAGE_NAME};
 
                     // create the PropertiesCollector
                     final PropertiesCollector pc =

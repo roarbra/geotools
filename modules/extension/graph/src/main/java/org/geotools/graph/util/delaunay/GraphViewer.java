@@ -38,19 +38,18 @@ public class GraphViewer extends JPanel {
     int xOffset = 0;
     int yOffset = 0;
     boolean colorEdges = false;
-    Color[] nodeColors =
-            new Color[] {
-                Color.RED,
-                Color.ORANGE,
-                Color.YELLOW,
-                Color.GREEN,
-                Color.BLUE,
-                Color.MAGENTA,
-                Color.LIGHT_GRAY,
-                Color.GRAY,
-                Color.DARK_GRAY,
-                Color.BLACK
-            };
+    Color[] nodeColors = {
+        Color.RED,
+        Color.ORANGE,
+        Color.YELLOW,
+        Color.GREEN,
+        Color.BLUE,
+        Color.MAGENTA,
+        Color.LIGHT_GRAY,
+        Color.GRAY,
+        Color.DARK_GRAY,
+        Color.BLACK
+    };
     List shortEdges, longEdges, otherEdges;
 
     /** Creates a new instance of GraphViewer */
@@ -109,6 +108,7 @@ public class GraphViewer extends JPanel {
         otherEdges = l;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         xOffset = (int) Math.round(xScaling - minX * xScaling);
         yOffset = (int) Math.round(yScaling - minY * yScaling);

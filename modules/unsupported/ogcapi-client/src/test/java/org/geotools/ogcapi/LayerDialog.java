@@ -18,12 +18,12 @@ package org.geotools.ogcapi;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -31,11 +31,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.geotools.util.logging.Logging;
 
 public class LayerDialog extends JDialog {
     /** serialVersionUID */
     private static final long serialVersionUID = -7331660512351526439L;
 
+    static final Logger LOGGER = Logging.getLogger(LayerDialog.class);
     static LayerDialog thedialog;
 
     JPanel panel0;
@@ -61,7 +63,7 @@ public class LayerDialog extends JDialog {
                 | InstantiationException
                 | IllegalAccessException
                 | UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "", e);
         }
 
         thedialog = new LayerDialog();
@@ -155,26 +157,18 @@ public class LayerDialog extends JDialog {
         gbpanel0.setConstraints(ok, gbcpanel0);
         panel0.add(ok);
         ok.addActionListener(
-                new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        setLayer((String) combo0.getSelectedItem());
-                        setStyle((String) combo0.getSelectedItem());
-                        setVisible(false);
-                    }
+                e -> {
+                    setLayer((String) combo0.getSelectedItem());
+                    setStyle((String) combo0.getSelectedItem());
+                    setVisible(false);
                 });
 
         cancel = new JButton("Cancel");
         cancel.addActionListener(
-                new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        setLayer(null);
-                        setStyle(null);
-                        dispose();
-                    }
+                e -> {
+                    setLayer(null);
+                    setStyle(null);
+                    dispose();
                 });
         gbcpanel0.gridx = 13;
         gbcpanel0.gridy = 16;

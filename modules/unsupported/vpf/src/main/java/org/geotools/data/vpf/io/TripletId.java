@@ -16,8 +16,11 @@
  */
 package org.geotools.data.vpf.io;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.geotools.data.vpf.VPFLogger;
 import org.geotools.data.vpf.exc.VPFDataFormatException;
+import org.geotools.util.logging.Logging;
 
 /**
  * Class TripletId.java is responsible for
@@ -34,6 +37,7 @@ public class TripletId extends Number {
     /** The raw data that can be decomposed into as many as three separate numbers */
     private byte[] rawData = null;
 
+    static final Logger LOGGER = Logging.getLogger(TripletId.class);
     /**
      * Creates a new <code>TripletId</code> instance.
      *
@@ -47,6 +51,7 @@ public class TripletId extends Number {
      *  (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         String result = "";
 
@@ -119,7 +124,7 @@ public class TripletId extends Number {
                     result += (piece << (8 * inx));
                 }
             } catch (RuntimeException exp) {
-                exp.printStackTrace();
+                LOGGER.log(Level.SEVERE, "", exp);
                 result = 0;
             }
         }
@@ -151,7 +156,7 @@ public class TripletId extends Number {
                     result += (piece << (8 * inx));
                 }
             } catch (RuntimeException exp) {
-                exp.printStackTrace();
+                LOGGER.log(Level.SEVERE, "", exp);
                 result = 0;
             }
         }
@@ -183,7 +188,7 @@ public class TripletId extends Number {
                     result += (piece << (8 * inx));
                 }
             } catch (RuntimeException exp) {
-                exp.printStackTrace();
+                LOGGER.log(Level.SEVERE, "", exp);
                 result = 0;
             }
         }
@@ -242,6 +247,7 @@ public class TripletId extends Number {
     /* (non-Javadoc)
      * @see java.lang.Number#doubleValue()
      */
+    @Override
     public double doubleValue() {
         return Integer.valueOf(getId()).doubleValue();
     }
@@ -249,6 +255,7 @@ public class TripletId extends Number {
     /* (non-Javadoc)
      * @see java.lang.Number#floatValue()
      */
+    @Override
     public float floatValue() {
         return Integer.valueOf(getId()).floatValue();
     }
@@ -256,6 +263,7 @@ public class TripletId extends Number {
     /* (non-Javadoc)
      * @see java.lang.Number#intValue()
      */
+    @Override
     public int intValue() {
         return getId();
     }
@@ -263,6 +271,7 @@ public class TripletId extends Number {
     /* (non-Javadoc)
      * @see java.lang.Number#longValue()
      */
+    @Override
     public long longValue() {
         return Integer.valueOf(getId()).longValue();
     }
@@ -270,6 +279,7 @@ public class TripletId extends Number {
     /* (non-Javadoc)
      * @see java.lang.Number#byteValue()
      */
+    @Override
     public byte byteValue() {
         return Integer.valueOf(getId()).byteValue();
     }
@@ -277,6 +287,7 @@ public class TripletId extends Number {
     /* (non-Javadoc)
      * @see java.lang.Number#shortValue()
      */
+    @Override
     public short shortValue() {
         return Integer.valueOf(getId()).shortValue();
     }

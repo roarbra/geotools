@@ -21,8 +21,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.Cursor;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,6 +31,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
@@ -55,10 +55,13 @@ import org.geotools.styling.Style;
 import org.geotools.swing.JMapFrame;
 import org.geotools.util.URLs;
 import org.geotools.util.UnsupportedImplementationException;
+import org.geotools.util.logging.Logging;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.SAXException;
 
 public class QuickTileViewer {
+
+    static final Logger LOGGER = Logging.getLogger(QuickTileViewer.class);
 
     public static final String APPLICATION_JSON = "application/json";
 
@@ -101,8 +104,7 @@ public class QuickTileViewer {
 
             setBaseURL(base);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOGGER.log(Level.WARNING, "", e);
         }
     }
 
@@ -267,26 +269,21 @@ public class QuickTileViewer {
         layerDialog = new LayerDialog(this, "Select a layer");
         JButton button = new JButton(imageIcon);
         button.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        layerDialog.updateLayers(collections);
-                        layerDialog.setVisible(true);
-                        String newLayer = layerDialog.getLayer();
-                        if (newLayer != null && !newLayer.isEmpty()) {
-                            SwingUtilities.invokeLater(
-                                    new Runnable() {
-                                        public void run() {
-                                            try {
-                                                addLayer(newLayer);
-                                            } catch (IOException
-                                                    | SAXException
-                                                    | ParserConfigurationException e1) {
-                                                e1.printStackTrace();
-                                            }
-                                        }
-                                    });
-                        }
+                e -> {
+                    layerDialog.updateLayers(collections);
+                    layerDialog.setVisible(true);
+                    String newLayer = layerDialog.getLayer();
+                    if (newLayer != null && !newLayer.isEmpty()) {
+                        SwingUtilities.invokeLater(
+                                () -> {
+                                    try {
+                                        addLayer(newLayer);
+                                    } catch (IOException
+                                            | SAXException
+                                            | ParserConfigurationException ex) {
+                                        LOGGER.log(Level.WARNING, "", ex);
+                                    }
+                                });
                     }
                 });
         frame.enableToolBar(true);

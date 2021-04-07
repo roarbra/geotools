@@ -107,10 +107,12 @@ public abstract class JDBCPrimaryKeyOnlineTest extends JDBCTestSupport {
                 count,
                 features.features(),
                 new SimpleFeatureAssertion() {
+                    @Override
                     public int toIndex(SimpleFeature feature) {
                         return Integer.parseInt(feature.getID().split("\\.", 2)[1]);
                     }
 
+                    @Override
                     public void check(int index, SimpleFeature feature) {
                         assertEquals(
                                 tname(features.getSchema().getName().getLocalPart()) + "." + index,
@@ -147,12 +149,14 @@ public abstract class JDBCPrimaryKeyOnlineTest extends JDBCTestSupport {
                 count,
                 features.features(),
                 new SimpleFeatureAssertion() {
-                    String[] xyz = new String[] {"x", "y", "z"};
+                    String[] xyz = {"x", "y", "z"};
 
+                    @Override
                     public int toIndex(SimpleFeature feature) {
                         return Integer.parseInt(feature.getID().split("\\.")[1]);
                     }
 
+                    @Override
                     public void check(int index, SimpleFeature feature) {
 
                         if (index < 4) {

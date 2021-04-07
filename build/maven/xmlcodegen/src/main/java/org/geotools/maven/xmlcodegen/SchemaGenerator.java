@@ -389,7 +389,7 @@ public class SchemaGenerator extends AbstractGenerator {
             gtSchema.put(gtType.getName(), gtType);
         }
 
-        Object[] input = new Object[] {
+        Object[] input = {
                 gtSchema, Schemas.getTargetPrefix(schema), this
             };
         String result = execute(getSchemaClassTemplateName(), input);
@@ -459,7 +459,8 @@ public class SchemaGenerator extends AbstractGenerator {
 		final List<AttributeType> sorted = new ArrayList<>();
 		GraphWalker walker = new GraphWalker() {
 			
-			public int visit(Graphable element, GraphTraversal traversal) {
+			@Override
+            public int visit(Graphable element, GraphTraversal traversal) {
 				AttributeType type = (AttributeType) element.getObject();
 				
 				//only add if in this schema
@@ -470,7 +471,8 @@ public class SchemaGenerator extends AbstractGenerator {
 				return GraphTraversal.CONTINUE;
 			}
 			
-			public void finish() { }
+			@Override
+            public void finish() { }
 		};
 		
 		GraphTraversal traversal = 
