@@ -72,8 +72,7 @@ public class DocumentFactory {
      */
     public static final String DISABLE_EXTERNAL_ENTITIES =
             "DocumentFactory_DISABLE_EXTERNAL_ENTITIES";
-   
-    
+
     private static final Logger logger = Logging.getLogger(DocumentFactory.class);
 
     /**
@@ -125,7 +124,7 @@ public class DocumentFactory {
     public static Object getInstance(InputStream is, Map<String, Object> hints, Level level)
             throws SAXException {
         SAXParser parser = getParser(hints);
-        
+
         XMLSAXHandler xmlContentHandler = new XMLSAXHandler(hints);
         XMLSAXHandler.setLogLevel(level);
 

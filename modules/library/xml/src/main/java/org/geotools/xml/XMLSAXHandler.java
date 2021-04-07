@@ -304,7 +304,7 @@ public class XMLSAXHandler extends DefaultHandler {
             throws SAXException {
         characters.setLength(0);
         logger.fine("START: " + qName);
-        
+
         checkStatus();
 
         if (!schemaProxy.isEmpty()) {

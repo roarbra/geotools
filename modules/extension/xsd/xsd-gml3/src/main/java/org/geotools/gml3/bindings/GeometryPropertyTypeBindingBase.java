@@ -35,7 +35,7 @@ import org.w3c.dom.Element;
 public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBinding {
 
     private static Logger LOGGER = Logging.getLogger(GeometryPropertyTypeBindingBase.class);
-    
+
     private XSDIdRegistry idSet;
 
     private boolean makeEmpty = false;
@@ -68,9 +68,10 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         final Object childValue = node.getChildValue(getGeometryType());
         if (childValue == null) {
-            LOGGER.warning(String.format("Element %s doesn't have a child value that matches type: %s",
-                    instance.getName(),
-                    getGeometryType().getName()));
+            LOGGER.warning(
+                    String.format(
+                            "Element %s doesn't have a child value that matches type: %s",
+                            instance.getName(), getGeometryType().getName()));
         }
         return childValue;
     }

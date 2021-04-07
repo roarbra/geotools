@@ -54,7 +54,8 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
     public GeometryAttributeImpl(Object content, GeometryDescriptor descriptor, Identifier id) {
         super(content, descriptor, id);
         if (content != null && !(content instanceof Geometry)) {
-            throw new IllegalStateException("content of GeometryAttribute should be of kind Geometry.");
+            throw new IllegalStateException(
+                    "content of GeometryAttribute should be of kind Geometry.");
         }
     }
 
@@ -75,7 +76,8 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
             return null;
         }
         if (!(value instanceof Geometry)) {
-            throw new IllegalStateException("value of GeometryAttribute should be of kind Geometry.");
+            throw new IllegalStateException(
+                    "value of GeometryAttribute should be of kind Geometry.");
         }
         return (Geometry) value;
     }

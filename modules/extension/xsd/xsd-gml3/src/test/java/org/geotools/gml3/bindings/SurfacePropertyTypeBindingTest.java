@@ -47,7 +47,7 @@ public class SurfacePropertyTypeBindingTest extends GML3TestSupport {
         Assert.assertEquals(1, dom.getElementsByTagName("gml:Polygon").getLength());
         Assert.assertEquals(1, dom.getElementsByTagName("gml:exterior").getLength());
     }
-    
+
     @Test
     public void parseSurfacePropertyWithRing() throws Exception {
         Element prev = GML3MockData.element(GML.surfaceProperty, document, document);
@@ -62,15 +62,15 @@ public class SurfacePropertyTypeBindingTest extends GML3TestSupport {
         lineStringSegment("1.0 2.0 3.5 3.0", prev);
         lineStringSegment("3.5 3.0 3.0 2.5", prev);
         lineStringSegment("3.0 2.5 1.0 2.0", prev);
-        
+
         Geometry geom = (Geometry) parse();
         Assert.assertNotNull(geom);
     }
-    
+
     private Element lineStringSegment(String posList, Element root) {
         Element prev = GML3MockData.element(GML.LineStringSegment, document, root);
         GML3MockData.element(GML.posList, document, prev)
-                    .appendChild(document.createTextNode(posList));
+                .appendChild(document.createTextNode(posList));
         return prev;
     }
 }

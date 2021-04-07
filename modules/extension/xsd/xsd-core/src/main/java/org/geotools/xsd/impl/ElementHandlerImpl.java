@@ -239,7 +239,13 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
             // cache the parsed value
             value = executor.getValue();
             if (value != null && parser.getLogger().isLoggable(Level.FINEST)) {
-                parser.getLogger().finest("Binding for " + element.getName() + " has value [" + value.toString() + "]");
+                parser.getLogger()
+                        .finest(
+                                "Binding for "
+                                        + element.getName()
+                                        + " has value ["
+                                        + value.toString()
+                                        + "]");
             }
             if (value == null) {
                 // TODO: instead of continuing, just remove the element from
