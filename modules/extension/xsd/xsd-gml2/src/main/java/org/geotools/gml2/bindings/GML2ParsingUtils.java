@@ -122,9 +122,25 @@ public class GML2ParsingUtils {
                         && node.getChild("boundedBy").hasChild("Envelope")) {
                     crs = crs(node.getChild("boundedBy").getChild("Envelope"));
                 }
+                else {
+                    // application schema defined attributes
+                    for (Node child : node.getChildren()) {
+                        Object childValue = child.getValue();
 
+                        // if the next property is of type geometry, let's set its CRS
+                        if (childValue != null && Geometry.class.isAssignableFrom(childValue.getClass()) && crs == null) {
+                            crs = crs(child);
+                            if (crs == null) {
+                                crs = crs(child.getChildren().get(0));
+                            }
+                        }
+                    }
+                }
+                if (crs == null) {
+                    LOGGER.info("Couldn't find CRS of featureType.");
+                }
                 // build from element declaration
-                sfType = GML2ParsingUtils.featureType(decl, bwFactory, crs);
+                sfType = featureType(decl, bwFactory, crs);
                 ftCache.put(sfType);
             }
         } else {
@@ -261,9 +277,7 @@ public class GML2ParsingUtils {
             }
 
             final List<Binding> bindings = new ArrayList<>();
-            BindingWalker.Visitor visitor = binding -> bindings.add(binding);
-
-            bwFactory.walk(property, visitor);
+            bwFactory.walk(property, bindings::add);
 
             if (bindings.isEmpty()) {
                 // could not find a binding, use the defaults
@@ -296,7 +310,7 @@ public class GML2ParsingUtils {
             }
 
             // if the next property is of type geometry, let's set its CRS
-            if (Geometry.class.isAssignableFrom(theClass) && crs != null) {
+            if (Geometry.class.isAssignableFrom(theClass)) {
                 ftBuilder.crs(crs);
             }
 
