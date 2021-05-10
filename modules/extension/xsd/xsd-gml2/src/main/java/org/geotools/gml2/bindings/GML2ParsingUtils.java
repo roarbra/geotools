@@ -40,7 +40,6 @@ import org.geotools.xsd.BindingWalkerFactory;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.Schemas;
-import org.geotools.xsd.impl.BindingWalker;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -121,14 +120,15 @@ public class GML2ParsingUtils {
                 } else if (node.hasChild("boundedBy")
                         && node.getChild("boundedBy").hasChild("Envelope")) {
                     crs = crs(node.getChild("boundedBy").getChild("Envelope"));
-                }
-                else {
+                } else {
                     // application schema defined attributes
                     for (Node child : node.getChildren()) {
                         Object childValue = child.getValue();
 
                         // if the next property is of type geometry, let's set its CRS
-                        if (childValue != null && Geometry.class.isAssignableFrom(childValue.getClass()) && crs == null) {
+                        if (childValue != null
+                                && Geometry.class.isAssignableFrom(childValue.getClass())
+                                && crs == null) {
                             crs = crs(child);
                             if (crs == null) {
                                 crs = crs(child.getChildren().get(0));
