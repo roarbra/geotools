@@ -493,28 +493,33 @@ public abstract class MapProjection extends AbstractMathTransform
         if (!xOut && !yOut) {
             return false;
         }
-        final String lineSeparator = System.getProperty("line.separator", "\n");
-        final StringBuilder buffer = new StringBuilder();
-        buffer.append(Errors.format(ErrorKeys.OUT_OF_PROJECTION_VALID_AREA_$1, tr.getName()));
-        if (xOut) {
-            buffer.append(lineSeparator);
-            buffer.append(Errors.format(ErrorKeys.LONGITUDE_OUT_OF_RANGE_$1, new Longitude(x)));
+
+        try {
+            final String lineSeparator = System.getProperty("line.separator", "\n");
+            final StringBuilder buffer = new StringBuilder();
+            buffer.append(Errors.format(ErrorKeys.OUT_OF_PROJECTION_VALID_AREA_$1, tr.getName()));
+            if (xOut) {
+                buffer.append(lineSeparator);
+                buffer.append(Errors.format(ErrorKeys.LONGITUDE_OUT_OF_RANGE_$1, x));
+            }
+            if (yOut) {
+                buffer.append(lineSeparator);
+                buffer.append(Errors.format(ErrorKeys.LATITUDE_OUT_OF_RANGE_$1, y));
+            }
+            final LogRecord record = new LogRecord(Level.WARNING, buffer.toString());
+            final String classe;
+            if (tr instanceof Inverse) {
+                classe = ((Inverse) tr).inverse().getClass().getName() + ".Inverse";
+            } else {
+                classe = tr.getClass().getName();
+            }
+            record.setSourceClassName(classe);
+            record.setSourceMethodName("transform");
+            record.setLoggerName(LOGGER.getName());
+            LOGGER.log(record);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Just wanted to log the result of a verification.", e);
         }
-        if (yOut) {
-            buffer.append(lineSeparator);
-            buffer.append(Errors.format(ErrorKeys.LATITUDE_OUT_OF_RANGE_$1, new Latitude(y)));
-        }
-        final LogRecord record = new LogRecord(Level.WARNING, buffer.toString());
-        final String classe;
-        if (tr instanceof Inverse) {
-            classe = ((Inverse) tr).inverse().getClass().getName() + ".Inverse";
-        } else {
-            classe = tr.getClass().getName();
-        }
-        record.setSourceClassName(classe);
-        record.setSourceMethodName("transform");
-        record.setLoggerName(LOGGER.getName());
-        LOGGER.log(record);
         return true;
     }
 
