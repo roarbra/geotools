@@ -561,6 +561,9 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
         final OperationType operationMetadata = getOperationMetadata(operation);
 
         Set<String> serverSupportedFormats = findParameters(operationMetadata, parameterName);
+        if (serverSupportedFormats.isEmpty()) {
+            serverSupportedFormats = findParameters(parameterName);
+        }
         return serverSupportedFormats;
     }
 
@@ -660,6 +663,22 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
             ftypeCrss.addAll(globalSrsNames);
         }
         return ftypeCrss;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private Set<String> findParameters(final String parameterName) {
+        final OperationsMetadataType operationsMetadata = capabilities.getOperationsMetadata();
+        List<DomainType> parameters = operationsMetadata.getParameter();
+        for (DomainType parameter : parameters) {
+            if (parameterName.equals(parameter.getName())) {
+                Set<String> foundValues = new HashSet<>();
+                for (ValueType value : (List<ValueType>) parameter.getAllowedValues().getValue()) {
+                    foundValues.add(value.getValue());
+                }
+                return foundValues;
+            }
+        }
+        return Collections.emptySet();
     }
 
     @SuppressWarnings("unchecked")
