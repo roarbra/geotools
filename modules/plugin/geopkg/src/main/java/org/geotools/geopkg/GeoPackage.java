@@ -322,6 +322,7 @@ public class GeoPackage implements Closeable {
             runScript(DATA_COLUMN_CONSTRAINTS + ".sql", cx);
             addDefaultSpatialReferences(cx);
             runSQL("PRAGMA application_id = " + GPKG_120_APPID + ";", cx);
+            runSQL("PRAGMA user_version = " + 10300, cx);
         }
     }
 
