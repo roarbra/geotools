@@ -142,6 +142,8 @@ public class GeoPackage implements Closeable {
     static final int GPKG_120_APPID = 0x47504B47;
     /** The application id for GeoPackage 1.0 (GP10) */
     static final int GPKG_100_APPID = 0x47503130;
+    /** The user_version for GeoPackage 1.2 */
+    static final int GPKG_120_VERSION = 10200;
 
     public static enum DataType {
         Feature("features"),
@@ -322,7 +324,7 @@ public class GeoPackage implements Closeable {
             runScript(DATA_COLUMN_CONSTRAINTS + ".sql", cx);
             addDefaultSpatialReferences(cx);
             runSQL("PRAGMA application_id = " + GPKG_120_APPID + ";", cx);
-            runSQL("PRAGMA user_version = " + 10300, cx);
+            runSQL("PRAGMA user_version = " + GPKG_120_VERSION + ";", cx);
         }
     }
 
