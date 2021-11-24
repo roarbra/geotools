@@ -42,7 +42,8 @@ public class NamedLayerImpl extends StyledLayerImpl implements NamedLayer {
 
     @Override
     public FeatureTypeConstraint[] getLayerFeatureConstraints() {
-        return featureTypeConstraints.toArray(new FeatureTypeConstraint[featureTypeConstraints.size()]);
+        return featureTypeConstraints.toArray(
+                new FeatureTypeConstraint[featureTypeConstraints.size()]);
     }
 
     @Override
