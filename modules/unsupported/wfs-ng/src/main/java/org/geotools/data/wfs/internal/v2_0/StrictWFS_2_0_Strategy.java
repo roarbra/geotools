@@ -664,7 +664,7 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
         }
         return ftypeCrss;
     }
-    
+
     @SuppressWarnings("unchecked")
     private Set<String> findParameters(final String parameterName) {
         final OperationsMetadataType operationsMetadata = capabilities.getOperationsMetadata();
