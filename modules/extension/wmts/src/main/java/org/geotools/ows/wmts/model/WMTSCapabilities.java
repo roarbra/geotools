@@ -191,38 +191,40 @@ public class WMTSCapabilities extends Capabilities {
             ReferencedEnvelope wgs84Env = new ReferencedEnvelope(wmtsLayer.getLatLonBoundingBox());
 
             // add a bbox for every CRS
+            CoordinateReferenceSystem prefCRS = null;
             for (TileMatrixSetLink tmsLink : tileMatrixLinks.values()) {
                 CoordinateReferenceSystem tmsCRS = names.get(tmsLink.getIdentifier());
-                wmtsLayer.setPreferredCRS(tmsCRS); // the preferred crs is just
-                // an arbitrary one?
+                wmtsLayer.addSRS(tmsCRS);
+                if (prefCRS == null) {
+                    prefCRS = tmsCRS;
+                }
+                
                 String crsCode = tmsCRS.getName().getCode();
-
                 if (wmtsLayer.getBoundingBoxes().containsKey(crsCode)) {
-                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.fine(
-                                "Bbox for " + crsCode + " already exists for layer " + l.getName());
                     continue;
                 }
 
                 TileMatrixSet tms = matrixSetMap.get(tmsLink.getIdentifier());
+                // add bboxes
                 if (tms.getBbox() != null) {
                     wmtsLayer.getBoundingBoxes().put(crsCode, tms.getBbox());
                 }
+                else {
+                    try {
+                        // make safe to CRS bounds
+                        // making bbox safe may restrict it too much: let's trust in
+                        // the declaration
+                        wmtsLayer
+                                .getBoundingBoxes()
+                                .put(crsCode, new CRSEnvelope(wgs84Env.transform(tmsCRS, true)));
 
-                // add bboxes
-                try {
-                    // make safe to CRS bounds
-                    // making bbox safe may restrict it too much: let's trust in
-                    // the declaration
-                    wmtsLayer
-                            .getBoundingBoxes()
-                            .put(crsCode, new CRSEnvelope(wgs84Env.transform(tmsCRS, true)));
-                    wmtsLayer.addSRS(tmsCRS);
-                } catch (TransformException | FactoryException e) {
-                    if (LOGGER.isLoggable(Level.INFO))
-                        LOGGER.info("Not adding CRS " + crsCode + " for layer " + l.getName());
+                    } catch (TransformException | FactoryException e) {
+                        LOGGER.severe("Not adding CRS " + crsCode + " for layer " + l.getName());
+                    }
                 }
             }
+            wmtsLayer.setPreferredCRS(prefCRS); // the preferred crs is just
+            // an arbitrary one?
         }
 
         request = new WMTSRequest();
