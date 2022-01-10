@@ -339,7 +339,6 @@ class DirectoryTypeCache {
      */
     class DirectoryFilter implements FileFilter {
 
-        @Override
         public boolean accept(File pathname) {
             return !pathname.isDirectory();
         }

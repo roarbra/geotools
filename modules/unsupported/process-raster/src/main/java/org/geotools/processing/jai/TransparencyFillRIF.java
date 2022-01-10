@@ -41,7 +41,6 @@ public class TransparencyFillRIF implements RenderedImageFactory {
      *
      * @param paramBlock The source image and the dilation kernel.
      */
-    @Override
     public RenderedImage create(ParameterBlock paramBlock, RenderingHints renderHints) {
         // Get ImageLayout from renderHints if any.
         ImageLayout layout = RIFUtil.getImageLayoutHint(renderHints);

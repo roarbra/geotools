@@ -103,7 +103,6 @@ public class GranuleLoader implements Callable<GranuleLoadingResult> {
         return imageIndex;
     }
 
-    @Override
     public GranuleLoadingResult call() throws Exception {
         try {
             return granuleDescriptor.loadRaster(

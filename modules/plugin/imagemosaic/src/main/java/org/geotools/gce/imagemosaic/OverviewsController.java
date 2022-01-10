@@ -262,7 +262,6 @@ final class OverviewsController {
             this.imageChoice = imageChoice;
         }
 
-        @Override
         public int compareTo(final OverviewLevel other) {
             if (scaleFactor > other.scaleFactor) {
                 return 1;

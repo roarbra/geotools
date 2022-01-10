@@ -129,7 +129,6 @@ class RasterLayerResponse {
             return imageIndex;
         }
 
-        @Override
         public RenderedImage call() throws Exception {
 
             return granule.loadRaster(
