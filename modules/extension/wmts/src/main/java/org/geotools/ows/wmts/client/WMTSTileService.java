@@ -252,22 +252,6 @@ public class WMTSTileService extends TileService {
 
         ReferencedEnvelope coverageEnvelope = getBounds();
 
-        if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(
-                    Level.FINE,
-                    "coverage bbox :"
-                            + coverageEnvelope
-                            + " "
-                            + coverageEnvelope
-                                    .getCoordinateReferenceSystem()
-                                    .getCoordinateSystem()
-                                    .getAxis(0)
-                                    .getDirection()
-                            + " ("
-                            + coverageEnvelope.getCoordinateReferenceSystem().getName()
-                            + ")");
-        }
-
         ReferencedEnvelope requestEnvelopeWGS84;
 
         boolean sameCRS =
@@ -276,8 +260,21 @@ public class WMTSTileService extends TileService {
                         reqExtentInTileCrs.getCoordinateReferenceSystem());
         if (sameCRS) {
             if (!coverageEnvelope.intersects((BoundingBox) reqExtentInTileCrs)) {
-                if (LOGGER.isLoggable(Level.FINE))
-                    LOGGER.log(Level.FINE, "Extents do not intersect (sameCRS))");
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(
+                            Level.FINE,
+                            "Extents do not intersect (sameCRS)) coverage bbox :"
+                                    + coverageEnvelope
+                                    + " "
+                                    + coverageEnvelope
+                                            .getCoordinateReferenceSystem()
+                                            .getCoordinateSystem()
+                                            .getAxis(0)
+                                            .getDirection()
+                                    + " ("
+                                    + coverageEnvelope.getCoordinateReferenceSystem().getName()
+                                    + ")");
+                }
                 return null;
             }
         } else {
@@ -288,8 +285,14 @@ public class WMTSTileService extends TileService {
                 requestEnvelopeWGS84 = requestedExtent.transform(DefaultGeographicCRS.WGS84, true);
 
                 if (!dataEnvelopeWGS84.intersects((BoundingBox) requestEnvelopeWGS84)) {
-                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.log(Level.FINE, "Extents do not intersect");
+                    if (LOGGER.isLoggable(Level.FINE)) {
+                        LOGGER.log(
+                                Level.FINE,
+                                "Extents do not intersect coverage bbox (WGS84):"
+                                        + dataEnvelopeWGS84
+                                        + " request bbox (WGS84)"
+                                        + requestEnvelopeWGS84);
+                    }
                     return null;
                 }
             } catch (TransformException | FactoryException e) {
