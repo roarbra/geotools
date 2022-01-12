@@ -36,7 +36,6 @@ import org.geotools.ows.wmts.model.TileMatrixSetLink;
 import org.geotools.ows.wmts.model.WMTSLayer;
 import org.geotools.ows.wmts.model.WMTSServiceType;
 import org.geotools.referencing.CRS;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.tile.Tile;
 import org.geotools.tile.TileFactory;
 import org.geotools.tile.TileService;
@@ -132,7 +131,6 @@ public class WMTSTileService extends TileService {
 
         this.layer = layer;
         this.tileMatrixSetName = tileMatrixSet.getIdentifier();
-
         this.envelope = new ReferencedEnvelope(layer.getLatLonBoundingBox());
 
         this.scaleList = buildScaleList(tileMatrixSet);
@@ -212,17 +210,6 @@ public class WMTSTileService extends TileService {
                                 + tileCrs.getCoordinateSystem().getName()
                                 + ") :"
                                 + ex.getMessage());
-
-                // maybe the req area is too wide for the data; let's try an
-                // inverse transformation
-                try {
-                    ReferencedEnvelope covExtentInReqCrs = envelope.transform(reqCrs, true);
-                    requestedExtent = requestedExtent.intersection(covExtentInReqCrs);
-
-                } catch (TransformException | FactoryException ex2) {
-                    LOGGER.log(Level.WARNING, "Incompatible CRS: " + ex2.getMessage());
-                    return null; // should throw
-                }
             }
         } else {
             reqExtentInTileCrs = requestedExtent;
@@ -250,9 +237,7 @@ public class WMTSTileService extends TileService {
                             + ")");
         }
 
-        ReferencedEnvelope coverageEnvelope = getBounds();
-
-        ReferencedEnvelope requestEnvelopeWGS84;
+        ReferencedEnvelope coverageEnvelope = this.envelope;
 
         boolean sameCRS =
                 CRS.equalsIgnoreMetadata(
@@ -278,20 +263,16 @@ public class WMTSTileService extends TileService {
                 return null;
             }
         } else {
-            ReferencedEnvelope dataEnvelopeWGS84;
+            ReferencedEnvelope covEnvelopeTileCRS;
             try {
-                dataEnvelopeWGS84 = coverageEnvelope.transform(DefaultGeographicCRS.WGS84, true);
+                covEnvelopeTileCRS = coverageEnvelope.transform(tileCrs, true);
 
-                requestEnvelopeWGS84 = requestedExtent.transform(DefaultGeographicCRS.WGS84, true);
-
-                if (!dataEnvelopeWGS84.intersects((BoundingBox) requestEnvelopeWGS84)) {
+                if (!covEnvelopeTileCRS.intersects((BoundingBox) reqExtentInTileCrs)) {
                     if (LOGGER.isLoggable(Level.FINE)) {
                         LOGGER.log(
                                 Level.FINE,
-                                "Extents do not intersect coverage bbox (WGS84):"
-                                        + dataEnvelopeWGS84
-                                        + " request bbox (WGS84)"
-                                        + requestEnvelopeWGS84);
+                                "Extents do not intersect coverage bbox (tileCRS):"
+                                        + covEnvelopeTileCRS);
                     }
                     return null;
                 }
