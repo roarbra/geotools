@@ -51,10 +51,9 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
 @DescribeProcess(
-    title = "Nearest Feature",
-    description =
-            "Returns the feature in a given feature collection that has the smallest distance to a given point."
-)
+        title = "Nearest Feature",
+        description =
+                "Returns the feature in a given feature collection that has the smallest distance to a given point.")
 public class NearestProcess implements VectorProcess {
     private static final Logger LOGGER = Logging.getLogger(NearestProcess.class);
 
@@ -74,18 +73,11 @@ public class NearestProcess implements VectorProcess {
             @DescribeParameter(name = "point", description = "Point from which to compute distance")
                     Point point,
             @DescribeParameter(
-                        name = "crs",
-                        min = 0,
-                        description =
-                                "Coordinate reference system of the collection and point (default is the input feature collection CRS)"
-                    )
-                    CoordinateReferenceSystem crs,
-            @DescribeParameter(
-                        name = "numFeatures",
-                        min = 1,
-                        description = "Number of nearest features to return."
-                    )
-                    int numFeatures)
+                            name = "crs",
+                            min = 0,
+                            description =
+                                    "Coordinate reference system of the collection and point (default is the input collection CRS)")
+                    CoordinateReferenceSystem crs)
             throws ProcessException {
         try {
             MathTransform crsTransform = null;

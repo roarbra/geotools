@@ -5730,9 +5730,7 @@ public class ImageMosaicReaderTest {
                     endsWith("global_mosaic_0.png"));
             // System.out.println(groupFirst.getSupportFiles());
             assertThat(
-                    groupFirst
-                            .getSupportFiles()
-                            .stream()
+                    groupFirst.getSupportFiles().stream()
                             .map(f -> f.getName())
                             .collect(Collectors.toList()),
                     Matchers.containsInAnyOrder(
@@ -5746,9 +5744,7 @@ public class ImageMosaicReaderTest {
                     groupLast.getMainFile().getPath().toLowerCase(),
                     endsWith("global_mosaic_9.png"));
             assertThat(
-                    groupLast
-                            .getSupportFiles()
-                            .stream()
+                    groupLast.getSupportFiles().stream()
                             .map(f -> f.getName())
                             .collect(Collectors.toList()),
                     Matchers.containsInAnyOrder(
