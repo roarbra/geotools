@@ -77,7 +77,12 @@ public class NearestProcess implements VectorProcess {
                             min = 0,
                             description =
                                     "Coordinate reference system of the collection and point (default is the input collection CRS)")
-                    CoordinateReferenceSystem crs)
+                    CoordinateReferenceSystem crs,
+            @DescribeParameter(
+                            name = "numFeatures",
+                            min = 1,
+                            description = "Number of nearest features to return.")
+                    int numFeatures)
             throws ProcessException {
         try {
             MathTransform crsTransform = null;
