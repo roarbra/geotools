@@ -75,7 +75,7 @@ import org.locationtech.jts.geom.MultiPolygon;
  * @generated
  */
 @SuppressWarnings("ComparableType")
-public class SurfaceTypeBinding extends AbstractComplexBinding implements Comparable {
+public class SurfaceTypeBinding extends AbstractSurfaceTypeBinding implements Comparable {
 
     GeometryFactory gf;
 
