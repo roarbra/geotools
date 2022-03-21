@@ -443,7 +443,7 @@ public class ParserHandler extends DefaultHandler2 {
                             schemas[i / 2] =
                                     Schemas.parse(location, locators, resolvers, uriHandlers);
                         } catch (Exception e) {
-                            String msg = "Error parsing: " + location;
+                            String msg = "Error parsing: " + location + " " + e.getMessage();
                             logger.warning(msg);
 
                             if (isStrict()) {
