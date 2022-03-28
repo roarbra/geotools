@@ -2091,21 +2091,22 @@ public final class JDBCDataStore extends ContentDataStore implements GmlObjectSt
             }
             return cx;
         }
-
-        JDBCTransactionState tstate = (JDBCTransactionState) t.getState(this);
-        if (tstate != null) {
-            return tstate.cx;
-        } else {
-            Connection cx = createConnection();
-            try {
-                cx.setAutoCommit(false);
-            } catch (SQLException e) {
-                throw (IOException) new IOException().initCause(e);
-            }
-
-            tstate = new JDBCTransactionState(cx, this);
-            t.putState(this, tstate);
-            return cx;
+        synchronized (t) {
+                JDBCTransactionState tstate = (JDBCTransactionState) t.getState(this);
+                if (tstate != null) {
+                    return tstate.cx;
+                } else {
+                    Connection cx = createConnection();
+                    try {
+                        cx.setAutoCommit(false);
+                    } catch (SQLException e) {
+                        throw (IOException) new IOException().initCause(e);
+                    }
+        
+                    tstate = new JDBCTransactionState(cx, this);
+                    t.putState(this, tstate);
+                    return cx;
+                }
         }
     }
 
