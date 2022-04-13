@@ -53,6 +53,7 @@ import org.geotools.test.TestData;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -62,6 +63,10 @@ import org.opengis.parameter.ParameterValue;
 /** Testing using COG remote granules on an ImageMosaic */
 public class ImageMosaicCogOnlineTest {
 
+    /**
+     * The following tests use S3 Sentinel-2 Cloud-Optimized GeoTIFFs. S3 Sentinel-2 Cloud-Optimized
+     * GeoTIFFs was accessed from https://registry.opendata.aws/sentinel-2-l2a-cogs.
+     */
     @BeforeClass
     public static void init() {
         System.setProperty("user.timezone", "GMT");
@@ -76,7 +81,7 @@ public class ImageMosaicCogOnlineTest {
 
     @Test
     public void testCogMosaic() throws Exception {
-        File workDir = prepareWorkingDir("cogtest.zip", "cogtest", "");
+        File workDir = prepareWorkingDir("s3cogtest.zip", "s3cogtest", "");
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
         GridCoverage2D coverage = reader.read(null);
         Assert.assertNotNull(coverage);
@@ -91,8 +96,12 @@ public class ImageMosaicCogOnlineTest {
     }
 
     @Test
+    @Ignore
     public void testCogMosaicOverview() throws Exception {
-        File workDir = prepareWorkingDir("cogtest.zip", "overview", "cogtest");
+
+        // Need to find a public S3 dataset with external .ovr.
+        // The previous Landsat8 dataset is no longer available
+        File workDir = prepareWorkingDir("s3cogtest.zip", "overview", "s3cogtest");
         ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
 
         GeneralParameterValue[] params = new GeneralParameterValue[1];
@@ -131,7 +140,7 @@ public class ImageMosaicCogOnlineTest {
 
     @Test
     public void testCogMosaicDefaultConfig() throws Exception {
-        File workDir = prepareWorkingDir("cogtest.zip", "default", "cogtest");
+        File workDir = prepareWorkingDir("s3cogtest.zip", "default", "s3cogtest");
         File file = new File(workDir, "cogtest.properties");
         Properties properties = new Properties();
         try (FileInputStream fin = new FileInputStream(file)) {
@@ -159,7 +168,7 @@ public class ImageMosaicCogOnlineTest {
 
     @Test
     public void testHarvestSingleURL() throws Exception {
-        File workDir = prepareWorkingDir("cogtest.zip", "harvest", "cogtest");
+        File workDir = prepareWorkingDir("s3cogtest.zip", "harvest", "s3cogtest");
         File file = new File(workDir, "indexer.properties");
         Properties properties = new Properties();
         try (FileInputStream fin = new FileInputStream(file)) {
@@ -182,7 +191,7 @@ public class ImageMosaicCogOnlineTest {
             // now go and harvest the url
             URL source =
                     new URL(
-                            "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/153/075/LC08_L1TP_153075_20190515_20190515_01_RT/LC08_L1TP_153075_20190515_20190515_01_RT_B3.TIF");
+                            "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181020_0_L2A/B01.tif");
             reader.harvest(null, source, null);
 
             // check the granule catalog
@@ -214,7 +223,7 @@ public class ImageMosaicCogOnlineTest {
         try {
             // now go and harvest a granule
             String granuleUrl =
-                    "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/153/075/LC08_L1TP_153075_20190515_20190515_01_RT/LC08_L1TP_153075_20190515_20190515_01_RT_B3.TIF";
+                    "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181019_0_L2A/B01.tif";
             URL source = new URL(granuleUrl);
             List<HarvestedSource> summary = reader.harvest(null, source, null);
             Assert.assertSame(originalCatalog, reader.granuleCatalog);
@@ -239,19 +248,18 @@ public class ImageMosaicCogOnlineTest {
     /** Checking time get extracted from remote URL too. */
     @Test
     public void testTimeDimensionMosaic() throws Exception {
-
         final File workDir = prepareWorkingDir("emptycog.zip", "timeMosaic", "");
         try (FileWriter out =
                 new FileWriter(
                         new File(TestData.file(this, "."), "/timeMosaic/datastore.properties"))) {
-            out.write("database=cogmosaic\n");
+            out.write("database=cogtimemosaic\n");
             out.write(ImageMosaicReaderTest.H2_SAMPLE_PROPERTIES);
             out.flush();
         }
         try (FileWriter out =
                 new FileWriter(
                         new File(TestData.file(this, "."), "/timeMosaic/timeregex.properties"))) {
-            out.write("regex=[0-9]{8}");
+            out.write("regex=[0-9]{8},fullPath=true");
             out.flush();
         }
         try (FileWriter out =
@@ -264,28 +272,25 @@ public class ImageMosaicCogOnlineTest {
             out.flush();
         }
 
-        final AbstractGridFormat IMAGE_MOSAIC_FORMAT = new ImageMosaicFormat();
-        ImageMosaicReader reader = (ImageMosaicReader) IMAGE_MOSAIC_FORMAT.getReader(workDir);
+        ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
         GranuleCatalog originalCatalog = reader.granuleCatalog;
 
         try {
             // now go and harvest 2 granules
             List<URL> urls = new LinkedList<>();
-            urls.add(
-                    new URL(
-                            "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/153/075/LC08_L1TP_153075_20190429_20190429_01_RT/LC08_L1TP_153075_20190429_20190429_01_RT_B1.TIF"));
-            urls.add(
-                    new URL(
-                            "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/153/075/LC08_L1TP_153075_20190515_20190515_01_RT/LC08_L1TP_153075_20190515_20190515_01_RT_B3.TIF"));
+            String prefix =
+                    "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/";
+            urls.add(new URL(prefix + "5/C/MK/2018/10/S2B_5CMK_20181019_0_L2A/B01.tif"));
+            urls.add(new URL(prefix + "5/C/MK/2018/10/S2B_5CMK_20181020_0_L2A/B01.tif"));
             List<HarvestedSource> summary = reader.harvest(null, urls, null);
             Assert.assertSame(originalCatalog, reader.granuleCatalog);
             Assert.assertEquals(2, summary.size());
 
             Assert.assertEquals("true", reader.getMetadataValue("HAS_TIME_DOMAIN"));
             Assert.assertEquals(
-                    "2019-04-29T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MINIMUM"));
+                    "2018-10-19T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MINIMUM"));
             Assert.assertEquals(
-                    "2019-05-15T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MAXIMUM"));
+                    "2018-10-20T00:00:00.000Z", reader.getMetadataValue("TIME_DOMAIN_MAXIMUM"));
         } finally {
             reader.dispose();
         }
@@ -296,7 +301,7 @@ public class ImageMosaicCogOnlineTest {
     public void testFSDateCollect() throws Exception {
         URL url =
                 new URL(
-                        "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/153/075/LC08_L1TP_153075_20190429_20190429_01_RT/LC08_L1TP_153075_20190429_20190429_01_RT_B1.TIF");
+                        "https://s3-us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/5/C/MK/2018/10/S2B_5CMK_20181019_0_L2A/B01.tif");
         final FSDateExtractorSPI spi = new FSDateExtractorSPI();
         final PropertiesCollector collector = spi.create(spi, Arrays.asList("createdate"));
         final SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
@@ -310,9 +315,9 @@ public class ImageMosaicCogOnlineTest {
         GregorianCalendar calendar = (GregorianCalendar) GregorianCalendar.getInstance();
         Date date = (Date) feature.getAttribute("createdate");
         calendar.setTime(date);
-        Assert.assertEquals(2019, calendar.get(Calendar.YEAR));
-        Assert.assertEquals(29, calendar.get(Calendar.DAY_OF_MONTH));
-        Assert.assertEquals(4, calendar.get(Calendar.MONTH) + 1);
+        Assert.assertEquals(2020, calendar.get(Calendar.YEAR));
+        Assert.assertEquals(26, calendar.get(Calendar.DAY_OF_MONTH));
+        Assert.assertEquals(9, calendar.get(Calendar.MONTH) + 1);
     }
 
     private File prepareWorkingDir(String zipName, String folder, String subFolder)
@@ -333,5 +338,79 @@ public class ImageMosaicCogOnlineTest {
         TestData.unzipFile(this, destinationPath);
         FileUtils.deleteQuietly(zipFile);
         return workDir;
+    }
+
+    /** Harvests single Google Storage file using public URLs */
+    @Test
+    public void testHarvestGSPublicURL() throws Exception {
+        final File workDir = prepareWorkingDir("emptycog.zip", "emptyGSCogMosaic", "");
+        try (FileWriter out =
+                new FileWriter(
+                        new File(
+                                TestData.file(this, "."),
+                                "/emptyGSCogMosaic/datastore.properties"))) {
+            out.write("database=cogmosaic\n");
+            out.write(ImageMosaicReaderTest.H2_SAMPLE_PROPERTIES);
+            out.flush();
+        }
+        ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
+        GranuleCatalog originalCatalog = reader.granuleCatalog;
+
+        try {
+            // now go and harvest a granule
+            String granuleUrl =
+                    "https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/044/034"
+                            + "/LC08_L1GT_044034_20130330_20170310_01_T2"
+                            + "/LC08_L1GT_044034_20130330_20170310_01_T2_B11.TIF";
+            URL source = new URL(granuleUrl);
+            List<HarvestedSource> summary = reader.harvest(null, source, null);
+            Assert.assertSame(originalCatalog, reader.granuleCatalog);
+            Assert.assertEquals(1, summary.size());
+
+            // check the granule catalog
+            String coverageName = reader.getGridCoverageNames()[0];
+            GranuleSource granules = reader.getGranules(coverageName, true);
+            Assert.assertEquals(1, granules.getCount(Query.ALL));
+            Query q = new Query(Query.ALL);
+            try (SimpleFeatureIterator fi = granules.getGranules(q).features()) {
+                Assert.assertTrue(fi.hasNext());
+                SimpleFeature f = fi.next();
+                Assert.assertEquals(granuleUrl, f.getAttribute("location"));
+            }
+        } finally {
+            reader.dispose();
+        }
+    }
+
+    @Test
+    public void testGSCogMosaic() throws Exception {
+        File workDir = prepareWorkingDir("gscogtest.zip", "gscogtest", "");
+        ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
+        GridCoverage2D coverage = reader.read(null);
+        Assert.assertNotNull(coverage);
+        RenderedImage image = coverage.getRenderedImage();
+        int numTileX = image.getNumXTiles();
+        int numTileY = image.getNumYTiles();
+        Raster raster = image.getTile(numTileX / 2, numTileY / 2);
+        Assert.assertEquals(512, raster.getWidth());
+        Assert.assertEquals(512, raster.getHeight());
+        Assert.assertEquals(1, raster.getNumBands());
+        reader.dispose();
+    }
+
+    @Test
+    public void testGSURICogMosaic() throws Exception {
+        File workDir = prepareWorkingDir("gsuricogtest.zip", "gsuricogtest", "");
+        ImageMosaicReader reader = IMAGE_MOSAIC_FORMAT.getReader(workDir);
+        GridCoverage2D coverage = reader.read(null);
+        Assert.assertNotNull(coverage);
+        RenderedImage image = coverage.getRenderedImage();
+        int numTileX = image.getNumXTiles();
+        int numTileY = image.getNumYTiles();
+        Raster raster = image.getTile(numTileX / 2, numTileY / 2);
+        Assert.assertEquals(512, raster.getWidth());
+        Assert.assertEquals(512, raster.getHeight());
+        Assert.assertEquals(1, raster.getNumBands());
+        reader.dispose();
     }
 }
