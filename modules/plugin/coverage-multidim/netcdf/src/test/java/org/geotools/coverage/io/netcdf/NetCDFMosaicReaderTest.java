@@ -1771,6 +1771,7 @@ public class NetCDFMosaicReaderTest {
     }
 
     @Test
+    @Ignore
     public void testGranuleSourceFileView() throws Exception {
         File testDir = tempFolder.newFolder("multi-coverage-fileview");
         URL testUrl = URLs.fileToUrl(testDir);

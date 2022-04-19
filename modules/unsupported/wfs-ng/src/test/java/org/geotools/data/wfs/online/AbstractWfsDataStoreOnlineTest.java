@@ -49,6 +49,7 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.CRS.AxisOrder;
+import org.geotools.test.OnlineTestCase;
 import org.geotools.util.logging.Logging;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +68,7 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Online tests only run if {@link #SERVER_URL} can be reached. */
-public abstract class AbstractWfsDataStoreOnlineTest {
+public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestCase {
 
     private static final Logger LOGGER = Logging.getLogger(AbstractWfsDataStoreOnlineTest.class);
 
@@ -122,8 +123,13 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         this.spatialFilter = spatialFilter;
     }
 
+    @Override
+    protected String getFixtureId() {
+        return "wfs";
+    }
+
     @Before
-    public void setUp() throws IOException {
+    public void setUpWFS() throws IOException {
         if (serviceAvailable == null) {
             // check for service availability only once
             URL url = new URL(SERVER_URL);

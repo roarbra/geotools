@@ -44,7 +44,7 @@ import org.geotools.gml2.bindings.GML2EncodingUtils;
 import org.geotools.ows.ServiceException;
 import org.geotools.referencing.CRS;
 import org.junit.Test;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
@@ -133,7 +133,7 @@ public class DataStoreTest {
                 SimpleFeature feature = featureReader.next();
                 Object geometry = feature.getDefaultGeometry();
                 assertNotNull(geometry);
-                assertTrue(geometry instanceof Polygon);
+                assertTrue(geometry instanceof Geometry);
             }
         }
         GetFeatureRequest request = wfs.getRequest();
