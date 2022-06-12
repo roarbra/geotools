@@ -158,22 +158,7 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
                 throw new IllegalArgumentException(
                         Errors.format(ErrorKeys.INCOMPATIBLE_UNIT_$1, unit));
             }
-            /*
-             * Ensures there is no axis along the same direction
-             * (e.g. two North axis, or an East and a West axis).
-             */
-            final AxisDirection check = direction.absolute();
-            if (!check.equals(AxisDirection.OTHER)) {
-                for (int j = i; --j >= 0; ) {
-                    if (check.equals(axis[j].getDirection().absolute())) {
-                        // TODO: localize name()
-                        final String nameI = axis[i].getDirection().name();
-                        final String nameJ = axis[j].getDirection().name();
-                        throw new IllegalArgumentException(
-                                Errors.format(ErrorKeys.COLINEAR_AXIS_$2, nameI, nameJ));
-                    }
-                }
-            }
+
             /*
              * Checks for some inconsistency in naming and direction. For example if the axis
              * is named "Northing", then the direction must be North. Exceptions to this rule
@@ -202,6 +187,24 @@ public class AbstractCS extends AbstractIdentifiedObject implements CoordinateSy
                                             name,
                                             direction.name()));
                         }
+                    }
+                }
+            }
+            
+            /*
+             * Ensures there is no axis along the same direction
+             * (e.g. two North axis, or an East and a West axis).
+             * Loops through prior axis for similar direction. (Should consider DirectionAlongMeridian)
+             */
+            final AxisDirection check = direction.absolute();
+            if (!check.equals(AxisDirection.OTHER)) {
+                for (int j = i - 1; j >= 0; j--) {
+                    if (check.equals(axis[j].getDirection().absolute())) {
+                        // TODO: localize name()
+                        final String nameI = axis[i].getDirection().name();
+                        final String nameJ = axis[j].getDirection().name();
+                        throw new IllegalArgumentException(
+                                Errors.format(ErrorKeys.COLINEAR_AXIS_$2, nameI, nameJ));
                     }
                 }
             }

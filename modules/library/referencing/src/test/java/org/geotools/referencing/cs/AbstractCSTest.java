@@ -25,8 +25,13 @@ import static org.junit.Assert.assertTrue;
 import javax.measure.MetricPrefix;
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
+
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.WKT;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.junit.Test;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.cs.AxisDirection;
 import org.opengis.referencing.cs.CoordinateSystem;
 import org.opengis.referencing.cs.CoordinateSystemAxis;
@@ -169,5 +174,12 @@ public final class AbstractCSTest {
                 "\"Standard\" vertical axis should be forced to ellipsoidal height.",
                 DefaultVerticalCS.ELLIPSOIDAL_HEIGHT,
                 AbstractCS.standard(cs));
+    }
+    
+    /** At the north or south pole both axis will head in the same direction SOUTH or NORTH */
+    @Test
+    public void testBothAxisSouthDirection() throws Exception {
+    	CoordinateReferenceSystem crs = CRS.parseWKT(WKT.NORTH_POLE);
+    	assertNotNull(crs);
     }
 }

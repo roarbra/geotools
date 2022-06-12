@@ -230,4 +230,22 @@ public final class WKT {
                     + "  VERT_DATUM[\"Mean Sea Level\", 2005, AUTHORITY[\"EPSG\",\"5100\"]],\n"
                     + "  UNIT[\"metre\", 1, AUTHORITY[\"EPSG\",\"9001\"]],\n"
                     + "  AXIS[\"Z\",UP], AUTHORITY[\"EPSG\",\"5714\"]]";
+    
+    
+    /** North pole Lambert Azimuthal (both axis SOUTH direction) */
+    public static final String NORTH_POLE = 
+    		"PROJCS[\"North_Pole_Lambert_Azimuthal_Equal_Area\",\n"
+		    		+ "  GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",\n"
+		    		+ "    SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],\n"
+		    		+ "    AUTHORITY[\"EPSG\",\"6326\"]],\n"
+		    		+ "  PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],\n"
+		    		+ "  PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],\n"
+		    		+ "  PARAMETER[\"latitude_of_center\",90],\n"
+		    		+ "  PARAMETER[\"longitude_of_center\",0],\n"
+		    		+ "  PARAMETER[\"false_easting\",0],\n"
+		    		+ "  PARAMETER[\"false_northing\",0],\n"
+		    		+ "  UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],\n"
+		    		+ "  AXIS[\"Easting\",SOUTH],\n"
+		    		+ "  AXIS[\"Northing\",SOUTH],\n"
+		    		+ "  AUTHORITY[\"ESRI\",\"102017\"]]";
 }
