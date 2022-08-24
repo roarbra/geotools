@@ -33,8 +33,14 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.http.HttpException;
 import org.geotools.http.HTTPResponse;
+import org.geotools.util.logging.Logging;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,6 +64,8 @@ public class MultithreadedHttpClientTest {
     private static final String SYS_PROP_KEY_PORT = "http.proxyPort";
 
     private String[] sysPropOriginalValue = new String[3];
+
+    private static Logger LOGGER = Logging.getLogger(MultithreadedHttpClientTest.class);
 
     /** Verifies that method is executed without specifying nonProxyHosts. */
     @Test
@@ -258,5 +266,72 @@ public class MultithreadedHttpClientTest {
                 response.dispose();
             }
         }
+    }
+
+    /**
+     * Test that the connection pool is working. We know the approx. response time of each http
+     * call.
+     *
+     * <p>Make sure that we are close to 2 * resp time, because one of the calls will have to wait.
+     *
+     * <p>And not above the connection timeout, which would mean that the connection's isn't freed
+     * when response is disposed.
+     */
+    @Test
+    public void testConnectionsReleased() throws Exception {
+
+        final URL testUrl = new URL("http://localhost:" + wireMockRule.port() + "/delayed");
+        wireMockRule.addStubMapping(
+                stubFor(get(urlEqualTo("/delayed")).willReturn(aResponse().withFixedDelay(200))));
+        long timing;
+        ExecutorService testExecutors = Executors.newFixedThreadPool(3);
+
+        try (MultithreadedHttpClient client = new MultithreadedHttpClient()) {
+            client.setMaxConnections(2);
+            client.setConnectTimeout(1);
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < 3; i++) {
+                testExecutors.execute(
+                        new Runnable() {
+                            public void run() {
+                                try {
+                                    LOGGER.info(
+                                            "http call "
+                                                    + Thread.currentThread().getName()
+                                                    + " started.");
+                                    HTTPResponse response = client.get(testUrl);
+                                    LOGGER.info(
+                                            "http call "
+                                                    + Thread.currentThread().getName()
+                                                    + " ready.");
+                                    try {
+                                        IOUtils.consume(response.getResponseStream());
+                                    } finally {
+                                        response.dispose();
+                                    }
+                                    LOGGER.info(
+                                            "http call "
+                                                    + Thread.currentThread().getName()
+                                                    + " disposed.");
+                                } catch (IOException e) {
+                                    LOGGER.log(Level.WARNING, "Test call failed.", e);
+                                    throw new RuntimeException("Something wrong with test.", e);
+                                }
+                            }
+                        });
+            }
+            testExecutors.shutdown();
+            testExecutors.awaitTermination(2, TimeUnit.SECONDS);
+            timing = System.currentTimeMillis() - start;
+        }
+
+        Assert.assertTrue("Test ended too early. (" + timing + " ms)", timing > 2 * 200);
+        Assert.assertFalse(
+                "Test calls seems to be serial. (" + timing + " ms)",
+                timing > 3 * 200 && timing < 1000);
+        Assert.assertFalse(
+                "Test seems to wait for connection timeout. (" + timing + " ms)",
+                timing > 1000 && timing < 2000);
+        Assert.assertFalse("Test seems to hang on something. (" + timing + " ms)", timing > 2000);
     }
 }
