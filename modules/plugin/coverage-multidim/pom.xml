@@ -82,8 +82,11 @@
   <!-- =========================================================== -->
   <modules>
     <module>coverage-api</module>
+
+    <!-- Doesn't work with Windows / norsk
     <module>grib</module>
-    <module>netcdf</module>
+    <module>netcdf</module> 
+  -->
   </modules>
 
   <repositories>
