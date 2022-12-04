@@ -339,8 +339,6 @@ public class GranuleDescriptor {
         }
     }
 
-    private static PAMParser pamParser = PAMParser.getInstance();
-
     ReferencedEnvelope granuleBBOX;
 
     MultiLevelROI roiProvider;
@@ -641,7 +639,9 @@ public class GranuleDescriptor {
         final File file = URLs.urlToFile(granuleUrl);
         final String path = file.getCanonicalPath();
         final File auxFile = new File(path + AUXFILE_EXT);
-        if (auxFile.exists()) pamDataset = pamParser.parsePAM(auxFile);
+        if (auxFile.exists()) {
+            pamDataset = PAMParser.getInstance().parsePAM(auxFile);
+        }
     }
 
     public GranuleDescriptor(
