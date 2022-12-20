@@ -25,6 +25,7 @@ import java.util.Properties;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.StyleImpl;
 import org.geotools.referencing.CRS;
@@ -96,6 +97,13 @@ public abstract class AbstractGetMapRequest extends AbstractWMSRequest implement
 
             setProperty(LAYERS, layerString);
             setProperty(STYLES, styleString);
+        }
+
+        if (!properties.containsKey(LAYERS) || ((String) properties.get(LAYERS)).length() == 0) {
+            throw new IllegalStateException(
+                    "No LAYERS is set for this request. Layers:["
+                            + layers.stream().collect(Collectors.joining(","))
+                            + "]");
         }
 
         return super.getFinalURL();

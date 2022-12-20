@@ -51,6 +51,7 @@ import org.geotools.ows.wms.response.GetFeatureInfoResponse;
 import org.geotools.ows.wms.response.GetMapResponse;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.RendererUtilities;
+import org.geotools.util.logging.Logging;
 import org.opengis.coverage.grid.Format;
 import org.opengis.geometry.Envelope;
 import org.opengis.parameter.GeneralParameterValue;
@@ -63,8 +64,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class WMSCoverageReader extends AbstractGridCoverage2DReader {
 
     /** The logger for the map module. */
-    public static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(WMSCoverageReader.class);
+    public static final Logger LOGGER = Logging.getLogger(WMSCoverageReader.class);
 
     static GridCoverageFactory gcf = new GridCoverageFactory();
 
@@ -397,7 +397,9 @@ public class WMSCoverageReader extends AbstractGridCoverage2DReader {
         } catch (Exception e) {
             throw new IOException("Could not reproject the request envelope", e);
         }
-
+        if (layers.size() == 0) {
+            throw new IllegalStateException("No layer is specified.");
+        }
         GetMapRequest mapRequest = wms.createGetMapRequest();
         // for some silly reason GetMapRequest will list the layers in the opposite order...
         List<LayerStyle> reversed = new ArrayList<>(layers);
@@ -521,6 +523,10 @@ public class WMSCoverageReader extends AbstractGridCoverage2DReader {
 
         /** */
         public LayerStyle(Layer layer, String style) {
+            if (layer == null || layer.getName() == null || layer.getName().length() == 0) {
+                throw new IllegalArgumentException(
+                        "Layer must be specified with a non-empty name.");
+            }
             this.layer = layer;
             this.style = style;
         }
