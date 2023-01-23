@@ -61,6 +61,7 @@ public class Geot5777Test {
         GetMapRequest request = wms.createGetMapRequest();
         request.setFormat("image/png");
         request.setDimensions("600", "600");
+        request.addLayer("point_landmark", "");
         request.setSRS("EPSG:4326");
         request.setBBox("-180, -85.0511287798, 180, 85.011287798");
         assertFalse(request.getFinalURL().toString().contains(" "));

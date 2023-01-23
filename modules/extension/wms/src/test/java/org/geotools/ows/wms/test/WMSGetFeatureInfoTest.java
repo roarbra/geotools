@@ -82,7 +82,8 @@ public class WMSGetFeatureInfoTest {
                         CRS.decode("EPSG:3006"));
 
         DirectPosition2D pointInImage = new DirectPosition2D(107, 2);
-        Layer layer = new Layer("CV100Coberta_Terrestre");
+        Layer layer = new Layer();
+        layer.setName("CV100Coberta_Terrestre");
         layer.setSrs(Sets.newSet("EPSG:3006"));
         layer.setBoundingBoxes(BBOXES);
         // a random layer to perform the getFeatureInfoRequest
