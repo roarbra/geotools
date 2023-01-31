@@ -20,11 +20,18 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /** @author Simone Giannecchini, GeoSolutions SAS */
+@RunWith(Parameterized.class)
 public class DateTimeParserTest extends Assert {
 
     private static final DateTimeParser PARSER =
@@ -34,6 +41,24 @@ public class DateTimeParserTest extends Assert {
                             | DateTimeParser.FLAG_GET_TIME_ON_CURRENT
                             | DateTimeParser.FLAG_GET_TIME_ON_NOW);
 
+    private Locale initialLocale;
+    
+    public DateTimeParserTest(Locale testLocale) {
+    	initialLocale = Locale.getDefault();
+    	Locale.setDefault(testLocale);
+    }
+    
+    @Parameterized.Parameters
+    public static List<Object[]> locales() {
+    	return List.of(new Object[]{Locale.ENGLISH}, 
+    				   new Object[]{Locale.forLanguageTag("NO")});
+    }
+    
+    @After
+    public void resetLocale() {
+    	Locale.setDefault(initialLocale);
+    }
+    
     @Test
     public void testParserOnCurrentTime() throws ParseException, InterruptedException {
         long now = System.currentTimeMillis();
