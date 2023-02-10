@@ -43,6 +43,7 @@
     <module>graph</module>
     <module>grid</module>
     <module>mbstyle</module>
+    <module>random-sampler</module>
     <module>tile-client</module>
     <module>transform</module>
     <module>wms</module>

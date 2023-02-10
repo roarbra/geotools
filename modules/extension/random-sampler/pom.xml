@@ -1,0 +1,20 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.geotools</groupId>
+    <artifactId>extension</artifactId>
+    <version>29-SNAPSHOT</version>
+  </parent>
+  <groupId>org.geotools</groupId>
+  <artifactId>gt-random-sampler</artifactId>
+  <name>Random Sampler</name>
+  <description>Random sampling of pixels, points, linesegments or polygons</description>
+  
+  <dependencies>
+	  <dependency>
+		  <groupId>org.geotools</groupId>
+		  <artifactId>gt-main</artifactId>
+		  <version>${project.version}</version>
+	  </dependency>
+  </dependencies>
+</project>
