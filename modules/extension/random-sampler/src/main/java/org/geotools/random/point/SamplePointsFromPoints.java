@@ -18,7 +18,9 @@ import org.opengis.feature.type.GeometryDescriptor;
  * Sampling random points from point features.
  * 
  * Specify number of points to draw.
+ * Uses the actual size of feature collection to sample random indexes.
  * 
+ * Might need to traverse features twice.
  * 
  * @author Roar Brænden
  *
