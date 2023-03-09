@@ -55,30 +55,30 @@ public class ComplexFeatureIteratorImpl implements FeatureIterator<Feature> {
 
     @Override
     public boolean hasNext() {
-        this.hasNextCalled = true;
-        try {
-            parsedFeature = parser.parse();
+        if (!hasNextCalled) {
+            try {
+                parsedFeature = parser.parse();
+                hasNextCalled = true;
+                return parsedFeature != null;
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                return false;
+            }
+        } else {
             return parsedFeature != null;
-        } catch (IOException e) {
-            LOGGER.log(Level.FINER, e.getMessage(), e);
-            close();
-            return false;
         }
     }
 
     @Override
     public Feature next() throws NoSuchElementException {
         if (!hasNextCalled) {
-            if (hasNext()) {
-                this.hasNextCalled = false;
-                return parsedFeature;
-            } else {
-                close();
-                return null;
-            }
-        } else {
+            hasNext();
+        }
+        if (parsedFeature != null) {
             this.hasNextCalled = false;
             return parsedFeature;
+        } else {
+            throw new NoSuchElementException();
         }
     }
 
