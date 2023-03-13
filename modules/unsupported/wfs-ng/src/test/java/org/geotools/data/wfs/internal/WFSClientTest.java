@@ -34,10 +34,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.xml.namespace.QName;
 import org.geotools.TestData;
+import org.geotools.api.feature.Feature;
 import org.geotools.api.feature.type.FeatureType;
 import org.geotools.api.feature.type.Name;
 import org.geotools.api.filter.Filter;
@@ -45,10 +47,12 @@ import org.geotools.data.wfs.TestHttpClient;
 import org.geotools.data.wfs.TestWFSClient;
 import org.geotools.data.wfs.WFSServiceInfo;
 import org.geotools.data.wfs.WFSTestData;
+import org.geotools.data.wfs.impl.WFSContentDataAccess;
 import org.geotools.data.wfs.internal.v1_x.CubeWerxStrategy;
 import org.geotools.data.wfs.internal.v1_x.IonicStrategy;
 import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_x_Strategy;
 import org.geotools.feature.FakeTypes;
+import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.type.FeatureTypeImpl;
@@ -343,6 +347,44 @@ public class WFSClientTest {
         }
     }
 
+    /** Testing different aspect of ComplexFeatureIteratorIter. GetFeature request should return single feature. */
+    @Test
+    public void testGetFeaturesIterator() throws Exception {
+        WFSClient client = createKartverketWFSClient();
+        FeatureType featureType = createComplexFeatureType(client);
+        GetFeatureRequest complexRequest = client.createGetFeatureRequest();
+        complexRequest.setTypeName(STED_REMOTE_NAME);
+        complexRequest.setFilter(Filter.INCLUDE);
+        complexRequest.setFullType(featureType);
+
+        ComplexGetFeatureResponse complexResponse = client.issueComplexRequest(complexRequest);
+        try (FeatureIterator<Feature> iterator = complexResponse.features()) {
+            Feature nextFeature = iterator.next();
+            Assert.assertNotNull(nextFeature);
+            Assert.assertFalse(iterator.hasNext());
+        }
+
+        complexResponse = client.issueComplexRequest(complexRequest);
+        try (FeatureIterator<Feature> iterator = complexResponse.features()) {
+            Assert.assertTrue(iterator.hasNext());
+            Assert.assertTrue(iterator.hasNext());
+            Feature nextFeature = iterator.next();
+            Assert.assertNotNull(nextFeature);
+            Assert.assertFalse(iterator.hasNext());
+        }
+
+        complexResponse = client.issueComplexRequest(complexRequest);
+        try (FeatureIterator<Feature> iterator = complexResponse.features()) {
+            Assert.assertNotNull(iterator.next());
+            Assert.assertThrows(NoSuchElementException.class, () -> iterator.next());
+        }
+    }
+
+    private FeatureType createComplexFeatureType(WFSClient client) throws IOException {
+        WFSContentDataAccess dataAccess = new WFSContentDataAccess(client);
+        return dataAccess.getSchema(STED_LOCAL_NAME);
+    }
+
     private void testGetRemoteTypeNames(String capabilitiesLocation, int typeCount) throws Exception {
 
         WFSClient client = newClient(capabilitiesLocation);
@@ -359,6 +401,12 @@ public class WFSClientTest {
                 new URL("https://wfs.geonorge.no/skwms1/wfs.stedsnavn?REQUEST=GetCapabilities&SERVICE=WFS"),
                 new MockHttpResponse(
                         TestData.file(TestHttpClient.class, "KartverketNo/GetCapabilities.xml"), "text/xml"));
+
+        mockHttp.expectGet(
+                new URL(
+                        "https://wfs.geonorge.no/skwms1/wfs.stedsnavn?REQUEST=DescribeFeatureType&VERSION=2.0.0&TYPENAMES=app%3ASted&NAMESPACES=xmlns%28app%2Chttp%3A%2F%2Fskjema.geonorge.no%2FSOSI%2Fproduktspesifikasjon%2FStedsnavnForVanligBruk%2F20181115%29&SERVICE=WFS"),
+                new MockHttpResponse(
+                        TestData.file(TestHttpClient.class, "KartverketNo/DescribeFeatureType_sted.xsd"), "text/xml"));
 
         mockHttp.expectGet(
                 new URL(

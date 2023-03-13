@@ -31,7 +31,9 @@ import org.geotools.util.logging.Logging;
  *
  * @author Adam Brown (Curtin University of Technology)
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
+ * @deprecated Moved to inner class of ComplexGetFeatureResponse
  */
+@Deprecated
 public class ComplexFeatureIteratorImpl implements FeatureIterator<Feature> {
 
     private static final Logger LOGGER = Logging.getLogger(ComplexFeatureIteratorImpl.class);
