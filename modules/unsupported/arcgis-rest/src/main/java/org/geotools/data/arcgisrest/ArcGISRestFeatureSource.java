@@ -24,9 +24,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.logging.Level;
@@ -318,11 +321,12 @@ public class ArcGISRestFeatureSource extends ContentFeatureSource {
      * @param ext Extent (as expressed in the JSON describing the layer)
      */
     protected String composeExtent(Extent ext) {
-        return (new StringJoiner(","))
-                .add(ext.getXmin().toString())
-                .add(ext.getYmin().toString())
-                .add(ext.getXmax().toString())
-                .add(ext.getYmax().toString())
+        DecimalFormat df = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ROOT));
+        return new StringJoiner(",")
+                .add(df.format(ext.getXmin()))
+                .add(df.format(ext.getYmin()))
+                .add(df.format(ext.getXmax()))
+                .add(df.format(ext.getYmax()))
                 .toString();
     }
 
@@ -358,14 +362,14 @@ public class ArcGISRestFeatureSource extends ContentFeatureSource {
 
         if (query.retrieveAllProperties()) {
             Iterator<AttributeDescriptor> iter = this.schema.getAttributeDescriptors().iterator();
+            String geometryField = this.schema.getGeometryDescriptor().getLocalName();
+
             while (iter.hasNext()) {
                 AttributeDescriptor attr = iter.next();
                 // Skips ID and geometry field
-                if (!attr.getLocalName().equalsIgnoreCase(this.objectIdField)
-                        && !attr.getLocalName()
-                                .equalsIgnoreCase(
-                                        this.schema.getGeometryDescriptor().getLocalName())) {
-                    joiner.add(iter.next().getLocalName());
+                if (!(attr.getLocalName().equalsIgnoreCase(this.objectIdField)
+                        || attr.getLocalName().equalsIgnoreCase(geometryField))) {
+                    joiner.add(attr.getLocalName());
                 }
             }
         } else {

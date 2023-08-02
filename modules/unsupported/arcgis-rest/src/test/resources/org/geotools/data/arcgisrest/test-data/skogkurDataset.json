@@ -1,0 +1,93 @@
+{
+	"currentVersion": 11.1,
+	"serviceItemId": "29e813e6229e4ece897ffa527cf2916b",
+	"serviceDescription": "",
+	"hasVersionedData": false,
+	"supportsDisconnectedEditing": false,
+	"hasStaticData": true,
+	"hasSharedDomains": false,
+	"maxRecordCount": 2000,
+	"supportedQueryFormats": "JSON",
+	"supportsVCSProjection": false,
+	"supportedExportFormats": "csv,shapefile,sqlite,geoPackage,filegdb,featureCollection,geojson,excel",
+	"capabilities": "Query",
+	"description": "",
+	"copyrightText": "",
+	"spatialReference": {
+		"wkid": 102100,
+		"latestWkid": 3857
+	},
+	"initialExtent": {
+		"xmin": 365864.75882220111,
+		"ymin": 7851602.3232031316,
+		"xmax": 3263054.8229887793,
+		"ymax": 11264489.725386638,
+		"spatialReference": {
+			"wkid": 102100,
+			"latestWkid": 3857
+		}
+	},
+	"fullExtent": {
+		"xmin": 365864.75882220111,
+		"ymin": 7851602.3232031316,
+		"xmax": 3263054.8229887793,
+		"ymax": 11264489.725386638,
+		"spatialReference": {
+			"wkid": 102100,
+			"latestWkid": 3857
+		}
+	},
+	"allowGeometryUpdates": true,
+	"units": "esriMeters",
+	"supportsAppend": true,
+	"supportsSharedDomains": true,
+	"supportsWebHooks": true,
+	"supportsTemporalLayers": true,
+	"layerOverridesEnabled": true,
+	"size": 131072,
+	"syncEnabled": false,
+	"supportsApplyEditsWithGlobalIds": false,
+	"supportsReturnDeleteResults": true,
+	"supportsLayerOverrides": true,
+	"supportsTilesAndBasicQueriesMode": true,
+	"supportsQueryContingentValues": true,
+	"supportedContingentValuesFormats": "JSON, PBF",
+	"supportsContingentValuesJson": 2,
+	"advancedEditingCapabilities": {
+		"supportsSplit": false,
+		"supportsReturnServiceEditsInSourceSR": false,
+		"supportsAsyncApplyEdits": true,
+		"supportsReturnEditResults": true,
+		"supportsApplyEditsbyUploadID": true,
+		"supportedApplyEditsUploadIDFormats": "JSON"
+	},
+	"editorTrackingInfo": {
+		"enableEditorTracking": false,
+		"enableOwnershipAccessControl": false,
+		"allowOthersToQuery": true,
+		"allowOthersToUpdate": true,
+		"allowOthersToDelete": false,
+		"allowAnonymousToQuery": true,
+		"allowAnonymousToUpdate": true,
+		"allowAnonymousToDelete": true
+	},
+	"xssPreventionInfo": {
+		"xssPreventionEnabled": true,
+		"xssPreventionRule": "InputOnly",
+		"xssInputRule": "rejectInvalid"
+	},
+	"layers": [
+		{
+			"id": 0,
+			"name": "ALLE_PUNKTER",
+			"parentLayerId": -1,
+			"defaultVisibility": true,
+			"subLayerIds": null,
+			"minScale": 0,
+			"maxScale": 0,
+			"type": "Feature Layer",
+			"geometryType": "esriGeometryPoint"
+		}
+	],
+	"tables": []
+}

@@ -357,8 +357,7 @@ public class ArcGISRestDataStore extends ContentDataStore {
         // metadata that support the ReST API (if there are no distribution
         // elements, return an error)
         Collection<WsCall> calls = new ArrayList<WsCall>();
-        datasetList
-                .stream()
+        datasetList.stream()
                 .forEach(
                         (ds) -> {
                             String ws = ArcGISRestDataStore.getWebServiceEndpoint(ds);
@@ -448,7 +447,7 @@ public class ArcGISRestDataStore extends ContentDataStore {
 
     /**
      * Helper method returning a JSON String out of a resource belongining to a ArcGIS ReST API
-     * instance (via a GET). If present, it sends authorixzation.
+     * instance (via a GET). If present, it sends authorization.
      *
      * @param url The endpoint of the resource
      * @param params Request parameters
@@ -474,14 +473,10 @@ public class ArcGISRestDataStore extends ContentDataStore {
         // Sets the URI, request parameters and request body (depending on method
         // type)
         URI uri = new URI(url.toString(), false);
-        NameValuePair[] kvps = new NameValuePair[params.size()];
-        int i = 0;
-        for (Object entry : params.entrySet().toArray()) {
-            kvps[i++] =
-                    new NameValuePair(
-                            ((Map.Entry) entry).getKey().toString(),
-                            ((Map.Entry) entry).getValue().toString());
-        }
+        NameValuePair[] kvps =
+                params.entrySet().stream()
+                        .map(e -> new NameValuePair(e.getKey(), e.getValue().toString()))
+                        .toArray(NameValuePair[]::new);
 
         if (methType.equals("GET")) {
             meth.setQueryString(kvps);
