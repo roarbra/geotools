@@ -344,6 +344,36 @@ public class WMTSCapabilitiesTest {
         Assert.assertEquals("Map overlay with all layers.", layer3.get_abstract());
     }
 
+    @Test
+    public void testPolarBoundingBox() throws Exception {
+        WMTSCapabilities caps = createCapabilities("statkart_wmts_getcapabilities.xml");
+        // Defined without any bounding box
+        // TileMatrixSetLink for EPSG:3408; EPSG:3857; EPSG:32633; EPSG:25833; EPSG:3575
+        WMTSLayer sirkumpolarLayer = caps.getLayer("sirkumpolar_grunnkart");
+        assertBoundingBox(sirkumpolarLayer, "EPSG:3408", null);
+        assertBoundingBox(sirkumpolarLayer, "EPSG:3857", null);
+        assertBoundingBox(sirkumpolarLayer, "EPSG:32633", null);
+        assertBoundingBox(sirkumpolarLayer, "EPSG:25833", null);
+        assertBoundingBox(sirkumpolarLayer, "EPSG:3575", null);
+
+        // Defined with globe-wide bounding box
+        // TileMatrixSetLink for EPSG:3857; EPSG:32633; EPSG:25833; EPSG:4326; EPSG:4258; EPSG:3575;
+        // EPSG:900913
+        WMTSLayer gebcoLayer = caps.getLayer("gebco");
+        assertBoundingBox(gebcoLayer, "EPSG:3857", null);
+        assertBoundingBox(gebcoLayer, "EPSG:32633", null);
+        assertBoundingBox(gebcoLayer, "EPSG:25833", null);
+        assertBoundingBox(gebcoLayer, "EPSG:4326", null);
+        assertBoundingBox(gebcoLayer, "EPSG:4258", null);
+        assertBoundingBox(gebcoLayer, "EPSG:3575", null);
+        assertBoundingBox(gebcoLayer, "EPSG:900913", null);
+    }
+
+    private void assertBoundingBox(WMTSLayer layer, String tms, CRSEnvelope expected) {
+        CRSEnvelope env = layer.getBoundingBoxes().get(tms);
+        Assert.assertNotNull("Missing envelope for layer: " + layer.getName() + " tms:" + tms, env);
+    }
+
     protected WebMapTileServer getCustomWMS(URL featureURL)
             throws SAXException, URISyntaxException, IOException {
         return new WebMapTileServer(featureURL);
