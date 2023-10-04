@@ -625,7 +625,7 @@ public class WMTSCoverageReader extends AbstractGridCoverage2DReader {
             CoordinateReferenceSystem targetCRS = requestedEnvelope.getCoordinateReferenceSystem();
             CoordinateReferenceSystem sourceCRS = getBestSourceCRS(targetCRS, readParameters);
 
-            ReferencedEnvelope nativeEnvelope = requestedEnvelope.transform(sourceCRS, false);
+            ReferencedEnvelope nativeEnvelope = requestedEnvelope.transform(sourceCRS, true);
             TileRequest request =
                     initTileRequest(
                             nativeEnvelope,
