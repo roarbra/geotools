@@ -692,7 +692,11 @@ public class JniOGR implements OGR {
 
     @Override
     public int GeometryGetWkbSize(Object geom) {
-        return ((Geometry) geom).WkbSize();
+        long lngSize = ((Geometry) geom).WkbSize();
+        if (lngSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Size of geometry wkb is too large.");
+        }
+        return (int) lngSize;
     }
 
     @Override
