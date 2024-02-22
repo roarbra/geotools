@@ -193,7 +193,11 @@ public abstract class XSD {
             // to avert the possibility of the above cited lock
             synchronized (Schemas.class) {
                 if (schema == null) {
-                    LOGGER.fine("building schema for schema: " + getNamespaceURI());
+                    LOGGER.fine(
+                            "building schema for schema: "
+                                    + getNamespaceURI()
+                                    + " with schema location: "
+                                    + getSchemaLocation());
                     schema = buildSchema();
                 }
             }
