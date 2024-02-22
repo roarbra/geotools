@@ -1738,6 +1738,9 @@ public class Schemas {
         @Override
         public String resolveSchemaLocation(
                 XSDSchema schema, String namespaceURI, String rawSchemaLocationURI) {
+            if (rawSchemaLocationURI == null) {
+                return null;
+            }
             for (XSDSchemaLocationResolver resolver : resolvers) {
                 String resolved =
                         resolver.resolveSchemaLocation(schema, namespaceURI, rawSchemaLocationURI);
