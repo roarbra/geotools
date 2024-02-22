@@ -16,8 +16,10 @@
  */
 package org.geotools.data.wfs.internal;
 
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import org.geotools.util.logging.Logging;
 
 /**
@@ -86,11 +88,9 @@ public final class Loggers {
     private static void log(Logger logger, Level level, Object... message) {
         if (logger.isLoggable(level)) {
             // miss guava Joiner....
-            StringBuilder sb = new StringBuilder();
-            for (Object part : message) {
-                sb.append(part);
-            }
-            logger.log(level, sb.toString());
+            String joined =
+                    Arrays.stream(message).map(o -> o.toString()).collect(Collectors.joining());
+            logger.log(level, joined);
         }
     }
 }
