@@ -77,6 +77,19 @@ public class GML3ParsingUtils {
         return GML2ParsingUtils.featureType(element, bwFactory);
     }
 
+    /**
+     * Turns a xml type definition into a geotools feature type.
+     *
+     * @return The corresponding geotools feature type.
+     */
+    public static SimpleFeatureType featureType(
+            XSDElementDeclaration element,
+            BindingWalkerFactory bwFactory,
+            CoordinateReferenceSystem crs)
+            throws Exception {
+        return GML2ParsingUtils.featureType(element, bwFactory, crs);
+    }
+
     /** Turns a parse node + feature type + fid info a feature. */
     static SimpleFeature feature(SimpleFeatureType fType, String fid, Node node) throws Exception {
         return GML2ParsingUtils.feature(fType, fid, node);

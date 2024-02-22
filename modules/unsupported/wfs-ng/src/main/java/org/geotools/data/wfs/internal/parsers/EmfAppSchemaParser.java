@@ -33,13 +33,11 @@ import org.geotools.api.feature.Feature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.api.feature.type.FeatureType;
-import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.api.feature.type.Name;
 import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.SchemaException;
-import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.gml3.ApplicationSchemaConfiguration;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.bindings.GML3ParsingUtils;
@@ -236,32 +234,7 @@ public class EmfAppSchemaParser {
         context.registerComponentInstance(bwFactory);
 
         try {
-            SimpleFeatureType featureType = GML3ParsingUtils.featureType(elementDecl, bwFactory);
-            if (crs != null) {
-                SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-                builder.setName(featureType.getName());
-                builder.setAbstract(featureType.isAbstract());
-                builder.setDescription(featureType.getDescription());
-                if (featureType.getSuper() instanceof SimpleFeatureType) {
-                    builder.setSuperType((SimpleFeatureType) featureType.getSuper());
-                }
-                List<AttributeDescriptor> attributes = featureType.getAttributeDescriptors();
-                final GeometryDescriptor defaultGeometry = featureType.getGeometryDescriptor();
-                for (AttributeDescriptor descriptor : attributes) {
-                    if (descriptor instanceof GeometryDescriptor) {
-                        String name = descriptor.getLocalName();
-                        Class binding = descriptor.getType().getBinding();
-                        builder.add(name, binding, crs);
-                    } else {
-                        builder.add(descriptor);
-                    }
-                }
-                if (defaultGeometry != null) {
-                    builder.setDefaultGeometry(defaultGeometry.getLocalName());
-                }
-                featureType = builder.buildFeatureType();
-            }
-            return featureType;
+            return GML3ParsingUtils.featureType(elementDecl, bwFactory, crs);
         } catch (Exception e) {
             if (e instanceof IOException) {
                 throw (IOException) e;

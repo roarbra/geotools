@@ -88,7 +88,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
 
             if (rawAttQName != null) {
                 // ignore namespace declarations
-                if (rawAttQName.startsWith("xmlns:")) {
+                if (rawAttQName.startsWith("xmlns")) {
                     continue;
                 }
 
