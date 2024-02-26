@@ -145,7 +145,8 @@ public abstract class AbstractHttpClient implements HTTPClient {
     }
 
     protected boolean isFile(URL url) {
-        return "file".equalsIgnoreCase(url.getProtocol());
+        return "file".equalsIgnoreCase(url.getProtocol())
+                || "jar".equalsIgnoreCase(url.getProtocol());
     }
 
     protected HTTPResponse createFileResponse(URL url) throws IOException {

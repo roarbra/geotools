@@ -128,7 +128,8 @@ public abstract class AbstractRequest implements Request {
     }
 
     static boolean isFileUrl(URL url) {
-        return url.getProtocol().equalsIgnoreCase("file");
+        return url.getProtocol().equalsIgnoreCase("file")
+                || url.getProtocol().equalsIgnoreCase("jar");
     }
 
     /** @see org.geotools.data.wms.request.Request#getFinalURL() */
