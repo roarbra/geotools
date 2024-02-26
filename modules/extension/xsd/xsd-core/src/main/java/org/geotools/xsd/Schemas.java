@@ -78,6 +78,7 @@ import org.eclipse.xsd.util.XSDSchemaLocator;
 import org.eclipse.xsd.util.XSDUtil;
 import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
+import org.geotools.util.logging.Logging;
 import org.geotools.xsd.impl.SchemaIndexImpl;
 import org.geotools.xsd.impl.TypeWalker;
 import org.picocontainer.ComponentAdapter;
@@ -95,7 +96,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author Justin Deoliveira, The Open Planning Project
  */
 public class Schemas {
-    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(Schemas.class);
+    private static final Logger LOGGER = Logging.getLogger(Schemas.class);
 
     /*
      * Name of the system property forcing the import of external schemas in any case,
@@ -278,16 +279,29 @@ public class Schemas {
                 (XSDResourceImpl) resourceSet.createResource(URI.createURI(".xsd"));
         xsdMainResource.setURI(uri);
 
+        Map<Object, Object> options = resourceSet.getLoadOptions();
+        URIConverter uriConverter = resourceSet.getURIConverter();
+
+        Map<Object, Object> loadMap = new HashMap<>(options);
+        if (options == null || !options.containsKey(URIConverter.OPTION_RESPONSE)) {
+            loadMap.put(URIConverter.OPTION_RESPONSE, new HashMap<>());
+        }
+
         // read resource before synchronize: Shorter lock duration and prevention of deadlock
         // if remote schema is created on same JVM and synchronizes on Schemas, too.
-        Map<Object, Object> options = resourceSet.getLoadOptions();
-        Map<?, ?> response = getOrCreateResponseFrom(options);
-        byte[] resourceData = readUriResource(uri, resourceSet, response);
+        Map<?, ?> response = (Map<?, ?>) loadMap.get(URIConverter.OPTION_RESPONSE);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (InputStream inputStream = uriConverter.createInputStream(uri, loadMap)) {
+            IOUtils.copy(inputStream, out);
+        }
 
         // schema building has effects on referenced schemas, it will alter them -> we need
         // to synchronize this call so that only one of these operations is active at any time
         synchronized (Schemas.class) {
-            try (InputStream in = new ByteArrayInputStream(resourceData)) {
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("loading xsd from uri " + uri);
+            }
+            try (InputStream in = new ByteArrayInputStream(out.toByteArray())) {
                 xsdMainResource.load(in, options);
             } finally {
                 Long timeStamp = (Long) response.get(URIConverter.RESPONSE_TIME_STAMP_PROPERTY);
@@ -314,46 +328,6 @@ public class Schemas {
 
             return schema;
         }
-    }
-
-    /**
-     * Fetches the contents of the URI into a byte[].
-     *
-     * @return The resource data
-     */
-    private static byte[] readUriResource(URI uri, ResourceSet resourceSet, Map<?, ?> response)
-            throws IOException {
-        Map<Object, Object> options = resourceSet.getLoadOptions();
-        URIConverter uriConverter = getUriConverter(resourceSet);
-
-        Map<Object, Object> loadMap = new HashMap<>(options);
-        loadMap.put(URIConverter.OPTION_RESPONSE, response);
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (InputStream inputStream = uriConverter.createInputStream(uri, loadMap)) {
-            IOUtils.copy(inputStream, out);
-        }
-        return out.toByteArray();
-    }
-
-    /**
-     * Fetches the map to be used as reponse from the given options, creating a new one if not
-     * existing.
-     *
-     * @return a map to be used as response
-     */
-    private static Map<?, ?> getOrCreateResponseFrom(Map<Object, Object> options) {
-        Map<?, ?> response =
-                (options == null) ? null : (Map<?, ?>) options.get(URIConverter.OPTION_RESPONSE);
-        if (response == null) {
-            response = new HashMap<>();
-        }
-        return response;
-    }
-
-    private static URIConverter getUriConverter(ResourceSet resourceSet) {
-        URIConverter uriConverter = resourceSet.getURIConverter();
-        return uriConverter;
     }
 
     private static boolean hasNoElementsNorTypes(XSDSchema schema) {

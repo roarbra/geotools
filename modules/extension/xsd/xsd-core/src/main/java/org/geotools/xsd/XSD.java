@@ -194,15 +194,15 @@ public abstract class XSD {
             synchronized (Schemas.class) {
                 if (schema == null) {
                     LOGGER.fine(
-                            "building schema for schema: "
+                            "building schema for namespace: "
                                     + getNamespaceURI()
                                     + " with schema location: "
                                     + getSchemaLocation());
                     schema = buildSchema();
                 }
             }
+            LOGGER.fine("done building schema for namespace: " + getNamespaceURI());
         }
-
         return schema;
     }
 
@@ -265,7 +265,7 @@ public abstract class XSD {
         return new QName(getNamespaceURI(), local);
     }
 
-    /** Implementation of equals, equality is based soley on {@link #getNamespaceURI()}. */
+    /** Implementation of equals, equality is based solely on {@link #getNamespaceURI()}. */
     @Override
     public final boolean equals(Object obj) {
         if (obj instanceof XSD) {
