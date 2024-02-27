@@ -38,7 +38,6 @@ import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.SchemaException;
-import org.geotools.gml3.ApplicationSchemaConfiguration;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.bindings.GML3ParsingUtils;
 import org.geotools.util.logging.Logging;
@@ -205,8 +204,8 @@ public class EmfAppSchemaParser {
             final CoordinateReferenceSystem crs,
             final Map<QName, Class<?>> mappedBindings)
             throws IOException {
-        ApplicationSchemaConfiguration configuration =
-                getConfiguration(featureName, schemaLocation);
+        Configuration configuration =
+                new FeatureTypeConfiguration(featureName, schemaLocation, wfsConfiguration);
         XSDElementDeclaration elementDecl = parseFeatureType(featureName, configuration);
 
         Map<QName, Object> bindings = wfsConfiguration.setupBindings();
@@ -252,8 +251,7 @@ public class EmfAppSchemaParser {
 
     /** TODO: add connectionfactory parameter to handle authentication, gzip, etc */
     private static XSDElementDeclaration parseFeatureType(
-            final QName featureTypeName, ApplicationSchemaConfiguration configuration)
-            throws DataSourceException {
+            final QName featureTypeName, Configuration configuration) throws DataSourceException {
         SchemaIndex schemaIndex;
         try {
             schemaIndex = Schemas.findSchemas(configuration);
@@ -268,17 +266,6 @@ public class EmfAppSchemaParser {
             throw new DataSourceException("No XSDElementDeclaration found for " + featureTypeName);
         }
         return elementDeclaration;
-    }
-
-    private static ApplicationSchemaConfiguration getConfiguration(
-            final QName featureTypeName, final URL schemaLocation) {
-        ApplicationSchemaConfiguration configuration;
-        {
-            String namespaceURI = featureTypeName.getNamespaceURI();
-            String uri = schemaLocation.toExternalForm();
-            configuration = new ApplicationSchemaConfiguration(namespaceURI, uri);
-        }
-        return configuration;
     }
 
     public static SimpleFeatureType parseSimpleFeatureType(
