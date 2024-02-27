@@ -425,9 +425,6 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
 
     public DescribeFeatureTypeResponse issueRequest(DescribeFeatureTypeRequest request)
             throws IOException {
-
-        requestDebug("Sending DFT request to ", request.getFinalURL());
-
         Response response = internalIssueRequest(request);
         return (DescribeFeatureTypeResponse) response;
     }
