@@ -65,16 +65,18 @@ import org.geotools.api.feature.Property;
 import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.FeatureCollection;
+import org.geotools.util.logging.Logging;
 import org.geotools.xml.XMLUtils;
 import org.geotools.xml.transform.QNameValidatingHandler;
 import org.geotools.xs.XS;
+import org.geotools.xsd.impl.AttributeEncodeExecutor;
 import org.geotools.xsd.impl.BindingFactoryImpl;
 import org.geotools.xsd.impl.BindingLoader;
 import org.geotools.xsd.impl.BindingPropertyExtractor;
 import org.geotools.xsd.impl.BindingVisitorDispatch;
 import org.geotools.xsd.impl.BindingWalker;
 import org.geotools.xsd.impl.BindingWalkerFactoryImpl;
-import org.geotools.xsd.impl.ElementEncoder;
+import org.geotools.xsd.impl.ElementEncodeExecutor;
 import org.geotools.xsd.impl.GetPropertyExecutor;
 import org.geotools.xsd.impl.NamespaceSupportWrapper;
 import org.geotools.xsd.impl.SchemaIndexImpl;
@@ -147,29 +149,26 @@ public class Encoder {
     static final String INDENT_AMOUNT_KEY = "{http://xml.apache.org/xslt}indent-amount";
 
     /** the schema + index * */
-    private XSDSchema schema;
+    private final XSDSchema schema;
 
-    private SchemaIndex index;
+    private final SchemaIndex index;
 
     /** binding factory + context * */
-    private BindingLoader bindingLoader;
+    private final BindingLoader bindingLoader;
 
     private MutablePicoContainer context;
 
     /** binding walker */
-    private BindingWalker bindingWalker;
+    private final BindingWalker bindingWalker;
 
     /** property extractors */
     private List<PropertyExtractor> propertyExtractors;
-
-    /** element encoder */
-    private ElementEncoder encoder;
 
     /** factory for creating nodes * */
     private Document doc;
 
     /** namespaces */
-    private NamespaceSupport namespaces;
+    private final NamespaceSupport namespaces;
 
     /** document serializer * */
     private ContentHandler serializer;
@@ -198,7 +197,7 @@ public class Encoder {
     private boolean relaxed = Boolean.parseBoolean(System.getProperty("encoder.relaxed", "true"));
 
     /** The configuration used by the encoder */
-    private Configuration configuration;
+    private final Configuration configuration;
 
     /**
      * Creates an encoder from a configuration.
@@ -227,13 +226,41 @@ public class Encoder {
      * @param schema The schema instance.
      */
     public Encoder(Configuration configuration, XSDSchema schema) {
+        // final variables
         this.configuration = configuration;
         this.schema = schema;
 
-        index = new SchemaIndexImpl(new XSDSchema[] {schema});
-
         bindingLoader = new BindingLoader(configuration.setupBindings());
+
         bindingWalker = new BindingWalker(bindingLoader);
+
+        namespaces = new NamespaceSupport();
+        addSchemasNamespaces(schema);
+
+        List<XSDSchema> schemas = new ArrayList<XSDSchema>();
+        schemas.add(schema);
+
+        for (Configuration depConfig : configuration.allDependencies()) {
+            try {
+                XSDSchema dependentSchema = depConfig.getXSD().getSchema();
+                if (dependentSchema != null) {
+                    schemas.add(dependentSchema);
+                    addSchemasNamespaces(dependentSchema);
+                }
+            } catch (IOException e) {
+                logger.severe("Error in dependent xsd " + depConfig.getXSD().getSchemaLocation());
+            }
+        }
+
+        index = new SchemaIndexImpl(schemas.toArray(new XSDSchema[schemas.size()]));
+
+        // ensure a default namespace prefix set
+        if (namespaces.getURI("") == null) {
+            namespaces.declarePrefix("", schema.getTargetNamespace());
+        }
+
+        // schema location setup
+        schemaLocations = new HashMap<>();
 
         // create the context
         context = new DefaultPicoContainer();
@@ -243,36 +270,27 @@ public class Encoder {
         BindingFactory bindingFactory = new BindingFactoryImpl(bindingLoader);
         context.registerComponentInstance(bindingFactory);
 
-        // register the element encoder in the context
-        encoder = new ElementEncoder(bindingWalker, context);
-        context.registerComponentInstance(encoder);
+        // binding walker support
+        context.registerComponentInstance(new BindingWalkerFactoryImpl(bindingLoader, context));
 
         // register the schema index
         context.registerComponentInstance(index);
 
-        // binding walker support
-        context.registerComponentInstance(new BindingWalkerFactoryImpl(bindingLoader, context));
-
-        // pass the context off to the configuration
+        // initialise the context based on the configuration
         context = configuration.setupContext(context);
-        encoder.setContext(context);
 
-        // schema location setup
-        schemaLocations = new HashMap<>();
-
+        /// fetch from context
         // get a logger from the context
         logger = (Logger) context.getComponentInstanceOfType(Logger.class);
 
         if (logger == null) {
             // create a default
-            logger = org.geotools.util.logging.Logging.getLogger(Encoder.class);
+            logger = Logging.getLogger(Encoder.class);
             context.registerComponentInstance(logger);
         }
 
-        encoder.setLogger(logger);
-
         // namespaces
-        namespaces = new NamespaceSupport();
+
         context.registerComponentInstance(namespaces);
         context.registerComponentInstance(new NamespaceSupportWrapper(namespaces));
 
@@ -290,6 +308,19 @@ public class Encoder {
         outputProps.setProperty(INDENT_AMOUNT_KEY, "2");
 
         configuration.setupEncoder(this);
+    }
+
+    private void addSchemasNamespaces(XSDSchema schema) {
+        for (Map.Entry<String, String> entry : schema.getQNamePrefixToNamespaceMap().entrySet()) {
+            String pre = entry.getKey();
+            String ns = entry.getValue();
+
+            if (XSDUtil.SCHEMA_FOR_SCHEMA_URI_2001.equals(ns) || namespaces.getPrefix(ns) != null) {
+                continue;
+            }
+
+            namespaces.declarePrefix((pre != null) ? pre : "", ns);
+        }
     }
 
     /**
@@ -493,6 +524,10 @@ public class Encoder {
      * @param location A schema location.
      */
     public void setSchemaLocation(String namespaceURI, String location) {
+        if (schemaLocations == null) {
+            throw new IllegalStateException(
+                    "Not allowed to set schemaLocation after calling encode.");
+        }
         schemaLocations.put(namespaceURI, location);
     }
 
@@ -628,7 +663,7 @@ public class Encoder {
             }
 
             if (namespaceAware) {
-                setupNamespaces();
+                serializeNamespaces();
             }
 
             // create the document
@@ -690,6 +725,46 @@ public class Encoder {
             // TODO: there are probably other references to elements of XSDSchema objects, we should
             // kill them too
         }
+    }
+
+    /**
+     * Encodes a value corresponding to an element in a schema.
+     *
+     * @param value The value to encode.
+     * @param element The declaration of the element corresponding to the value.
+     * @param document The document used to create the encoded element.
+     * @return The encoded value as an element.
+     */
+    public Element encodeElement(Object value, XSDElementDeclaration element, Document document) {
+        return encodeElement(value, element, document, null);
+    }
+
+    public Element encodeElement(
+            Object value,
+            XSDElementDeclaration element,
+            Document document,
+            XSDTypeDefinition container) {
+        ElementEncodeExecutor executor =
+                new ElementEncodeExecutor(
+                        value,
+                        element,
+                        document,
+                        logger,
+                        (NamespaceSupport)
+                                context.getComponentInstanceOfType(NamespaceSupport.class));
+        BindingVisitorDispatch.walk(value, bindingWalker, element, executor, container, context);
+        return executor.getEncodedElement();
+    }
+
+    public Attr encodeAttribute(
+            Object value,
+            XSDAttributeDeclaration attribute,
+            Document document,
+            XSDTypeDefinition container) {
+        AttributeEncodeExecutor executor =
+                new AttributeEncodeExecutor(value, attribute, document, logger);
+        BindingVisitorDispatch.walk(value, bindingWalker, attribute, executor, container, context);
+        return executor.getEncodedAttribute();
     }
 
     private void startEncoding(Object object, EncodingEntry entry)
@@ -1086,7 +1161,7 @@ public class Encoder {
         return root;
     }
 
-    private void setupNamespaces() throws SAXException {
+    private void serializeNamespaces() throws SAXException {
         // write out all the namespace prefix value mappings
         for (Enumeration e = namespaces.getPrefixes(); e.hasMoreElements(); ) {
             String prefix = (String) e.nextElement();
@@ -1096,30 +1171,6 @@ public class Encoder {
                 continue;
             }
             serializer.startPrefixMapping(prefix, uri);
-        }
-        for (Map.Entry<String, String> stringStringEntry :
-                schema.getQNamePrefixToNamespaceMap().entrySet()) {
-            Map.Entry entry = (Map.Entry) stringStringEntry;
-            String pre = (String) entry.getKey();
-            String ns = (String) entry.getValue();
-
-            if (XSDUtil.SCHEMA_FOR_SCHEMA_URI_2001.equals(ns)) {
-                continue;
-            }
-
-            // skip ones already registered
-            if (namespaces.getPrefix(ns) != null) {
-                continue;
-            }
-            serializer.startPrefixMapping(pre != null ? pre : "", ns);
-            serializer.endPrefixMapping(pre != null ? pre : "");
-
-            namespaces.declarePrefix((pre != null) ? pre : "", ns);
-        }
-
-        // ensure a default namespace prefix set
-        if (namespaces.getURI("") == null) {
-            namespaces.declarePrefix("", schema.getTargetNamespace());
         }
     }
 
@@ -1181,11 +1232,11 @@ public class Encoder {
         if (component instanceof XSDElementDeclaration) {
             XSDElementDeclaration element = (XSDElementDeclaration) component;
 
-            return encoder.encode(object, element, doc, container);
+            return encodeElement(object, element, doc, container);
         } else if (component instanceof XSDAttributeDeclaration) {
             XSDAttributeDeclaration attribute = (XSDAttributeDeclaration) component;
 
-            return encoder.encode(object, attribute, doc, container);
+            return encodeAttribute(object, attribute, doc, container);
         }
 
         return null;
