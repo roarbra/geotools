@@ -31,7 +31,9 @@ import org.xml.sax.helpers.NamespaceSupport;
  *
  * @author Justin Deoliveira, The Open Planning Project TODO: rename this class, it is not just for
  *     element.s
+ * @deprecated Use the three encode methods in {@link org.geotools.xsd.Encoder}.
  */
+@Deprecated
 public class ElementEncoder {
     /** The walker used to traverse bindings */
     private BindingWalker bindingWalker;
@@ -52,6 +54,8 @@ public class ElementEncoder {
         this.logger = logger;
     }
 
+    /** @deprecated Use {@link org.geotools.xsd.Encoder#encodeElement} */
+    @Deprecated
     public Element encode(Object value, XSDElementDeclaration element, Document document) {
         return encode(value, element, document, null);
     }
@@ -63,7 +67,9 @@ public class ElementEncoder {
      * @param element The declaration of the element corresponding to the value.
      * @param document The document used to create the encoded element.
      * @return The encoded value as an element.
+     * @deprecated Use {@link org.geotools.xsd.Encoder#encodeElement}
      */
+    @Deprecated
     public Element encode(
             Object value,
             XSDElementDeclaration element,
@@ -81,6 +87,8 @@ public class ElementEncoder {
         return executor.getEncodedElement();
     }
 
+    /** @deprecated Use {@link org.geotools.xsd.Encoder#encodeAttribute} */
+    @Deprecated
     public Attr encode(
             Object value,
             XSDAttributeDeclaration attribute,
