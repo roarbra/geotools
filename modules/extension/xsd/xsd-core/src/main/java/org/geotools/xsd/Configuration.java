@@ -139,7 +139,7 @@ import org.picocontainer.defaults.DuplicateComponentKeyRegistrationException;
  *
  * <pre>
  *         <code>
- * class MyConfiguration implements Configuration {
+ * class MyConfiguration extends Configuration {
  *
  *                XSDSchemaLocationResolver getSchemaLocationResolver() {
  *                  return new MySchemaLocationResolver();
@@ -221,7 +221,7 @@ public abstract class Configuration {
         context = new DefaultPicoContainer();
     }
 
-    /** The XSD instance representing the schema for which the schema works against. */
+    /** The XSD instance representing the schema for which this configuration works against. */
     public XSD getXSD() {
         return xsd;
     }
