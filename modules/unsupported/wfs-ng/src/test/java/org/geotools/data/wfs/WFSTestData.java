@@ -26,6 +26,8 @@ import org.geotools.data.wfs.internal.WFSConfig;
 /** */
 public class WFSTestData {
 
+    private WFSTestData() {}
+
     /** A class holding the type name and test data location for a feature type */
     public static class TestDataType {
         /** Location of a test data capabilities file */

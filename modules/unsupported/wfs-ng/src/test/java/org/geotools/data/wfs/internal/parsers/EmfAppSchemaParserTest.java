@@ -81,7 +81,7 @@ public class EmfAppSchemaParserTest {
     public void testParseCubeWerx_GML_Level1_FeatureType() throws IOException {
         final QName featureTypeName =
                 new QName("http://www.fgdc.gov/framework/073004/gubs", "GovernmentalUnitCE");
-        new WFSTestData();
+
         final URL schemaLocation =
                 WFSTestData.url("CubeWerx_nsdi/1.1.0/DescribeFeatureType_GovernmentalUnitCE.xsd");
 
@@ -92,14 +92,7 @@ public class EmfAppSchemaParserTest {
         // Plus, the following ones are being assigned multiplicity 0:1 by the
         // parser when they're not:
         // {instanceAlternateName:String[0..*],codingSystemReference:String[0..*]}
-        // And the last one: governmentalUnitType has a complex type, yet it
-        // gets parsed as String
-        // and I can't find out why (would be happier if it were bound to Object.class)
-        // 2008-06-05 update: governmentalUnitType no longer gets parsed by the gtxml parser
-        // at all, so reducing expectedAttributeCount from 10 to 9
-        // 2011-08-21 update: governmentalUnitType gets parsed again by the gtxml parser, so
-        // setting expectedAttributeCount back to 10
-        final int expectedAttributeCount = 10;
+        final int expectedAttributeCount = 9;
 
         // SimpleFeatureType ftype =
         testParseDescribeSimpleFeatureType(featureTypeName, schemaLocation, expectedAttributeCount);
