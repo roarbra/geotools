@@ -93,16 +93,8 @@ public class Dimension {
         // check arguments and throw IllegalArgumentException if not valid
         validateArguments(name, units);
         this.name = name;
-        this.units = units;
     }
-
     /**
-     * Check the two input arguments 'name' and 'units' for validity.
-     *
-     * <ul>
-     *   <li>'name': must neither be {@code null} nor empty
-     *   <li>'units': must not be {@code null}
-     * </ul>
      *
      * @param name the name attribute
      * @param units the units attribute
