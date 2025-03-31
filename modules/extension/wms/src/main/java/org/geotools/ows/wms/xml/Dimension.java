@@ -64,6 +64,11 @@ package org.geotools.ows.wms.xml;
  *
  * </blockquote>
  *
+ * <p>According to <a href="https://portal.ogc.org/files/?artifact_id=14416">OpenGIS Web Map Service WMS Implementation
+ * Specification - C.2 Declaring dimensions and their allowed value (page 52)</a>, units must not be missing, but their
+ * values are allowed to be empty: <i>"If the dimensional quantity has no units (e.g. band number in a multi-wavelength
+ * sensor), use the null string: units=""."</i>
+ *
  * @version SVN $Id$
  * @author Per Engstrom, Curalia AB, pereng@gmail.com
  */
@@ -82,16 +87,28 @@ public class Dimension {
     protected Extent extent = null;
 
     public Dimension(String name, String units, String unitSymbol) {
-        // check arguments and throw IllegalArgumentException if not valid
-        validateArguments(name, units);
+        if (name == null || name.length() == 0) {
+            throw new IllegalArgumentException("Error creating Extent: parameter name must not be null!");
+        }
+        // unit must not be null, but can be empty according to WMS spec 1.3, page 52
+        if (units == null) {
+            throw new IllegalArgumentException("Error creating Extent: parameter units must not be null!");
+        }
+
         this.name = name;
         this.units = units;
         this.unitSymbol = unitSymbol;
     }
 
     public Dimension(String name, String units) {
-        // check arguments and throw IllegalArgumentException if not valid
-        validateArguments(name, units);
+        if (name == null || name.length() == 0) {
+            throw new IllegalArgumentException("Error creating Extent: parameter name must not be null!");
+        }
+        // unit must not be null, but can be empty according to WMS spec 1.3, page 52
+        if (units == null) {
+            throw new IllegalArgumentException("Error creating Extent: parameter units must not be null!");
+        }
+
         this.name = name;
     }
     /**
