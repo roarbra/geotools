@@ -64,11 +64,6 @@ package org.geotools.ows.wms.xml;
  *
  * </blockquote>
  *
- * <p>According to <a href="https://portal.ogc.org/files/?artifact_id=14416">OpenGIS Web Map Service WMS Implementation
- * Specification - C.2 Declaring dimensions and their allowed value (page 52)</a>, units must not be missing, but their
- * values are allowed to be empty: <i>"If the dimensional quantity has no units (e.g. band number in a multi-wavelength
- * sensor), use the null string: units=""."</i>
- *
  * @version SVN $Id$
  * @author Per Engstrom, Curalia AB, pereng@gmail.com
  */
@@ -87,31 +82,45 @@ public class Dimension {
     protected Extent extent = null;
 
     public Dimension(String name, String units, String unitSymbol) {
-        if (name == null || name.length() == 0) {
-            throw new IllegalArgumentException("Error creating Extent: parameter name must not be null!");
-        }
-        // unit must not be null, but can be empty according to WMS spec 1.3, page 52
-        if (units == null) {
-            throw new IllegalArgumentException("Error creating Extent: parameter units must not be null!");
-        }
-
+        // check arguments and throw IllegalArgumentException if not valid
+        validateArguments(name, units);
         this.name = name;
         this.units = units;
         this.unitSymbol = unitSymbol;
     }
 
     public Dimension(String name, String units) {
-        if (name == null || name.length() == 0) {
-            throw new IllegalArgumentException("Error creating Extent: parameter name must not be null!");
-        }
-        // unit must not be null, but can be empty according to WMS spec 1.3, page 52
-        if (units == null) {
-            throw new IllegalArgumentException("Error creating Extent: parameter units must not be null!");
-        }
-
+        // check arguments and throw IllegalArgumentException if not valid
+        validateArguments(name, units);
         this.name = name;
     }
     /**
+     *
+     * @param name the name attribute
+     * @param units the units attribute
+     */
+    private static void validateArguments(String name, String units) throws IllegalArgumentException {
+        // 'name' must not be null
+        if (name == null) {
+            throw new IllegalArgumentException("Error creating Dimension: parameter 'name' must not be null!");
+        }
+        // 'name' must not be empty
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("Error creating Dimension: parameter 'name' must not be empty!");
+        }
+        // 'units' must not be null, but can be empty according to WMS spec 1.3, page 52
+        if (units == null) {
+            throw new IllegalArgumentException("Error creating Dimension: parameter 'units' must not be null!");
+        }
+    }
+
+    /**
+     * Check the two input arguments 'name' and 'units' for validity.
+     *
+     * <ul>
+     *   <li>'name': must neither be {@code null} nor empty
+     *   <li>'units': must not be {@code null}
+     * </ul>
      *
      * @param name the name attribute
      * @param units the units attribute
