@@ -33,6 +33,14 @@
       <timezone>+11</timezone>
     </developer>
   </developers>
+  <distributionManagement>
+    <snapshotRepository>
+      <uniqueVersion>false</uniqueVersion>
+      <id>nexus</id>
+      <name>Braenden Nexus</name>
+      <url>https://repo.braenden.net/repository/maven-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <properties>
     <powermock.version>2.0.9</powermock.version>
@@ -242,5 +250,4 @@
     </profile>
 
   </profiles>
-
 </project>
