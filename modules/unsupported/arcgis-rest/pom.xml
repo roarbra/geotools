@@ -36,7 +36,7 @@
   <distributionManagement>
     <snapshotRepository>
       <uniqueVersion>false</uniqueVersion>
-      <id>nexus</id>
+      <id>braenden</id>
       <name>Braenden Nexus</name>
       <url>https://repo.braenden.net/repository/maven-snapshots/</url>
     </snapshotRepository>

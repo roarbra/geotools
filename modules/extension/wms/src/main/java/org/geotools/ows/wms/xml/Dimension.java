@@ -95,7 +95,6 @@ public class Dimension {
         this.name = name;
     }
     /**
-     *
      * @param name the name attribute
      * @param units the units attribute
      */
